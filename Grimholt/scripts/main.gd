@@ -17,8 +17,20 @@ func _ready() -> void:
     player.building_system = building_system
     player.global_position = Vector3(0.0, terrain.height_at(0.0, 0.0) + 5.0, 0.0)
     terrain.populate_resources(inventory)
+    for child in terrain.get_children():
+        if child is GrimholtResourceNode:
+            child.harvested.connect(_on_resource_harvested)
     if FileAccess.file_exists(SAVE_PATH):
         _load_game(false)
+
+var depleted_resource_ids: Array[String] = []
+
+func _on_resource_harvested(resource_key: String) -> void:
+    if not depleted_resource_ids.has(resource_key):
+        depleted_resource_ids.append(resource_key)
+
+func _get_depleted_resource_ids() -> Array[String]:
+    return depleted_resource_ids.duplicate()
 
 func _notification(what: int) -> void:
     if what == NOTIFICATION_WM_CLOSE_REQUEST:
@@ -51,6 +63,7 @@ func _save_game(show_feedback: bool = true) -> bool:
         "inventory": player.inventory.items.duplicate(true),
         "profession_experience": player.professions.experience.duplicate(true),
         "buildings": building_system.get_save_data(),
+        "depleted_resources": _get_depleted_resource_ids(),
         "terrain_seed": terrain.terrain_seed
     }
     var file := FileAccess.open(SAVE_TEMP_PATH, FileAccess.WRITE)
@@ -105,12 +118,13 @@ func _load_game(show_feedback: bool = true) -> bool:
     var inventory_data: Variant = parsed.get("inventory", {})
     var profession_data: Variant = parsed.get("profession_experience", {})
     var building_data: Variant = parsed.get("buildings", [])
+    var depleted_data: Variant = parsed.get("depleted_resources", [])
     var inventory_probe := GrimholtInventory.new()
     var inventory_valid := inventory_probe.set_items_from_save(inventory_data)
     inventory_probe.free()
     var profession_probe := GrimholtProfessionSystem.new()
     var profession_valid := profession_probe.set_experience_from_save(profession_data)
-    if not inventory_valid or not profession_valid or not building_data is Array:
+    if not inventory_valid or not profession_valid or not building_data is Array or not depleted_data is Array:
         if show_feedback:
             player._set_feedback("Spielstand enthält ungültige Spielfortschritte.")
         return false
@@ -129,10 +143,26 @@ func _load_game(show_feedback: bool = true) -> bool:
                 if show_feedback:
                     player._set_feedback("Spielstand enthält ungültige Gebäudepositionen.")
                 return false
+    var valid_resource_ids: Dictionary = {}
+    for child in terrain.get_children():
+        if child is GrimholtResourceNode:
+            valid_resource_ids[child.persistent_id] = true
+    for resource_key in depleted_data:
+        if not resource_key is String or not valid_resource_ids.has(resource_key):
+            if show_feedback:
+                player._set_feedback("Spielstand enthält ungültige Ressourcendaten.")
+            return false
     if not building_system.restore_from_save(building_data):
         if show_feedback:
             player._set_feedback("Gebäude konnten nicht wiederhergestellt werden.")
         return false
+    if not terrain.restore_depleted_resources(depleted_data):
+        if show_feedback:
+            player._set_feedback("Ressourcen konnten nicht wiederhergestellt werden.")
+        return false
+    depleted_resource_ids.clear()
+    for resource_key in depleted_data:
+        depleted_resource_ids.append(String(resource_key))
     player.inventory.set_items_from_save(inventory_data)
     player.professions.set_experience_from_save(profession_data)
     player.global_position = Vector3(float(coordinates[0]), float(coordinates[1]), float(coordinates[2]))
