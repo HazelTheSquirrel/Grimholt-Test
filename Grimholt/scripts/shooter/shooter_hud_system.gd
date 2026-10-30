@@ -1,22 +1,5 @@
 extends "res://scripts/shooter/shooter_combat_system.gd"
 
-@rpc("authority", "call_local", "reliable")
-@rpc("authority", "call_local", "reliable")
-@rpc("authority", "call_remote", "reliable")
-@rpc("authority", "call_remote", "reliable")
-@rpc("authority", "call_local", "reliable")
-@rpc("authority", "call_remote", "unreliable")
-@rpc("any_peer", "call_remote", "unreliable")
-@rpc("authority", "call_remote", "unreliable")
-@rpc("any_peer", "call_remote", "reliable")
-@rpc("any_peer", "call_remote", "reliable")
-@rpc("authority", "call_local", "reliable")
-@rpc("authority", "call_local", "reliable")
-@rpc("authority", "call_local", "reliable")
-@rpc("authority", "call_local", "reliable")
-@rpc("authority", "call_local", "reliable")
-@rpc("authority", "call_local", "reliable")
-@rpc("authority", "call_local", "reliable")
 func _update_scoreboard() -> void:
 	if scoreboard_label == null:
 		return
