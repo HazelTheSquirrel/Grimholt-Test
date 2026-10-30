@@ -12,6 +12,8 @@ Grimholt ist ein eigenständiger, reiner Multiplayer-3D-Arena-Shooter. Es gibt k
 - 100 Lebenspunkte, Respawn und Kill-Punkte.
 - Fünf servergesteuerte Arena-Bots als Gegner.
 - Militärisch inspiriertes, eigenständiges HUD: Matchzeit, Top-Fragger, Lebenspunkte, Munition, Killfeed und taktische Minimap.
+- Vollständige K/D-Scoreboard-Ansicht per Tab, Trefferbestätigung und automatisches Gewehrfeuer bei gehaltenem Linksklick.
+- Prozedurale lokale Platzhalter-Audioeffekte für Schüsse und Nachladen (noch keine finalen Soundassets).
 - Server prüft eingehende Bewegungsupdates anhand der maximal plausiblen Laufgeschwindigkeit.
 
 ## Starten
@@ -40,7 +42,7 @@ Training startet einen lokalen Host mit fünf Bots. Auch beim Multiplayer-Hostin
 
 Dies ist weiterhin ein früher Gameplay-Prototyp, kein fertiges oder öffentlich serverfestes Spiel. Die Arena, HUD-Elemente und Bots sind Platzhalter. Die Bot-KI nutzt einfache direkte Verfolgung und Hitscan-Angriffe; sie navigiert noch nicht intelligent um Deckung. Die Minimap zeigt Positionsmarker, keine Sichtlinien- oder Aufklärungsdaten.
 
-Noch offen sind unter anderem serverautoritatives Munitions-/Nachladesystem, vollständige serverautoritativ simulierte Bewegung, zuverlässige Replikation unter Paketverlust, Lag Compensation, Anti-Cheat-Härtung, Lobby/Matchmaking, Serverbrowser, dedizierte Serverkonfiguration, Tests mit mehreren echten Clients sowie finale Grafik und Levelgestaltung. Die aktuelle Schussprüfung validiert Feuerrate und Blickrichtung serverseitig, ersetzt aber noch keine vollständige serverautoritativ simulierte Combat-Pipeline.
+Noch offen sind unter anderem vollständig serverautoritativ simulierte Bewegung, zuverlässige Replikation unter Paketverlust, Lag Compensation, Anti-Cheat-Härtung, Lobby/Matchmaking, Serverbrowser, dedizierte Serverkonfiguration, Tests mit mehreren echten Clients sowie finale Grafik, Levelgestaltung und finale Audioassets. Das aktuelle Headless-Smoke-Testskript prüft Szenenstart, Eingabeaktionen, Solo-Spawn, Bots und HUD; es ersetzt keine echten Mehrspieler- und Eingabetests. Die aktuelle Schussprüfung validiert Feuerrate und Blickrichtung serverseitig, ersetzt aber noch keine vollständige serverautoritativ simulierte Combat-Pipeline.
 
 ## Projektstruktur
 
