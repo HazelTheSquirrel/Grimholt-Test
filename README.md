@@ -33,7 +33,7 @@ Der aktuelle Repository-Stand ist ein technischer Gameplay-Vertikalschnitt und n
 - Modulares Platzieren von Holzfundamenten, Wänden und Dachsegmenten im Baumodus.
 - Automatisierte Headless-Prüfungen für Projektimport, Start, Inventar, Crafting, Berufserfahrung, Landschaftsaufbau und die tatsächliche Ernte über die Spieler-Kamera.
 
-Der lokale Spielstand speichert aktuell Spielerposition, Inventar, Berufserfahrung und platzierte Bauteile automatisch beim Schließen; F5 speichert manuell und F9 lädt den letzten Stand. Ressourcen-Erntezustände und die übrige Welt sind noch nicht Teil des Spielstands.
+Der lokale Spielstand speichert aktuell Spielerposition, Inventar, Berufserfahrung, bereits geerntete Ressourcen und platzierte Bauteile automatisch beim Schließen; F5 speichert manuell und F9 lädt den letzten Stand. Ressourcen-Erntezustände werden anhand stabiler Welt-IDs gesichert; übrige Weltveränderungen, Respawn und dynamische Weltzustände sind noch nicht Teil des Spielstands.
 
 Die aktuell erzeugten Ressourcen, Vegetation und Bauteile sind eigene prozedurale Platzhalter-Prototypen. Die Ernte-HUD zeigt beim Anvisieren einer Ressource die passende E-Aktion an. Hochwertige Charaktermodelle, Animationen, finale Umgebungsassets, vollständige Gebäude-Snap-Verbindungen und eine ausgearbeitete Benutzeroberfläche sind noch nicht enthalten.
 
