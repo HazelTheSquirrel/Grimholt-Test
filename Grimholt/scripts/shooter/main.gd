@@ -45,7 +45,7 @@ func _ready() -> void:
 		host_game()
 
 func _configure_inputs() -> void:
-	for pair in [["move_forward", KEY_W], ["move_backward", KEY_S], ["move_left", KEY_A], ["move_right", KEY_D], ["jump", KEY_SPACE], ["reload", KEY_R]]:
+	for pair in [["move_forward", KEY_W], ["move_backward", KEY_S], ["move_left", KEY_A], ["move_right", KEY_D], ["jump", KEY_SPACE], ["reload", KEY_R], ["crouch", KEY_CTRL], ["crouch", KEY_C]]:
 		if not InputMap.has_action(pair[0]):
 			InputMap.add_action(pair[0])
 		var event := InputEventKey.new()
