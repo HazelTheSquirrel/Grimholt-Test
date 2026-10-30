@@ -25,6 +25,12 @@ var next_timer_sync_msec := 0
 var round_active := false
 var hud_layer: CanvasLayer
 var menu_layer: CanvasLayer
+var pause_layer: CanvasLayer
+var pause_panel: PanelContainer
+var pause_home: VBoxContainer
+var pause_options: VBoxContainer
+var pause_option_detail: Label
+var is_local_paused := false
 var status_label: Label
 var address_input: LineEdit
 var main_menu_container: VBoxContainer
@@ -54,7 +60,8 @@ func _ready() -> void:
 	_configure_inputs()
 	_build_menu()
 	_build_hud()
-	if OS.has_feature("dedicated_server"):
+	_build_pause_menu()
+	if OS.has_feature("dedicated_server"): 
 		host_game()
 
 func _configure_inputs() -> void:
@@ -247,6 +254,106 @@ func _build_menu() -> void:
 	status_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	column.add_child(status_label)
 
+func _build_pause_menu() -> void:
+	pause_layer = CanvasLayer.new()
+	pause_layer.layer = 20
+	pause_layer.visible = false
+	add_child(pause_layer)
+	var backdrop := ColorRect.new()
+	backdrop.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	backdrop.color = Color(0.015, 0.025, 0.04, 0.78)
+	pause_layer.add_child(backdrop)
+	var center := CenterContainer.new()
+	center.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	pause_layer.add_child(center)
+	pause_panel = PanelContainer.new()
+	pause_panel.custom_minimum_size = Vector2(520, 480)
+	center.add_child(pause_panel)
+	var column := VBoxContainer.new()
+	column.add_theme_constant_override("separation", 12)
+	pause_panel.add_child(column)
+	var heading := Label.new()
+	heading.text = "GRIMHOLT // PAUSE"
+	heading.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	heading.add_theme_font_size_override("font_size", 28)
+	column.add_child(heading)
+	pause_home = VBoxContainer.new()
+	pause_home.add_theme_constant_override("separation", 8)
+	column.add_child(pause_home)
+	_add_menu_button(pause_home, "MATCH VERLASSEN", _leave_match)
+	_add_menu_button(pause_home, "OPTIONEN", func(): _show_pause_section("options"))
+	_add_menu_button(pause_home, "SPIEL VERLASSEN", _quit_game)
+	_add_menu_button(pause_home, "WEITERSPIELEN", _resume_match)
+	pause_options = VBoxContainer.new()
+	pause_options.add_theme_constant_override("separation", 8)
+	pause_options.visible = false
+	column.add_child(pause_options)
+	var options_heading := Label.new()
+	options_heading.text = "OPTIONEN"
+	options_heading.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	pause_options.add_child(options_heading)
+	_add_menu_button(pause_options, "GRAFIK", func(): _show_pause_option_detail("Grafik", "Vollbild und Anzeigeoptionen werden hier verwaltet."))
+	_add_menu_button(pause_options, "SOUND", func(): _show_pause_option_detail("Sound", "Audio-Mix und Lautstärke werden hier verwaltet."))
+	_add_menu_button(pause_options, "STEUERUNG", func(): _show_pause_option_detail("Steuerung", "Tastenbelegung und Maus-Empfindlichkeit werden hier verwaltet."))
+	_add_menu_button(pause_options, "EXTRAS", func(): _show_pause_option_detail("Extras", "HUD-, Barrierefreiheits- und weitere Spieloptionen werden hier verwaltet."))
+	pause_option_detail = Label.new()
+	pause_option_detail.text = "Wähle einen Optionsbereich."
+	pause_option_detail.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	pause_options.add_child(pause_option_detail)
+	_add_menu_button(pause_options, "ZURÜCK", func(): _show_pause_section("home"))
+
+func _toggle_pause_menu() -> void:
+	if pause_layer == null or not round_active:
+		return
+	is_local_paused = not is_local_paused
+	pause_layer.visible = is_local_paused
+	pause_home.visible = true
+	pause_options.visible = false
+	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE if is_local_paused else Input.MOUSE_MODE_CAPTURED
+	if is_local_paused:
+		var local_player: Node = players.get(multiplayer.get_unique_id())
+		if local_player != null:
+			local_player.set("fire_held", false)
+
+func _show_pause_section(section: String) -> void:
+	pause_home.visible = section == "home"
+	pause_options.visible = section == "options"
+
+func _show_pause_option_detail(section: String, description: String) -> void:
+	pause_option_detail.text = section.to_upper() + "\n\n" + description
+
+func _resume_match() -> void:
+	is_local_paused = false
+	pause_layer.visible = false
+	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
+
+func _leave_match() -> void:
+	is_local_paused = false
+	pause_layer.visible = false
+	round_active = false
+	if multiplayer.multiplayer_peer != null:
+		multiplayer.multiplayer_peer.close()
+	multiplayer.multiplayer_peer = OfflineMultiplayerPeer.new()
+	players.clear()
+	bots.clear()
+	scores.clear()
+	deaths.clear()
+	last_input_packet_msec.clear()
+	last_shot_times.clear()
+	weapon_ammo.clear()
+	weapon_reserve.clear()
+	reload_deadlines.clear()
+	for child in get_children():
+		if child is CharacterBody3D:
+			child.queue_free()
+	menu_layer.visible = true
+	_show_menu_section("main")
+	status_label.text = "MATCH VERLASSEN"
+	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+
+func _quit_game() -> void:
+	get_tree().quit()
+
 func _add_menu_button(parent: VBoxContainer, button_text: String, callback: Callable) -> void:
 	var button := Button.new()
 	button.text = button_text
@@ -346,6 +453,10 @@ func _build_hud() -> void:
 	scoreboard_panel.add_child(scoreboard_label)
 
 func _unhandled_input(event: InputEvent) -> void:
+	if event is InputEventKey and event.pressed and not event.echo and event.keycode == KEY_ESCAPE and round_active:
+		_toggle_pause_menu()
+		get_viewport().set_input_as_handled()
+		return
 	if menu_layer != null and menu_layer.visible and event is InputEventKey and event.pressed and not event.echo:
 		if event.keycode == KEY_ENTER or event.keycode == KEY_KP_ENTER or event.keycode == KEY_SPACE:
 			start_solo_game()
@@ -458,6 +569,10 @@ func _match_started(remaining_msec: int) -> void:
 	round_end_time_msec = Time.get_ticks_msec() + remaining_msec
 	next_timer_sync_msec = Time.get_ticks_msec() + 1000
 	menu_layer.visible = false
+	is_local_paused = false
+	if pause_layer != null:
+		pause_layer.visible = false
+	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 
 @rpc("authority", "call_local", "reliable")
 func _sync_round_timer(remaining_msec: int) -> void:
@@ -854,6 +969,10 @@ func _round_finished(winner: int, points: int, reason: String) -> void:
 		status_label.text = "RUNDE BEENDET // %s GEWINNT (%d)" % [_actor_name(winner), points]
 	timer_label.text = "DEATHMATCH     SCORE LIMIT" if reason == "score" else "DEATHMATCH     00:00"
 	menu_layer.visible = true
+	is_local_paused = false
+	if pause_layer != null:
+		pause_layer.visible = false
+	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 
 func _format_round_time(remaining_msec: int) -> String:
 	# Round up partial seconds so 00:00 is shown only once the clock truly expires.
