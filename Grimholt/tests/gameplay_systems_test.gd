@@ -34,10 +34,25 @@ func _run() -> void:
     if inventory.get_item_count("wood") != 4:
         _fail("Resource node did not award its configured yield.")
         return
+    if not inventory.add_item("healing_potion", 20):
+        _fail("Could not fill a stack to its configured limit.")
+        return
+    if inventory.add_item("healing_potion", 1):
+        _fail("Inventory accepted an item beyond its configured stack limit.")
+        return
+    if not inventory.add_item("herb", 2):
+        _fail("Could not add ingredients for the output-capacity test.")
+        return
+    if CraftingScript.craft("healing_potion", inventory, professions):
+        _fail("Crafting consumed ingredients despite a full output stack.")
+        return
+    if inventory.get_item_count("herb") != 2:
+        _fail("Failed crafting consumed ingredients when output capacity was unavailable.")
+        return
     if resource.harvest(inventory):
         _fail("Depleted resource node was harvested twice.")
         return
-    print("PASS: inventory, crafting costs, profession XP and one-time resource harvesting.")
+    print("PASS: inventory limits, atomic crafting, profession XP and one-time resource harvesting.")
     quit(0)
 
 func _fail(message: String) -> void:
