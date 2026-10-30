@@ -38,7 +38,8 @@ Grimholt ist ein polygonbasiertes Fantasy-Sandbox-RPG mit natürlichem Terrain, 
 - [x] Validierung gespeicherter Daten vor Übernahme in die laufende Session
 - [ ] Persistenz von Ressourcen-Zuständen und Weltveränderungen
 - [ ] Werkzeuge, Werkzeughaltbarkeit und Abbauzeiten
-- [ ] Ressourcen-Respawn, Spawnregeln und Persistenz
+- [x] Persistenz bereits geernteter Ressourcen im lokalen Spielstand
+- [ ] Ressourcen-Respawn und erweiterte Spawnregeln
 - [ ] Weitere Ressourcen: Stein, Lehm, Fasern, Fisch, Jagdbeute
 - [ ] Vollständige Sammelberufe und Spezialisierungen
 
