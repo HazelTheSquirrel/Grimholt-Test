@@ -14,7 +14,9 @@ var players: Dictionary = {}
 var bots: Dictionary = {}
 var scores: Dictionary = {}
 var deaths: Dictionary = {}
-var round_time := ROUND_SECONDS
+var round_time := float(ROUND_SECONDS)
+var round_end_time_msec := 0
+var next_timer_sync_msec := 0
 var round_active := false
 var hud_layer: CanvasLayer
 var menu_layer: CanvasLayer
@@ -61,14 +63,20 @@ func _configure_inputs() -> void:
 func _process(delta: float) -> void:
 	if multiplayer.is_server():
 		_process_reload_timers()
-	if multiplayer.is_server() and round_active:
-		round_time = maxf(0.0, round_time - delta)
-		bot_sync_timer += delta
-		if bot_sync_timer >= 0.05:
-			bot_sync_timer = 0.0
-			_sync_bot_states.rpc(_collect_bot_states())
-		if round_time <= 0.0:
-			_finish_round()
+	if round_active:
+		var now_msec := Time.get_ticks_msec()
+		var remaining_msec := maxi(0, round_end_time_msec - now_msec)
+		round_time = float(remaining_msec) / 1000.0
+		if multiplayer.is_server():
+			bot_sync_timer += delta
+			if bot_sync_timer >= 0.05:
+				bot_sync_timer = 0.0
+				_sync_bot_states.rpc(_collect_bot_states())
+			if now_msec >= next_timer_sync_msec:
+				_sync_round_timer.rpc(remaining_msec)
+				next_timer_sync_msec = now_msec + 1000
+			if remaining_msec == 0:
+				_finish_round()
 	_update_hud()
 	if hitmarker_timer > 0.0:
 		hitmarker_timer = maxf(0.0, hitmarker_timer - delta)
@@ -408,16 +416,25 @@ func _on_server_disconnected() -> void:
 	multiplayer.multiplayer_peer = null
 
 func _start_match() -> void:
-	round_active = true
-	round_time = ROUND_SECONDS
+	# Monotonic milliseconds keep the round at exactly 900 real seconds,
+	# independent of frame rate and floating-point delta accumulation.
 	# Host local starten; RPC nur für weitere Clients verwenden.
-	_match_started(round_time)
+	_match_started(ROUND_SECONDS * 1000)
 
 @rpc("authority", "call_local", "reliable")
-func _match_started(seconds: int) -> void:
+func _match_started(remaining_msec: int) -> void:
 	round_active = true
-	round_time = seconds
+	round_time = float(remaining_msec) / 1000.0
+	round_end_time_msec = Time.get_ticks_msec() + remaining_msec
+	next_timer_sync_msec = Time.get_ticks_msec() + 1000
 	menu_layer.visible = false
+
+@rpc("authority", "call_local", "reliable")
+func _sync_round_timer(remaining_msec: int) -> void:
+	if not round_active:
+		return
+	round_time = float(maxi(0, remaining_msec)) / 1000.0
+	round_end_time_msec = Time.get_ticks_msec() + maxi(0, remaining_msec)
 
 func _on_peer_connected(peer_id: int) -> void:
 	if not multiplayer.is_server():
@@ -429,7 +446,7 @@ func _on_peer_connected(peer_id: int) -> void:
 	for id in bots:
 		_spawn_bot_remote.rpc_id(peer_id, int(id), bots[id].global_position)
 	_sync_scores.rpc_id(peer_id, scores, deaths)
-	_match_started.rpc_id(peer_id, int(ceil(round_time)))
+	_match_started.rpc_id(peer_id, maxi(0, round_end_time_msec - Time.get_ticks_msec()))
 
 func _on_peer_disconnected(peer_id: int) -> void:
 	if players.has(peer_id):
@@ -770,21 +787,37 @@ func _finish_round() -> void:
 	round_active = false
 	var winner := -1
 	var best := -1
+	var tied := false
 	for id in scores:
-		if int(scores[id]) > best:
-			best = int(scores[id])
+		var points := int(scores[id])
+		if points > best:
+			best = points
 			winner = int(id)
-	_round_finished.rpc(winner, best)
+			tied = false
+		elif points == best:
+			tied = true
+	if tied:
+		winner = -1
+	_round_finished.rpc(winner, maxi(0, best))
 
 @rpc("authority", "call_local", "reliable")
 func _round_finished(winner: int, points: int) -> void:
-	status_label.text = "RUNDE BEENDET // %s GEWINNT (%d)" % [_actor_name(winner), points]
+	if winner < 0:
+		status_label.text = "RUNDE BEENDET // UNENTSCHIEDEN (%d PUNKTE)" % points
+	else:
+		status_label.text = "RUNDE BEENDET // %s GEWINNT (%d)" % [_actor_name(winner), points]
+	timer_label.text = "DEATHMATCH     00:00"
 	menu_layer.visible = true
+
+func _format_round_time(remaining_msec: int) -> String:
+	# Round up partial seconds so 00:00 is shown only once the clock truly expires.
+	var total_seconds := ceili(float(maxi(0, remaining_msec)) / 1000.0)
+	return "%02d:%02d" % [total_seconds / 60, total_seconds % 60]
 
 func _update_hud() -> void:
 	if hud_layer == null:
 		return
-	timer_label.text = "DEATHMATCH     %02d:%02d" % [int(round_time) / 60, int(round_time) % 60]
+	timer_label.text = "DEATHMATCH     " + _format_round_time(maxi(0, round_end_time_msec - Time.get_ticks_msec()))
 	var ranking: Array = []
 	for id in scores:
 		ranking.append([int(id), int(scores[id])])
