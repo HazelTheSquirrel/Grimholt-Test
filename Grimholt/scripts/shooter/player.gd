@@ -22,6 +22,7 @@ const DAMAGE_RANGE := 120.0
 var gravity: float = ProjectSettings.get_setting("physics/3d/default_gravity")
 var fire_cooldown := 0.0
 var network_timer := 0.0
+var jump_input_buffered := false
 var remote_move_input := Vector2.ZERO
 var remote_jump_requested := false
 var remote_crouch_requested := false
@@ -87,12 +88,15 @@ func _physics_process(delta: float) -> void:
 	if local_control:
 		input_vector = Input.get_vector("move_left", "move_right", "move_forward", "move_backward")
 		jump_requested = Input.is_action_just_pressed("jump")
+		if jump_requested:
+			jump_input_buffered = true
 		wants_crouch = Input.is_action_pressed("crouch")
 		if not server_control:
 			network_timer += delta
 			if network_timer >= 0.05 and multiplayer.multiplayer_peer != null:
 				network_timer = 0.0
-				get_parent()._submit_input.rpc_id(1, input_vector, jump_requested, wants_crouch, rotation.y, head.rotation.x)
+				get_parent()._submit_input.rpc_id(1, input_vector, jump_input_buffered, wants_crouch, rotation.y, head.rotation.x)
+				jump_input_buffered = false
 	else:
 		var input_is_fresh := Time.get_ticks_msec() - remote_input_received_msec <= 250
 		if input_is_fresh:
