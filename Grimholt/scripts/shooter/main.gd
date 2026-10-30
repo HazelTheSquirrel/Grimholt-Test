@@ -1,3 +1,5 @@
+extends Node3D
+
 # Grimholt arena shooter composition root.
 # Systems share one Node3D owner; this avoids cyclic script inheritance.
 
