@@ -59,6 +59,7 @@ func _run() -> void:
 
     var tree: GrimholtResourceNode = ResourceNodeScript.new()
     tree.configure("tree", "Eiche", "wood", 4)
+    root.add_child(tree)
     var trunk := tree.get_node("TreeTrunk") as MeshInstance3D
     if trunk == null or not is_equal_approx((trunk.mesh as CylinderMesh).height, 7.4):
         _fail("Tree trunk is not using the documented world scale.")
@@ -86,6 +87,11 @@ func _run() -> void:
         _fail("Unknown building piece was accepted.")
         return
 
+    await process_frame
+    building.free()
+    inventory.free()
+    full_inventory.free()
+    building_inventory.free()
     print("PASS: 1.70 m player scale, all crafting recipes, inventory validation, resource harvesting and building costs.")
     quit(0)
 
