@@ -75,9 +75,9 @@ func _build_visuals() -> void:
         var foliage := _textured_material(foliage_color, 0.07)
         if display_name == "Fichte":
             for tier_index in range(4):
-                var tier := ConeMesh.new()
+                var tier := CylinderMesh.new()
                 tier.bottom_radius = 2.5 - float(tier_index) * 0.38
-                tier.top_radius = 0.05
+                tier.top_radius = 0.0
                 tier.height = 2.8
                 _add_mesh(tier, "SpruceTier%d" % tier_index, Vector3(0, 4.8 + float(tier_index) * 1.15, 0), foliage)
         elif display_name == "Birke":
