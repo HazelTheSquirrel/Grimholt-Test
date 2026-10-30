@@ -2,58 +2,70 @@
 
 ## Leitbild
 
-Ein Voxel-Sandbox-RPG mit starkem Rollenspiel-Fokus: erkundbare Fantasy-Welt, glaubwürdige Orte und NPCs, Charakterentwicklung und freie Spielerentscheidungen. Singleplayer und private Multiplayer-Server sollen dieselbe Simulationslogik verwenden. Es gibt keine offiziellen zentralen Spielserver.
+Grimholt ist ein polygonbasiertes Fantasy-Sandbox-RPG mit natürlichem Terrain, modularen Gebäuden, sammelbaren Ressourcen, Berufen, Crafting, Erkundung und Rollenspiel. Kein Voxel- oder Blockspiel. Singleplayer und private Multiplayer-Server sollen dieselben Gameplay-Regeln verwenden; offizielle zentrale Spielserver sind nicht vorgesehen.
 
-## Phase 0 – Technischer Prototyp
+## Phase 0 – Technischer Welt-Prototyp
 
-- [x] Godot-Projekt und Startszene
-- [x] First-Person-Bewegung
-- [x] Seedbasierte Terrain-Grundlage
-- [x] Voxel-Chunks mit 16 × 64 × 16 Zellen
-- [x] Chunk-Streaming um den Spieler
-- [x] Sichtflächen-Meshes und Chunk-Kollisionen
-- [ ] Laufzeitprüfung in Godot 4.7.2 auf Windows
+- [x] Godot 4.7.2 Projekt und Hauptszene
+- [x] Wechsel auf Forward+ Renderer
+- [x] Polygonales prozedurales Höhen-Terrain mit Mesh-Kollision
+- [x] Third-Person-Spielergrundlage und Kamera
+- [ ] Hochwertiger Third-Person-Charakter mit Animationen
+- [ ] Terrain-Streaming, LOD und Profiling
+- [ ] Windows-Grafiktest auf Zielhardware
 
-## Phase 1 – Belastbare Sandbox-Basis
+## Phase 1 – Sammeln, Inventar und Berufe
 
-- [x] Blockabbau und Platzieren mit Raycast
-- [x] Chunk-Änderungen und Nachbar-Chunk-Updates
-- [x] Welt-Metadaten und persistente Chunk-Speicherung
-- [ ] Spawn-/Weltverwaltung und Fehlerbehandlung
-- [ ] Hintergrundjobs für Generierung und Mesh-Aufbau
-- [ ] Profiling und automatisierte Gameplay-Tests
+- [x] Datenbasierter Item-Katalog
+- [x] Inventar mit Stapeln, Materialprüfung und Verbrauch
+- [x] Interaktive Bäume, Erzadern und Kräuter
+- [x] Ressourcenernte mit konfigurierbaren Erträgen
+- [x] Grundsystem für Berufserfahrung und Level
+- [ ] Werkzeuge, Werkzeughaltbarkeit und Abbauzeiten
+- [ ] Ressourcen-Respawn, Spawnregeln und Persistenz
+- [ ] Weitere Ressourcen: Stein, Lehm, Fasern, Fisch, Jagdbeute
+- [ ] Vollständige Sammelberufe und Spezialisierungen
 
-## Phase 2 – Welt und Erkundung
+## Phase 2 – Crafting und Wirtschaft
 
-- [ ] Biome mit eigenständigen Höhen-, Klima- und Materialprofilen
-- [ ] Höhlen, Erzlager, Vegetation und natürliche Strukturen
-- [ ] Flüsse, Seen und Wasserlogik
-- [ ] Tageszeit, Wetter und Beleuchtung
-- [ ] Handgebaute Orte und prozedurale Ergänzungen
+- [x] Datengetriebene Rezeptdefinitionen
+- [x] Materialkosten und Ergebnisgegenstände
+- [x] Werkstatt-/Stationskennung in Rezeptdaten
+- [x] Erste Schmiede-, Schreinerei- und Alchemie-Rezepte
+- [ ] Interaktive Werkstätten und Crafting-Warteschlangen
+- [ ] Rezeptfreischaltungen, Qualitätsstufen und seltene Rezepte
+- [ ] Schmiedekunst, Lederverarbeitung, Schneiderei, Kochen und weitere Berufe
+- [ ] Händler, Marktplätze, Währung und Spielerhandel
 
-## Phase 3 – Charakter und Sandbox-Spielschleife
+## Phase 3 – Bauen und Grundstücke
 
-- [ ] Charaktererstellung und Third-Person-Kamera
-- [ ] Inventar, Ausrüstung und Gegenstandsdefinitionen
-- [ ] Sammeln, Werkzeuge, Abbaugeschwindigkeit und Crafting
-- [ ] Gesundheit, Ausdauer, Attribute und Fähigkeiten
-- [ ] Kampf, Trefferlogik und Loot
+- [x] Datenbasierte Bauteildefinitionen
+- [x] Fundament-, Wand- und Dach-Prototyp
+- [x] Materialkosten beim Platzieren
+- [ ] Snap-Punkte, Raster- und Bauteilverbindungen
+- [ ] Türen, Fenster, Treppen, Dächer und modulare Sets
+- [ ] Grundstücke, Baurechte, Schutz und Berechtigungen
+- [ ] Gebäude-Persistenz und gemeinschaftliche Siedlungen
+- [ ] Gildenhäuser, Werkstätten und öffentliche Gebäude
 
-## Phase 4 – RPG und Rollenspiel
+## Phase 4 – RPG und lebendige Welt
 
-- [ ] Interaktionssystem und Dialogeditor-Daten
-- [ ] NPCs mit Tagesabläufen, Bedürfnissen und Reaktionen
-- [ ] Questketten, Fraktionen, Ruf und Konsequenzen
-- [ ] Händler, Berufe, Wirtschaft und Spielerhäuser
-- [ ] Emotes, Charakterprofile und Rollenspiel-Chat
+- [ ] Charaktererstellung, Attribute und Ausrüstung
+- [ ] Kampf, Waffen, Magie, Trefferreaktionen und Gegner-KI
+- [ ] Biome, Höhlen, Dungeons und handgebaute Orte
+- [ ] NPCs, Dialoge, Tagesabläufe und Fraktionen
+- [ ] Quests, Ruf, Konsequenzen und Rollenspielwerkzeuge
+- [ ] Wetter, Tag-Nacht-Wechsel und Umgebungs-Audio
+- [ ] Jagd, Kochen, Alchemie und Überlebenssysteme
 
 ## Phase 5 – Private Multiplayer-Server
 
+- [ ] Gemeinsame serverautoritative Simulationslogik
 - [ ] Dedizierter Headless-Server
-- [ ] Serverautorität für Bewegung, Inventar und Weltänderungen
+- [ ] Synchronisierung von Charakteren, Ressourcen und Gebäuden
 - [ ] Private Serverkonfiguration, Passwort und Whitelist
-- [ ] Persistente Charaktere und Welten
-- [ ] Administration, Moderation und Backups
+- [ ] Persistente Charaktere, Inventare, Berufe und Welten
+- [ ] Administration, Moderation, Logs und Backups
 - [ ] Verbindungsabbrüche, Wiederbeitritt und Versionsprüfung
 
 ## Phase 6 – Veröffentlichung
@@ -61,14 +73,14 @@ Ein Voxel-Sandbox-RPG mit starkem Rollenspiel-Fokus: erkundbare Fantasy-Welt, gl
 - [ ] Hauptmenü und Welt-/Serverauswahl
 - [ ] Windows-Export und Installer
 - [ ] Grafik-, Audio-, Eingabe- und Barrierefreiheitseinstellungen
-- [ ] Update- und Fehlerberichtssystem
+- [ ] Performance- und Speichertests auf Zielhardware
 - [ ] Dokumentation für private Serverbetreiber
 
 ## Architekturregeln
 
-1. Keine Node-Instanz pro Voxel.
-2. Weltzustand ist Datenbestand; Mesh und Kollision sind daraus abgeleitete Darstellung.
-3. Seed und Generatorversion müssen reproduzierbare Welten ermöglichen.
-4. Client-Eingaben sind im Multiplayer niemals autoritativ.
-5. Singleplayer nutzt dieselben Spielregeln wie ein lokaler Serverprozess.
-6. Neue Systeme erhalten klare Datenverträge und werden isoliert testbar gehalten.
+1. Polygonale 3D-Welt; keine Voxel als Weltgrundlage.
+2. Ressourcen, Items, Rezepte, Berufe und Bauteile werden datengetrieben definiert.
+3. Inventar-, Ressourcen-, Crafting- und Bauänderungen müssen später serverautorisiert sein.
+4. Weltzustand und persistente Daten sind von der visuellen Darstellung getrennt.
+5. Große Gebiete benötigen Streaming, LOD, Instancing und regelmäßiges Profiling.
+6. Singleplayer und Multiplayer verwenden dieselben Gameplay-Regeln.

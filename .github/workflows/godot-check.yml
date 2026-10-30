@@ -27,5 +27,5 @@ jobs:
       - name: Headless startup smoke test
         run: godot --headless --path . --quit-after 10
 
-      - name: World persistence regression test
-        run: godot --headless --path . --script res://tests/world_persistence_test.gd
+      - name: Gameplay systems regression test
+        run: godot --headless --path . --script res://tests/gameplay_systems_test.gd

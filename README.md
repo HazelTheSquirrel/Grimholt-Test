@@ -1,40 +1,73 @@
 # Grimholt
 
-**Grimholt** ist ein Godot-4-Projekt für ein Voxel-Sandbox-RPG mit Rollenspiel-Fokus. Ziel sind Singleplayer-Welten und private Multiplayer-Server ohne zentrale offizielle Spielserver.
+**Grimholt** ist ein Fantasy-Sandbox-RPG in Godot 4.7.2. Die technische und visuelle Grundlage ist eine polygonbasierte 3D-Welt mit natürlichem Terrain, modularen Gebäuden und sammelbaren Weltressourcen – ausdrücklich kein Voxel- oder Blockspiel.
 
-## Aktueller technischer Stand
+Das langfristige Ziel sind eine lebendige Fantasywelt, umfangreiche Berufe und Handwerksketten, Spielerbau, Erkundung und Rollenspiel. Das Spiel soll sowohl im Singleplayer als auch auf privat betriebenen Multiplayer-Servern funktionieren. Es sind keine offiziellen zentralen Spielserver vorgesehen.
 
-- Seedbasierte prozedurale Voxel-Terrain-Generierung
-- 16 × 64 × 16 Voxel pro Chunk
-- Chunk-Nachbarschaftsladen rund um den Spieler und Entfernen entfernter Chunks
-- Mesh-Erzeugung nur für sichtbare Blockflächen und separate Chunk-Kollisionen
-- First-Person-Bewegung mit Laufen, Sprinten und Springen
-- Blockabbau per Linksklick und Erdplatzierung per Rechtsklick (Raycast, 6 Meter Reichweite)
-- Persistente Speicherung geänderter Blöcke pro Chunk unter `user://worlds/default/chunks/`
-- Welt-Metadaten mit Seed und Speicherformatversion unter `user://worlds/default/world.json`
-- Geänderte Chunks werden beim Laden wiederhergestellt und beim Verlassen der Welt gespeichert
+## Aktueller Prototyp
+
+Der aktuelle Repository-Stand ist ein technischer Gameplay-Vertikalschnitt und noch kein fertiges Spiel:
+
+- Godot 4.7.2 mit Forward+ Renderer.
+- Prozedural erzeugtes polygonales Höhen-Terrain mit Mesh-Kollision.
+- Third-Person-Spielersteuerung und Schulterkamera.
+- Interaktionsbasierte Ressourcengewinnung über natürliche Weltobjekte:
+  - Bäume liefern Rundholz.
+  - Eisenadern liefern Eisenerz.
+  - Kräuter liefern Alchemiezutaten.
+- Datenbasierter Item-Katalog und Inventar.
+- Erste Crafting-Rezepte für Eisenbarren, Holzplanken und Heiltränke.
+- Berufserfahrung und einfache Levelberechnung für Schmiedekunst, Schreinerei und Alchemie.
+- Modulares Platzieren von Holzfundamenten, Wänden und Dachsegmenten im Baumodus.
+- Automatisierte Headless-Prüfungen für Projektimport, Start, Inventar, Crafting, Berufserfahrung und Ressourcenernte.
+
+Die aktuell erzeugten Ressourcen und Bauteile sind Platzhalter-Prototypen. Hochwertige Charaktermodelle, Animationen, finale Umgebungsassets, vollständige Gebäude-Snap-Verbindungen und eine ausgearbeitete Benutzeroberfläche sind noch nicht enthalten.
 
 ## Starten
 
-1. Godot 4.7.2 öffnen.
-2. Im Projektmanager **Importieren** wählen und `project.godot` auswählen.
-3. Projekt öffnen und mit F6/F5 starten.
+1. Godot 4.7.2 installieren und starten.
+2. Im Projektmanager **Importieren** wählen.
+3. Die Datei project.godot aus diesem Repository auswählen.
+4. Projekt öffnen und mit F6/F5 starten.
 
 ## Steuerung
 
-| Taste | Funktion |
+| Eingabe | Funktion |
 |---|---|
 | W A S D | Bewegen |
-| Maus | Umsehen |
-| Leertaste | Springen |
+| Maus | Kamera drehen |
 | Shift | Sprinten |
+| Leertaste | Springen |
+| E | Anvisierte Ressource ernten |
+| C | Holzplanken herstellen (benötigt Rundholz) |
+| B | Baumodus ein-/ausschalten |
+| 1 | Holzfundament auswählen |
+| 2 | Holzwand auswählen |
+| 3 | Dachsegment auswählen |
+| Linksklick im Baumodus | Bauteil platzieren |
 | ESC | Maus freigeben |
-| Linksklick | Block abbauen |
-| Rechtsklick | Erdblock platzieren |
 
-## Speicherung
+## Spielsysteme und Designrichtung
 
-Weltänderungen werden lokal im Godot-Benutzerverzeichnis gespeichert. Der aktuelle Prototyp verwendet eine feste Welt-ID (`default`) und speichert nur veränderte Voxel, nicht die vollständigen Chunk-Daten. Die Welt wird beim Beenden zusätzlich gesichert. Es gibt noch keine Oberfläche zum Erstellen, Umbenennen oder Löschen mehrerer Welten.
+### Welt und Ressourcen
+
+Die Spielwelt besteht aus polygonalem Terrain, natürlichen Landschaftsformen und eigenständigen 3D-Objekten. Ressourcen sind Vorkommen in der Welt, keine abbaubaren Würfel. Geplant sind unter anderem Erzadern, Baumarten, Kräuter, Pilze, Jagdbeute, Stein, Lehm und seltene magische Materialien.
+
+Ressourcen sollen über passende Werkzeuge und Sammelberufe gewonnen werden. Vorkommen, Respawn-Regeln, Werkzeugstufen und Ressourcenknoten werden serverseitig verwaltet werden, sobald Multiplayer implementiert wird.
+
+### Berufe und Crafting
+
+Die Datenstruktur ist auf voneinander abhängige Produktionsketten ausgelegt. Vorgesehene Sammelberufe sind Bergbau, Holzfällerei, Jagd, Fischerei und Kräuterkunde. Herstellungsberufe umfassen unter anderem Schmiedekunst, Schreinerei, Lederverarbeitung, Schneiderei, Alchemie und Kochen.
+
+Der Prototyp enthält bereits ein kleines Rezept- und Berufssystem. Werkstattanforderungen, Rezeptfreischaltungen, Qualitätsstufen, Spezialisierungen und Wirtschaft sind Ausbauziele.
+
+### Bausystem
+
+Gebäude sollen aus modularen polygonalen Bauteilen entstehen, nicht aus Voxelblöcken. Vorgesehen sind Fundamente, Böden, Wände, Fenster, Türen, Dächer, Treppen, Zäune, Werkstätten und Lager. Das aktuelle Baumodus-Grundgerüst platziert einfache Holzfundamente, Wände und Dächer und zieht die Materialkosten aus dem Inventar ab.
+
+### Multiplayer und private Server
+
+Die Architektur soll langfristig serverautoritative Singleplayer- und Multiplayer-Simulation ermöglichen. Inventar, Ressourcen, Crafting, Bauplatzierung, Charakterdaten und Weltzustand dürfen im Multiplayer nicht vom Client allein bestimmt werden. Dedicated Server, private Serverkonfiguration, Persistenz, Administration und Backups sind noch nicht implementiert.
 
 ## Projektstruktur
 
@@ -42,21 +75,30 @@ Weltänderungen werden lokal im Godot-Benutzerverzeichnis gespeichert. Der aktue
     scenes/main.tscn
     scripts/main.gd
     scripts/player_controller.gd
-    scripts/core/world_config.gd
-    scripts/world/block_registry.gd
-    scripts/world/voxel_chunk.gd
-    scripts/world/world_generator.gd
+    scripts/data/item_catalog.gd
+    scripts/systems/inventory.gd
+    scripts/systems/profession_system.gd
+    scripts/systems/crafting_system.gd
+    scripts/systems/building_system.gd
+    scripts/world/terrain_world.gd
+    scripts/world/resource_node.gd
+    tests/gameplay_systems_test.gd
     docs/ROADMAP.md
     .github/workflows/godot-check.yml
 
-## Architektur und Grenzen
+## Technische Leitlinien
 
-Voxel-Daten sind der maßgebliche Weltzustand; Meshes und Kollisionen werden daraus neu aufgebaut. Es gibt keine Node-Instanz pro Block. Chunk-Generierung, Mesh-Aufbau und Speichern laufen derzeit synchron auf dem Hauptthread. Vor großen Welten sind Hintergrundjobs, robustere Save-Transaktionen und Profiling erforderlich.
+1. Polygonbasierte Weltgeometrie; keine Voxel- oder Blockwelt als Spielgrundlage.
+2. Datengetriebene Definitionen für Items, Ressourcen, Rezepte, Berufe und Bauteile.
+3. Weltobjekte und Ressourcen haben persistente IDs und serverseitig kontrollierte Zustände (für die spätere Multiplayer-Ausbaustufe).
+4. Terrain, Vegetation, Gebäude und Props benötigen LOD, Instancing, Streaming und Profiling, bevor die Welt groß wird.
+5. Singleplayer und Multiplayer sollen dieselben Gameplay-Regeln verwenden.
+6. Keine offiziellen zentralen Spielserver; private Server bleiben das Ziel.
 
-## Noch nicht implementiert
+## Noch nicht fertig
 
-Biome, Höhlen, Vegetation, Wasser, Inventar, Crafting, Charakterentwicklung, NPCs, Dialoge, Quests, mehrere Welten, Multiplayer, Serveradministration und Windows-Installer sind noch nicht enthalten. Diese Funktionen werden nicht als bereits fertig dargestellt.
+Es fehlen unter anderem finale Art-Assets, Charaktererstellung, ausgereifte Animationen, Werkzeugsystem und Abbauzeiten, Respawn und Persistenz von Ressourcen, vollständige Berufe und Rezeptfreischaltungen, Händler und Spielerwirtschaft, Gebäude-Snap-System, Baurechte und Grundstücke, NPCs, Quests, Kampf, Speichern/Laden von Charakteren und Gebäuden, Multiplayer, Serveradministration sowie Windows-Installer.
 
 ## Validierung
 
-GitHub Actions prüft das Projekt mit Godot im Headless-Modus auf Import-/Parserfehler und startet anschließend einen kurzen Headless-Smoke-Test. Ein erfolgreicher CI-Lauf ersetzt keinen manuellen Spieltest mit Grafik, Eingabe und Kollisionen auf Windows.
+GitHub Actions importiert und parst das Projekt mit Godot 4.7.2, führt einen Headless-Starttest aus und testet die zentralen Inventar-, Crafting-, Berufs- und Ressourcenernte-Funktionen. Diese automatisierten Prüfungen ersetzen keinen manuellen visuellen Spieltest unter Windows.
