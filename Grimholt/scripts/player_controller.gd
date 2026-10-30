@@ -8,6 +8,10 @@ const SPRINT_SPEED := 7.2
 const JUMP_VELOCITY := 5.0
 const MOUSE_SENSITIVITY := 0.002
 const INTERACTION_DISTANCE := 5.0
+const CAMERA_MIN_DISTANCE := 0.08
+const CAMERA_MAX_DISTANCE := 8.5
+const CAMERA_ZOOM_STEP := 0.7
+const FIRST_PERSON_THRESHOLD := 0.22
 
 @onready var camera_pivot: Node3D = $CameraPivot
 @onready var camera: Camera3D = $CameraPivot/Camera3D
@@ -22,6 +26,8 @@ var build_mode := false
 var interaction_feedback := ""
 var feedback_timer := 0.0
 var gravity: float = ProjectSettings.get_setting("physics/3d/default_gravity")
+var camera_distance := 5.2
+var effective_camera_distance := 5.2
 
 func _ready() -> void:
     _configure_input_actions()
@@ -30,6 +36,7 @@ func _ready() -> void:
     floor_snap_length = 0.35
     floor_max_angle = deg_to_rad(50.0)
     camera_pivot.rotation.x = deg_to_rad(-8.0)
+    _apply_camera_distance()
     Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 
 func _configure_body_visual() -> void:
@@ -74,7 +81,7 @@ func _add_key_action(action_name: String, key: Key) -> void:
 func _unhandled_input(event: InputEvent) -> void:
     if event is InputEventMouseMotion and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
         camera_pivot.rotate_y(-event.relative.x * MOUSE_SENSITIVITY)
-        camera_pivot.rotation.x = clampf(camera_pivot.rotation.x - event.relative.y * MOUSE_SENSITIVITY, deg_to_rad(-45), deg_to_rad(30))
+        camera_pivot.rotation.x = clampf(camera_pivot.rotation.x - event.relative.y * MOUSE_SENSITIVITY, deg_to_rad(-80), deg_to_rad(65))
     elif event is InputEventKey and event.pressed and not event.echo:
         if event.keycode == KEY_ESCAPE:
             Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
@@ -96,7 +103,13 @@ func _unhandled_input(event: InputEvent) -> void:
         elif event.keycode == KEY_F9:
             get_parent().call("_load_game")
     elif event is InputEventMouseButton and event.pressed:
-        if Input.mouse_mode == Input.MOUSE_MODE_VISIBLE:
+        if event.button_index == MOUSE_BUTTON_WHEEL_UP:
+            camera_distance = maxf(CAMERA_MIN_DISTANCE, camera_distance - CAMERA_ZOOM_STEP)
+            _apply_camera_distance()
+        elif event.button_index == MOUSE_BUTTON_WHEEL_DOWN:
+            camera_distance = minf(CAMERA_MAX_DISTANCE, camera_distance + CAMERA_ZOOM_STEP)
+            _apply_camera_distance()
+        elif Input.mouse_mode == Input.MOUSE_MODE_VISIBLE:
             Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
         elif event.button_index == MOUSE_BUTTON_LEFT and build_mode:
             _place_building_piece()
@@ -119,11 +132,32 @@ func _physics_process(delta: float) -> void:
         velocity.x = move_toward(velocity.x, 0.0, WALK_SPEED * 5.0 * delta)
         velocity.z = move_toward(velocity.z, 0.0, WALK_SPEED * 5.0 * delta)
     move_and_slide()
+    _apply_camera_distance()
     if feedback_timer > 0.0:
         feedback_timer = maxf(0.0, feedback_timer - delta)
         if feedback_timer == 0.0:
             interaction_feedback = ""
     _update_hud()
+
+
+func _apply_camera_distance() -> void:
+    if camera == null or camera_pivot == null:
+        return
+    var safe_distance := camera_distance
+    if camera_distance > CAMERA_MIN_DISTANCE + 0.01 and is_inside_tree():
+        var pivot_position := camera_pivot.global_position
+        var camera_direction := camera_pivot.global_transform.basis.z.normalized()
+        var desired_position := pivot_position + camera_direction * camera_distance
+        var query := PhysicsRayQueryParameters3D.create(pivot_position, desired_position)
+        query.exclude = [get_rid()]
+        query.collision_mask = 1
+        var obstruction := get_world_3d().direct_space_state.intersect_ray(query)
+        if not obstruction.is_empty():
+            safe_distance = maxf(CAMERA_MIN_DISTANCE, pivot_position.distance_to(Vector3(obstruction.position)) - 0.18)
+    effective_camera_distance = safe_distance
+    var zoom_ratio := inverse_lerp(CAMERA_MIN_DISTANCE, CAMERA_MAX_DISTANCE, camera_distance)
+    camera.position = Vector3(0.0, lerpf(0.12, 0.35, zoom_ratio), safe_distance)
+    body_visual.visible = camera_distance > FIRST_PERSON_THRESHOLD
 
 func _interact() -> bool:
     var hit := _raycast()
@@ -192,4 +226,4 @@ func _update_hud() -> void:
                 feedback_text = "E: %s ernten" % String(target.get("display_name"))
         if feedback_text.is_empty():
             feedback_text = "Richte das Fadenkreuz auf einen Baum, Erz oder eine Pflanze."
-    status_label.text = "GRIMHOLT – FANTASY SANDBOX\nWASD: Bewegen | SHIFT: Sprint | LEERTASTE: Springen | Maus: Kamera | ESC: Maus lösen\n%s\n%s\n%s" % [mode_text, feedback_text, inventory.get_summary()]
+    status_label.text = "GRIMHOLT – FANTASY SANDBOX\nWASD: Bewegen | SHIFT: Sprint | LEERTASTE: Springen | Maus: Umschauen | Mausrad: Ego-/Third-Person-Zoom | ESC: Maus lösen\n%s\n%s\n%s" % [mode_text, feedback_text, inventory.get_summary()]
