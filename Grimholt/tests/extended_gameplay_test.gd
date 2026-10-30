@@ -31,7 +31,7 @@ func _run() -> void:
     root.add_child(live_scene)
     var terrain_at_spawn := live_scene.get_node("TerrainWorld") as GrimholtTerrainWorld
     var player_at_spawn := live_scene.get_node("Player") as GrimholtPlayer
-    if absf(player_at_spawn.global_position.y - terrain_at_spawn.height_at(0.0, 0.0) - 1.25) > 0.01:
+    if absf(player_at_spawn.global_position.y - terrain_at_spawn.height_at(0.0, 0.0) - 0.20) > 0.01:
         _fail("Player did not start at the configured safe terrain spawn height.")
         return
     var initial_spawn_chunk: Node3D = terrain_at_spawn.active_chunks.get(Vector2i.ZERO)
