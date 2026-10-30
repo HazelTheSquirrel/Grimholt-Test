@@ -15,7 +15,7 @@ Grimholt ist ein eigenständiger, reiner Multiplayer-3D-Arena-Shooter. Es gibt k
 - Militärisch inspiriertes, eigenständiges HUD: Matchzeit, Top-Fragger, Lebenspunkte, Munition, Killfeed und taktische Minimap.
 - Vollständige K/D-Scoreboard-Ansicht per Tab, Trefferbestätigung und automatisches Gewehrfeuer bei gehaltenem Linksklick.
 - Lokale Waffen- und Nachlade-Rückmeldung; finale Audioaufnahmen und räumlicher Mix stehen noch aus.
-- Server prüft eingehende Bewegungsupdates mit fester Paket-Ratenbegrenzung, Plausibilitätsgrenzen und Geschwindigkeits-Toleranz. Das ist Härtung, aber noch keine vollständig serverautoritativ simulierte Bewegung.
+- Serverseitige Bewegungsphysik: Clients senden nur validierte Eingaben (20 Hz); der Server simuliert Bewegung und verteilt Positions-Snapshots. Direkte clientseitige Positionsmeldungen werden nicht mehr akzeptiert.
 
 ## Starten
 
