@@ -1,54 +1,57 @@
-# Godot-Editor: Szenenstruktur und Bearbeitung
+# Godot-Editor: Szenenstruktur und Spielersteuerung
 
-Das Godot-Projekt liegt unter `Grimholt/project.godot`. Importiere genau diese Datei – nicht den Repository-Ordner und nicht einen eventuell darüberliegenden Download-Ordner.
+Das Godot-Projekt liegt unter `Grimholt/project.godot`. Importiere genau diese Datei.
 
-## Hauptszene öffnen
+## Maßstab und Spieler
 
-1. Im Godot-Projektmanager das Projekt `Grimholt` öffnen.
-2. Im Dateisystem zu `res://scenes/main.tscn` wechseln.
-3. `main.tscn` doppelklicken.
-4. Oben links im Szenen-Dock den Szenenbaum aufklappen.
+Grimholt verwendet verbindlich **1 Godot-Einheit = 1 Meter**. Die Spieler-Kapsel ist exakt **1,75 m** hoch und **0,60 m** breit (Radius 0,30 m). Ihr Ursprung liegt am Boden; die Kollisionsform sitzt mittig bei Y = 0,875 m. Die Kamera sitzt auf 1,58 m Augen-/Kopfhöhe.
 
-Die Hauptszene enthält jetzt ausdrücklich angelegte Nodes. Sie werden nicht erst vollständig zur Laufzeit per Skript erzeugt.
+## Szenenstruktur
+
+```text
+Player (CharacterBody3D)
+├── CollisionShape3D          # CapsuleShape3D: 1,75 m
+├── BodyVisual                # getrennte Darstellung
+├── CameraPivot               # Maussteuerung / Blickrichtung
+│   └── Camera3D              # Third-Person, per Mausrad bis Ego
+├── InteractionComponent      # Raycast, Fokus und Interaktionsaufruf
+├── Inventory
+└── HUD
+    ├── StatusLabel
+    └── Crosshair
+```
+
+## Bewegung
+
+- WASD: Bewegung relativ zur Kamera
+- Shift: Sprint (4,2 m/s gehen; 6,2 m/s sprinten)
+- Leertaste: Springen
+- Maus: Kamera drehen
+- Mausrad: Kameraabstand stufenweise zwischen Ego- und Third-Person
+- ESC: Maus freigeben; Mausklick: wieder einfangen
+
+Die horizontale Geschwindigkeit wird über Beschleunigungs- und Bremswerte aufgebaut, nicht direkt auf die Zielgeschwindigkeit gesetzt. Am Boden gelten 14 m/s² Beschleunigung und 18 m/s² Verzögerung; in der Luft ist die Steuerung auf 4 m/s² reduziert. Die Gravitation kommt aus Godots Projekteinstellung.
+
+## Interaktionsarchitektur
+
+`GrimholtInteractionComponent` ist eine eigenständige Komponente am Spieler. Sie fragt vom Kamerazentrum aus bis zu 5 m nach einem Physik-Treffer und akzeptiert Ziele mit einer Methode `interact(actor)`. Optional liefert ein Ziel `get_interaction_prompt()` für die HUD-Anzeige.
+
+- Ressourcenobjekte implementieren `interact(actor)` und leiten die Aktion an ihr Inventar-/Harvest-System weiter.
+- Türen können `GrimholtInteractableDoor` verwenden. Das Script schaltet den Öffnungswinkel weich um.
+- Weitere RP-Objekte (Türen, Truhen, Schalter, Gesprächspartner) implementieren denselben Vertrag, ohne den Player-Controller zu ändern.
+
+Die Interaktion verändert Gameplay-Zustand über das Zielobjekt. Die Komponente kümmert sich nur um Fokus, Reichweite und Aufruf. Für späteren Multiplayer muss die eigentliche Zustandsänderung serverseitig autorisiert werden.
+
+## Welt und weitere Nodes
 
 ```text
 Grimholt
 ├── WorldEnvironment
 ├── Sun
 ├── TerrainWorld
-│   └── GeneratedTerrain (vom Terrain-Tool erzeugt)
-│       ├── TerrainSurface
-│       └── TerrainCollision
-├── PlayerSpawn (Marker3D – editierbarer Startpunkt)
+├── PlayerSpawn
 ├── PlayerBuildings
 └── Player
-    ├── CollisionShape3D
-    ├── BodyVisual
-    ├── CameraPivot
-    │   └── Camera3D
-    ├── Inventory
-    └── HUD
-        ├── StatusLabel
-        └── Crosshair
 ```
 
-## Was ist direkt bearbeitbar?
-
-- **TerrainWorld:** Terrain-Generator. Im Inspector lassen sich Ausdehnung, Zellgröße und Seed einstellen. Das generierte Terrain wird im Editor angezeigt.
-- **PlayerSpawn:** Marker3D für die horizontale Startposition. Die Höhe wird beim Start anhand der tatsächlich generierten Terrain-Funktion berechnet.
-- **Player:** Spieler-Node, Kollisionsform, sichtbarer Platzhalterkörper und Kamera sind einzelne Szenen-Nodes. Alte Spielstände mit einer Position unter dem Gelände werden beim Laden auf den Startpunkt zurückgesetzt.
-- **PlayerBuildings:** Container für platzierte Gebäudeteile.
-- **WorldEnvironment / Sun:** Himmel, Umgebungslicht und Sonnenlicht.
-- **HUD:** Statusanzeige und Fadenkreuz.
-
-Das Terrain-Mesh wird aus den Generator-Einstellungen erzeugt. Die generierte Geometrie ist kein handmodelliertes Einzelmesh; passe dafür die Export-Eigenschaften von `TerrainWorld` an.
-
-## Farb-Legende des aktuellen Prototyps
-
-- Grün: Grasland und Vegetation
-- Olivgrün: tiefere, moosige Geländeabschnitte
-- Grau: steilere/felsigere Terrainbereiche und Eisenadern
-- Braun: Baumstämme und Holzbauteile
-- Violett mit goldener Mitte: sammelbare Heilkräuter
-
-Die Farben sind vorläufige Gameplay-Farben, damit Ressourcen und Geländearten im frühen Prototyp gut unterscheidbar sind. Sie sind noch keine finalen Art-Assets.
+Terrain, Weltzustand und Darstellung bleiben getrennt. Der Third-Person-Charakter ist weiterhin ein Platzhalter-Mesh; Animationen und ein finaler Charakter-Controller sind noch nicht vorhanden.

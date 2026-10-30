@@ -12,9 +12,9 @@ Grimholt ist ein polygonbasiertes Fantasy-Sandbox-RPG mit natürlichem Terrain, 
 - [x] Erste lesbare Farbgebung für Grasland, Moos, Fels und sammelbare Ressourcen
 - [x] Wechsel auf Forward+ Renderer
 - [x] Polygonales prozedurales Höhen-Terrain mit Mesh-Kollision
-- [x] Third-Person-Spielergrundlage und Kamera
+- [x] Third-Person-Spielergrundlage und Kamera\n- [x] Spieler-Kapsel exakt 1,75 m bei 1 Einheit = 1 m\n- [x] Beschleunigungs-/Bremsmodell mit reduzierter Luftkontrolle\n- [x] Komponentenbasiertes Raycast-Interaktionssystem mit Fokus-Prompt und generischem Interaktionsvertrag\n- [x] Beispielimplementierung für interaktive Türen
 - [ ] Hochwertiger Third-Person-Charakter mit Animationen
-- [x] Verbindlicher Weltmaßstab: 1 Einheit = 1 Meter; Spieler-Kapsel 1,70 m
+- [x] Verbindlicher Weltmaßstab: 1 Einheit = 1 Meter; Spieler-Kapsel 1,75 m
 - [x] Prozedurale Terrain-Oberflächentextur und lesbare Gelände-Farbzonen
 - [x] Editor-sichtbare Himmels-/Umgebungsressource
 - [x] Instanzierte Grasbüschel und verstreute Steine als Landschafts-Füllassets

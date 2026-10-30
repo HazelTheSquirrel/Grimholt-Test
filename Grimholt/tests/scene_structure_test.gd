@@ -21,6 +21,7 @@ func _run() -> void:
         "Player/CameraPivot",
         "Player/CameraPivot/Camera3D",
         "Player/Inventory",
+        "Player/InteractionComponent",
         "Player/HUD",
         "Player/HUD/StatusLabel",
         "Player/HUD/Crosshair"
@@ -30,6 +31,20 @@ func _run() -> void:
             _fail("Editable scene node is missing: " + node_path)
             scene.free()
             return
+    var player := scene.get_node("Player") as CharacterBody3D
+    var capsule := player.get_node("CollisionShape3D").shape as CapsuleShape3D
+    if not is_equal_approx(capsule.height, 1.75):
+        _fail("Player capsule must be exactly 1.75 metres tall.")
+        scene.free()
+        return
+    if not ResourceLoader.exists("res://scripts/components/interaction_component.gd"):
+        _fail("Modular interaction component script is missing.")
+        scene.free()
+        return
+    if not ResourceLoader.exists("res://scripts/world/interactable_door.gd"):
+        _fail("Reusable door interactable script is missing.")
+        scene.free()
+        return
     if not ResourceLoader.exists("res://scripts/world/terrain_world.gd"):
         _fail("Terrain generator script is missing.")
         scene.free()

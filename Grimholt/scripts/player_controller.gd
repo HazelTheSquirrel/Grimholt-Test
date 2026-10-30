@@ -1,11 +1,14 @@
 extends CharacterBody3D
 class_name GrimholtPlayer
 
-const BODY_HEIGHT := 1.70
+const BODY_HEIGHT := 1.75
 const BODY_RADIUS := 0.30
-const WALK_SPEED := 4.8
-const SPRINT_SPEED := 7.2
-const JUMP_VELOCITY := 5.0
+const WALK_SPEED := 4.2
+const SPRINT_SPEED := 6.2
+const GROUND_ACCELERATION := 14.0
+const GROUND_DECELERATION := 18.0
+const AIR_ACCELERATION := 4.0
+const JUMP_VELOCITY := 4.5
 const MOUSE_SENSITIVITY := 0.002
 const INTERACTION_DISTANCE := 5.0
 const CAMERA_MIN_DISTANCE := 0.08
@@ -18,6 +21,7 @@ const FIRST_PERSON_THRESHOLD := 0.22
 @onready var body_visual: MeshInstance3D = $BodyVisual
 @onready var inventory: GrimholtInventory = $Inventory
 @onready var status_label: Label = $HUD/StatusLabel
+@onready var interaction_component: GrimholtInteractionComponent = $InteractionComponent
 
 var professions := GrimholtProfessionSystem.new()
 var building_system: GrimholtBuildingSystem
@@ -36,6 +40,7 @@ func _ready() -> void:
     floor_snap_length = 0.35
     floor_max_angle = deg_to_rad(50.0)
     camera_pivot.rotation.x = deg_to_rad(-8.0)
+    interaction_component.setup(self, camera)
     _apply_camera_distance()
     Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 
@@ -67,6 +72,9 @@ func _configure_input_actions() -> void:
     _add_key_action("move_backward", KEY_S)
     _add_key_action("move_left", KEY_A)
     _add_key_action("move_right", KEY_D)
+    _add_key_action("sprint", KEY_SHIFT)
+    _add_key_action("jump", KEY_SPACE)
+    _add_key_action("interact", KEY_E)
 
 func _add_key_action(action_name: String, key: Key) -> void:
     if not InputMap.has_action(action_name):
@@ -117,20 +125,22 @@ func _unhandled_input(event: InputEvent) -> void:
 func _physics_process(delta: float) -> void:
     if not is_on_floor():
         velocity.y -= gravity * delta
-    elif Input.is_key_pressed(KEY_SPACE):
+    elif Input.is_action_just_pressed("jump"):
         velocity.y = JUMP_VELOCITY
+
     var input_vector := Input.get_vector("move_left", "move_right", "move_forward", "move_backward")
     var local_direction := Vector3(input_vector.x, 0.0, input_vector.y)
     var direction := local_direction.rotated(Vector3.UP, camera_pivot.global_rotation.y).normalized()
-    var speed := SPRINT_SPEED if Input.is_key_pressed(KEY_SHIFT) else WALK_SPEED
-    if direction.length() > 0.01:
-        velocity.x = direction.x * speed
-        velocity.z = direction.z * speed
+    var target_speed := SPRINT_SPEED if Input.is_action_pressed("sprint") else WALK_SPEED
+    var target_velocity := direction * target_speed
+    var acceleration := AIR_ACCELERATION if not is_on_floor() else (GROUND_ACCELERATION if direction.length_squared() > 0.001 else GROUND_DECELERATION)
+    velocity.x = move_toward(velocity.x, target_velocity.x, acceleration * delta)
+    velocity.z = move_toward(velocity.z, target_velocity.z, acceleration * delta)
+
+    if direction.length_squared() > 0.001:
         var target_yaw := atan2(-direction.x, -direction.z)
-        body_visual.rotation.y = lerp_angle(body_visual.rotation.y, target_yaw, delta * 9.0)
-    else:
-        velocity.x = move_toward(velocity.x, 0.0, WALK_SPEED * 5.0 * delta)
-        velocity.z = move_toward(velocity.z, 0.0, WALK_SPEED * 5.0 * delta)
+        body_visual.rotation.y = lerp_angle(body_visual.rotation.y, target_yaw, 1.0 - exp(-10.0 * delta))
+
     move_and_slide()
     _apply_camera_distance()
     if feedback_timer > 0.0:
@@ -138,7 +148,6 @@ func _physics_process(delta: float) -> void:
         if feedback_timer == 0.0:
             interaction_feedback = ""
     _update_hud()
-
 
 func _apply_camera_distance() -> void:
     if camera == null or camera_pivot == null:
@@ -160,19 +169,12 @@ func _apply_camera_distance() -> void:
     body_visual.visible = camera_distance > FIRST_PERSON_THRESHOLD
 
 func _interact() -> bool:
-    var hit := _raycast()
-    if hit.is_empty():
-        _set_feedback("Kein Sammelobjekt im Fadenkreuz – näher herangehen und direkt ansehen.")
-        return false
-    var target := hit.get("collider") as Object
-    if target == null or not target.has_method("harvest"):
-        _set_feedback("Das ist keine sammelbare Ressource.")
-        return false
-    var resource_name := String(target.get("display_name"))
-    if bool(target.call("harvest", inventory)):
-        _set_feedback("%s geerntet. %s" % [resource_name, inventory.get_summary()])
+    if interaction_component.interact():
+        var target := interaction_component.get_focused_target()
+        var prompt := String(target.call("get_interaction_prompt")) if is_instance_valid(target) and target.has_method("get_interaction_prompt") else "Interaktion ausgeführt."
+        _set_feedback(prompt)
         return true
-    _set_feedback("Ernte nicht möglich – möglicherweise ist dein Inventar voll.")
+    _set_feedback("Kein interaktives Objekt im Fadenkreuz.")
     return false
 
 func _set_feedback(message: String) -> void:
@@ -194,18 +196,11 @@ func _place_building_piece() -> void:
 
 func _raycast() -> Dictionary:
     var origin := camera.global_position
-    var camera_to_player := origin.distance_to(global_position)
-    var ray_length := camera_to_player + INTERACTION_DISTANCE + 0.5
-    var endpoint := origin - camera.global_transform.basis.z * ray_length
+    var endpoint := origin - camera.global_transform.basis.z * (INTERACTION_DISTANCE + 0.5)
     var query := PhysicsRayQueryParameters3D.create(origin, endpoint)
     query.exclude = [get_rid()]
     query.collision_mask = 1
-    var hit := get_world_3d().direct_space_state.intersect_ray(query)
-    if hit.is_empty():
-        return {}
-    if Vector3(hit.position).distance_to(global_position) > INTERACTION_DISTANCE + 0.5:
-        return {}
-    return hit
+    return get_world_3d().direct_space_state.intersect_ray(query)
 
 func _craft(recipe_id: String) -> void:
     if GrimholtCraftingSystem.craft(recipe_id, inventory, professions):
@@ -216,14 +211,12 @@ func _craft(recipe_id: String) -> void:
 func _update_hud() -> void:
     if inventory == null:
         return
-    var mode_text := "BAUMODUS: %s (1 Fundament / 2 Wand / 3 Dach)" % selected_piece if build_mode else "E: Ernten | B: Bauen | C: Planken | F5: Speichern | F9: Laden"
+    var mode_text := "BAUMODUS: %s (1 Fundament / 2 Wand / 3 Dach)" % selected_piece if build_mode else "E: Interagieren | B: Bauen | C: Planken | F5: Speichern | F9: Laden"
     var feedback_text := interaction_feedback
     if feedback_text.is_empty():
-        var target_hit := _raycast()
-        if not target_hit.is_empty():
-            var target := target_hit.get("collider") as Object
-            if target != null and target.has_method("harvest"):
-                feedback_text = "E: %s ernten" % String(target.get("display_name"))
-        if feedback_text.is_empty():
-            feedback_text = "Richte das Fadenkreuz auf einen Baum, Erz oder eine Pflanze."
+        var target := interaction_component.get_focused_target()
+        if is_instance_valid(target):
+            feedback_text = String(target.call("get_interaction_prompt")) if target.has_method("get_interaction_prompt") else "E: Interagieren"
+        else:
+            feedback_text = "Richte das Fadenkreuz auf ein interaktives Objekt."
     status_label.text = "GRIMHOLT – FANTASY SANDBOX\nWASD: Bewegen | SHIFT: Sprint | LEERTASTE: Springen | Maus: Umschauen | Mausrad: Ego-/Third-Person-Zoom | ESC: Maus lösen\n%s\n%s\n%s" % [mode_text, feedback_text, inventory.get_summary()]

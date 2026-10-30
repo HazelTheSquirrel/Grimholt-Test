@@ -62,6 +62,9 @@ func _run() -> void:
         return
 
     var start := player.global_position
+    if not is_equal_approx((player.get_node("CollisionShape3D").shape as CapsuleShape3D).height, 1.75):
+        _fail("Player physical capsule is not 1.75 metres tall.")
+        return
     Input.action_press("move_forward")
     for i in range(30):
         await physics_frame
@@ -71,7 +74,7 @@ func _run() -> void:
         _fail("Forward input did not move the player. distance=%f" % distance)
         return
 
-    print("PASS: player stays grounded, camera zoom toggles first/third person safely, and forward input moves the character.")
+    if player.velocity.length() > 0.1:\n        _fail("Player should decelerate after releasing movement input.")\n        return\n\n    print("PASS: 1.75 m player remains grounded, camera zoom works, and accelerated movement responds to input.")
     quit(0)
 
 func _fail(message: String) -> void:

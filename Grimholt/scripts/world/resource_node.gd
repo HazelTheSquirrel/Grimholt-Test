@@ -146,6 +146,15 @@ func _build_visuals() -> void:
         _add_mesh(center, "HerbCenter", Vector3(0, 0.7, 0), _textured_material(Color(0.98, 0.78, 0.28)))
     add_child(collision)
 
+func interact(actor: Node) -> bool:
+    if actor == null or not actor.has_node("Inventory"):
+        return false
+    var target_inventory := actor.get_node("Inventory") as GrimholtInventory
+    return harvest(target_inventory)
+
+func get_interaction_prompt() -> String:
+    return "E: %s abbauen" % display_name
+
 func harvest(target_inventory: GrimholtInventory) -> bool:
     if depleted or target_inventory == null or yield_item.is_empty() or yield_amount <= 0:
         return false
