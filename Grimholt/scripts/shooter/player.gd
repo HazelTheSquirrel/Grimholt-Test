@@ -40,6 +40,7 @@ func _ready() -> void:
 	camera.current = is_multiplayer_authority()
 	if is_multiplayer_authority():
 		Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
+		_build_weapon_viewmodel()
 
 func _unhandled_input(event: InputEvent) -> void:
 	if not is_multiplayer_authority():
@@ -82,6 +83,36 @@ func _physics_process(delta: float) -> void:
 	if network_timer >= 0.05 and multiplayer.multiplayer_peer != null and not multiplayer.is_server():
 		network_timer = 0.0
 		get_parent()._submit_transform.rpc_id(1, global_position, rotation.y, head.rotation.x)
+
+func _build_weapon_viewmodel() -> void:
+	var weapon := Node3D.new()
+	weapon.name = "RifleViewmodel"
+	weapon.position = Vector3(0.24, -0.20, -0.42)
+	camera.add_child(weapon)
+	var dark := StandardMaterial3D.new()
+	dark.albedo_color = Color(0.075, 0.09, 0.105)
+	dark.metallic = 0.62
+	dark.roughness = 0.38
+	var polymer := StandardMaterial3D.new()
+	polymer.albedo_color = Color(0.16, 0.19, 0.21)
+	polymer.roughness = 0.72
+	_add_weapon_box(weapon, "Receiver", Vector3(0.0, 0.0, 0.0), Vector3(0.12, 0.13, 0.38), dark)
+	_add_weapon_box(weapon, "Barrel", Vector3(0.0, 0.015, -0.29), Vector3(0.055, 0.055, 0.30), dark)
+	_add_weapon_box(weapon, "Muzzle", Vector3(0.0, 0.015, -0.45), Vector3(0.075, 0.075, 0.055), polymer)
+	_add_weapon_box(weapon, "Stock", Vector3(0.0, 0.015, 0.27), Vector3(0.105, 0.10, 0.22), polymer)
+	_add_weapon_box(weapon, "Magazine", Vector3(0.0, -0.12, 0.045), Vector3(0.085, 0.19, 0.12), polymer)
+	_add_weapon_box(weapon, "Grip", Vector3(0.0, -0.12, 0.16), Vector3(0.075, 0.16, 0.085), dark)
+	_add_weapon_box(weapon, "Sight", Vector3(0.0, 0.105, -0.02), Vector3(0.055, 0.065, 0.12), polymer)
+
+func _add_weapon_box(parent: Node3D, part_name: String, part_position: Vector3, dimensions: Vector3, material: Material) -> void:
+	var part := MeshInstance3D.new()
+	part.name = part_name
+	var mesh := BoxMesh.new()
+	mesh.size = dimensions
+	part.mesh = mesh
+	part.material_override = material
+	part.position = part_position
+	parent.add_child(part)
 
 func _update_crouch() -> void:
 	var wants_crouch := Input.is_action_pressed("crouch")
