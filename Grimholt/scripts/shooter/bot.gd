@@ -1,5 +1,7 @@
 extends CharacterBody3D
 
+const ACTOR_VISUAL := preload("res://scripts/shooter/actor_visual.gd")
+
 const SPEED := 5.2
 const DETECT_RANGE := 42.0
 const FIRE_RANGE := 28.0
@@ -31,6 +33,7 @@ func _ready() -> void:
 	var material := StandardMaterial3D.new()
 	material.albedo_color = Color(0.78, 0.36, 0.18)
 	visual.material_override = material
+	ACTOR_VISUAL.build(visual, material.albedo_color, Color(0.94, 0.67, 0.25))
 
 func _physics_process(delta: float) -> void:
 	if not multiplayer.is_server() or not game.round_active or health <= 0:
