@@ -140,8 +140,8 @@ func generate() -> void:
         active_chunks[spawn_key] = _create_chunk(spawn_key.x, spawn_key.y)
     _pending_chunks.erase(spawn_key)
 
-func get_safe_spawn_position() -> Vector3:
-    return Vector3(0.0, height_at(0.0, 0.0) + 0.20, 0.0)
+func get_safe_spawn_position(spawn_point: Vector3 = Vector3.ZERO) -> Vector3:
+    return Vector3(spawn_point.x, height_at(spawn_point.x, spawn_point.z) + 0.20, spawn_point.z)
 
 func update_streaming(world_position: Vector3) -> void:
     if generated_root == null or not is_instance_valid(generated_root):
