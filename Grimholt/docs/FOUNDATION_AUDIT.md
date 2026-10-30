@@ -24,7 +24,7 @@ The goal is to translate broad design lessons into a distinct Grimholt identity:
 - First-person player controller, basic rifle, ammo/reload, health, hit marker.
 - Free-for-all score and round timer.
 - ENet host/join skeleton and server-side combat validation.
-- Server-driven bots with basic target acquisition.
+- Server-driven bots with target acquisition, engagement-distance control, strafing, short-range obstacle steering and line-of-sight-gated fire.
 - Minimap, kill feed, top-fragger label, scoreboard.
 - Headless script validation and a gameplay smoke test.
 
@@ -36,7 +36,7 @@ The goal is to translate broad design lessons into a distinct Grimholt identity:
 4. **HUD needs a proper layout pass.** Existing elements are mostly labels positioned with anchors and offsets. There is no responsive HUD specification, scale setting, safe-area treatment or visual acceptance test.
 5. **The reported oversized bar is not identifiable from source alone.** A screenshot is required before changing an unknown visual element.
 6. **Multiplayer is prototype-grade.** The server owns damage, score and ammo, but there is no lag compensation, robust reconnect/session flow, packet-loss test, prediction/reconciliation or complete client disconnect handling.
-7. **Bots do not navigate tactically.** They pursue a target directly and fire; they do not use navigation meshes, tactical positioning or difficulty profiles.
+7. **Bot navigation is still prototype-grade.** Bots now manage engagement distance, strafe, probe nearby obstacles and require a clear line of sight before firing. They still do not use navigation meshes, multi-step pathfinding, tactical cover selection or difficulty profiles.
 8. **Gameplay content is very thin.** One greybox arena, one rifle, one FFA ruleset and placeholder actors are not yet a complete shooter foundation.
 9. **Current CI is not visual QA.** Headless import, parse and smoke tests do not prove that a windowed menu is laid out correctly or that mouse interaction works.
 
@@ -72,7 +72,7 @@ The goal is to translate broad design lessons into a distinct Grimholt identity:
 
 ### E. Combat and maps
 - Establish one polished rifle loop before adding more weapons.
-- Add navigation-aware bots and test their tactical movement.
+- Expand the current short-range steering into navigation-aware pathfinding, tactical cover selection and difficulty profiles; test movement and line-of-sight behavior.
 - Design maps around sightlines, controlled engagement distances, cover, verticality and readable original landmarks.
 - Build weapon and equipment roles around a coherent sandbox; avoid copying any specific game's weapon roster or balance values.
 
