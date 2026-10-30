@@ -26,6 +26,8 @@ var reserve_ammo := RESERVE_START
 var reload_time := 0.0
 var is_crouched := false
 var fire_held := false
+var fire_audio: AudioStreamPlayer
+var reload_audio: AudioStreamPlayer
 
 func _ready() -> void:
 	collision_shape.shape = collision_shape.shape.duplicate()
@@ -42,6 +44,7 @@ func _ready() -> void:
 	if is_multiplayer_authority():
 		Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 		_build_weapon_viewmodel()
+		_build_audio_feedback()
 
 func _unhandled_input(event: InputEvent) -> void:
 	if not is_multiplayer_authority():
@@ -84,6 +87,39 @@ func _physics_process(delta: float) -> void:
 	if network_timer >= 0.05 and multiplayer.multiplayer_peer != null and not multiplayer.is_server():
 		network_timer = 0.0
 		get_parent()._submit_transform.rpc_id(1, global_position, rotation.y, head.rotation.x)
+
+func _build_audio_feedback() -> void:
+	fire_audio = AudioStreamPlayer.new()
+	fire_audio.name = "FireAudio"
+	fire_audio.volume_db = -8.0
+	add_child(fire_audio)
+	fire_audio.stream = _make_tone(115.0, 0.075, 0.34, true)
+
+	reload_audio = AudioStreamPlayer.new()
+	reload_audio.name = "ReloadAudio"
+	reload_audio.volume_db = -10.0
+	add_child(reload_audio)
+	reload_audio.stream = _make_tone(520.0, 0.11, 0.18, false)
+
+func _make_tone(frequency: float, duration: float, amplitude: float, noisy: bool) -> AudioStreamWAV:
+	const SAMPLE_RATE := 22050
+	var sample_count := int(SAMPLE_RATE * duration)
+	var samples := PackedByteArray()
+	samples.resize(sample_count * 2)
+	for i in range(sample_count):
+		var t := float(i) / SAMPLE_RATE
+		var envelope := pow(1.0 - float(i) / sample_count, 2.2)
+		var wave := sin(TAU * frequency * t)
+		if noisy:
+			wave = wave * 0.72 + randf_range(-1.0, 1.0) * 0.28
+		var value := int(clampf(wave * envelope * amplitude, -1.0, 1.0) * 32767.0)
+		samples.encode_s16(i * 2, value)
+	var stream := AudioStreamWAV.new()
+	stream.format = AudioStreamWAV.FORMAT_16_BITS
+	stream.mix_rate = SAMPLE_RATE
+	stream.stereo = false
+	stream.data = samples
+	return stream
 
 func _build_weapon_viewmodel() -> void:
 	var weapon := Node3D.new()
@@ -142,8 +178,12 @@ func _fire() -> void:
 	if fire_cooldown > 0.0 or reload_time > 0.0:
 		return
 	fire_cooldown = FIRE_INTERVAL
+	if fire_audio != null:
+		fire_audio.play()
 	get_parent().request_fire(get_multiplayer_authority())
 
 func _reload() -> void:
 	if reload_time <= 0.0 and ammo < MAGAZINE_SIZE and reserve_ammo > 0:
+		if reload_audio != null:
+			reload_audio.play()
 		get_parent().request_reload(get_multiplayer_authority())
