@@ -14,6 +14,10 @@ const ROUND_SECONDS := 900
 const SETTINGS_PATH := "user://grimholt_settings.cfg"
 const BOT_COUNT := 5
 const INPUT_MIN_INTERVAL_MSEC := 40
+const WEAPONS := {
+	"carbine": {"display_name": "PULSE CARBINE", "magazine": 30, "reserve": 120, "damage": 34, "fire_interval": 0.12, "reload_time": 1.65, "range": 120.0, "pellets": 1, "spread": 0.003},
+	"scatter": {"display_name": "ARC SCATTER", "magazine": 8, "reserve": 40, "damage": 8, "fire_interval": 0.78, "reload_time": 2.05, "range": 34.0, "pellets": 7, "spread": 0.095}
+}
 const SPAWNS := [Vector3(-17, 1, -17), Vector3(17, 1, 17), Vector3(-17, 1, 17), Vector3(17, 1, -17), Vector3(0, 1, -18), Vector3(0, 1, 18), Vector3(-18, 1, 0), Vector3(18, 1, 0)]
 
 var players: Dictionary = {}
@@ -52,7 +56,10 @@ var last_input_packet_msec: Dictionary = {}
 var last_shot_times: Dictionary = {}
 var weapon_ammo: Dictionary = {}
 var weapon_reserve: Dictionary = {}
+var player_loadouts: Dictionary = {}
+var current_weapons: Dictionary = {}
 var reload_deadlines: Dictionary = {}
+var reload_weapons: Dictionary = {}
 var bot_sync_timer := 0.0
 
 
@@ -688,7 +695,10 @@ func _on_peer_disconnected(peer_id: int) -> void:
 		last_shot_times.erase(peer_id)
 		weapon_ammo.erase(peer_id)
 		weapon_reserve.erase(peer_id)
+		player_loadouts.erase(peer_id)
+		current_weapons.erase(peer_id)
 		reload_deadlines.erase(peer_id)
+		reload_weapons.erase(peer_id)
 		_sync_scores.rpc(scores, deaths)
 
 func _spawn_player(peer_id: int) -> void:
@@ -703,10 +713,12 @@ func _spawn_player(peer_id: int) -> void:
 	scores[peer_id] = 0
 	deaths[peer_id] = 0
 	last_shot_times[peer_id] = -1000.0
+	player_loadouts[peer_id] = _make_default_loadout()
+	current_weapons[peer_id] = "carbine"
 	weapon_ammo[peer_id] = 30
 	weapon_reserve[peer_id] = 120
-	_sync_weapon_state.rpc(peer_id, 30, 120, false)
 	_spawn_player_remote.rpc(peer_id, player.global_position)
+	_sync_weapon_selection.rpc(peer_id, "carbine", 30, 120)
 	_sync_scores.rpc(scores, deaths)
 
 @rpc("authority", "call_remote", "reliable")
@@ -828,6 +840,51 @@ func _sync_player_states(states: Array) -> void:
 			head.rotation.x = state[3]
 
 # --- shooter_weapon_system.gd ---
+func _weapon_spec(weapon_id: String) -> Dictionary:
+	return WEAPONS.get(weapon_id, WEAPONS["carbine"])
+
+func _make_default_loadout() -> Dictionary:
+	return {
+		"carbine": {"ammo": 30, "reserve": 120},
+		"scatter": {"ammo": 8, "reserve": 40}
+	}
+
+func request_weapon_switch(player_id: int, weapon_id: String) -> void:
+	if multiplayer.is_server():
+		_server_switch_weapon(player_id, weapon_id)
+	else:
+		_request_weapon_switch.rpc_id(1, weapon_id)
+
+@rpc("any_peer", "call_remote", "reliable")
+func _request_weapon_switch(weapon_id: String) -> void:
+	if multiplayer.is_server():
+		_server_switch_weapon(multiplayer.get_remote_sender_id(), weapon_id)
+
+func _server_switch_weapon(player_id: int, weapon_id: String) -> void:
+	if not multiplayer.is_server() or not round_active or not players.has(player_id):
+		return
+	if not WEAPONS.has(weapon_id) or reload_deadlines.has(player_id):
+		return
+	if int(players[player_id].get("health")) <= 0 or not player_loadouts.has(player_id):
+		return
+	current_weapons[player_id] = weapon_id
+	var state: Dictionary = player_loadouts[player_id][weapon_id]
+	weapon_ammo[player_id] = int(state["ammo"])
+	weapon_reserve[player_id] = int(state["reserve"])
+	_sync_weapon_selection.rpc(player_id, weapon_id, weapon_ammo[player_id], weapon_reserve[player_id])
+
+@rpc("authority", "call_local", "reliable")
+func _sync_weapon_selection(player_id: int, weapon_id: String, ammo: int, reserve: int) -> void:
+	if not players.has(player_id) or not WEAPONS.has(weapon_id):
+		return
+	current_weapons[player_id] = weapon_id
+	players[player_id].current_weapon = weapon_id
+	players[player_id].ammo = ammo
+	players[player_id].reserve_ammo = reserve
+	players[player_id].reload_time = 0.0
+	if players[player_id].has_method("set_weapon_visual"):
+		players[player_id].set_weapon_visual(weapon_id)
+
 func request_fire(shooter_id: int) -> void:
 	if multiplayer.is_server():
 		_server_fire(shooter_id)
@@ -845,32 +902,52 @@ func _server_fire(shooter_id: int) -> void:
 	var shooter: Node3D = players[shooter_id]
 	if int(shooter.get("health")) <= 0 or reload_deadlines.has(shooter_id):
 		return
-	var ammo := int(weapon_ammo.get(shooter_id, 0))
+	var weapon_id := str(current_weapons.get(shooter_id, "carbine"))
+	var spec := _weapon_spec(weapon_id)
+	if not player_loadouts.has(shooter_id):
+		return
+	var loadout: Dictionary = player_loadouts[shooter_id]
+	var state: Dictionary = loadout[weapon_id]
+	var ammo := int(state["ammo"])
 	if ammo <= 0:
-		_sync_weapon_state.rpc(shooter_id, ammo, int(weapon_reserve.get(shooter_id, 0)), false)
+		_sync_weapon_state.rpc(shooter_id, weapon_id, ammo, int(state["reserve"]), false)
 		return
 	var now := Time.get_ticks_msec() / 1000.0
-	if now - float(last_shot_times.get(shooter_id, -1000.0)) < 0.12:
+	if now - float(last_shot_times.get(shooter_id, -1000.0)) < float(spec["fire_interval"]):
 		return
 	var head := shooter.get_node_or_null("Head") as Node3D
 	if head == null:
 		return
 	var origin := head.global_position
-	var direction := -head.global_transform.basis.z.normalized()
+	var basis := head.global_transform.basis
+	state["ammo"] = ammo - 1
+	loadout[weapon_id] = state
+	player_loadouts[shooter_id] = loadout
 	weapon_ammo[shooter_id] = ammo - 1
+	weapon_reserve[shooter_id] = int(state["reserve"])
 	last_shot_times[shooter_id] = now
-	_sync_weapon_state.rpc(shooter_id, ammo - 1, int(weapon_reserve.get(shooter_id, 0)), false)
-	var query := PhysicsRayQueryParameters3D.create(origin, origin + direction * 120.0)
-	query.exclude = [shooter.get_rid()]
-	var hit := get_world_3d().direct_space_state.intersect_ray(query)
-	if hit.is_empty():
-		return
-	var target: Object = hit.collider
-	if target is CharacterBody3D and target.is_in_group("combatants"):
-		var victim_id := int(target.get_meta("actor_id", -1))
-		if victim_id != shooter_id:
-			_hit_confirm.rpc(shooter_id)
-			_apply_damage(victim_id, shooter_id, 34)
+	_sync_weapon_state.rpc(shooter_id, weapon_id, ammo - 1, int(state["reserve"]), false)
+
+	# The scatter weapon resolves several short-range pellets on the server.
+	# Damage is aggregated per victim so one blast cannot trigger duplicate kills.
+	var damage_by_victim: Dictionary = {}
+	for pellet_index in range(int(spec["pellets"])):
+		var spread := float(spec["spread"])
+		var direction := (-basis.z + basis.x * randf_range(-spread, spread) + basis.y * randf_range(-spread, spread)).normalized()
+		var query := PhysicsRayQueryParameters3D.create(origin, origin + direction * float(spec["range"]))
+		query.exclude = [shooter.get_rid()]
+		var hit := get_world_3d().direct_space_state.intersect_ray(query)
+		if hit.is_empty():
+			continue
+		var target: Object = hit.collider
+		if target is CharacterBody3D and target.is_in_group("combatants"):
+			var victim_id := int(target.get_meta("actor_id", -1))
+			if victim_id != shooter_id:
+				damage_by_victim[victim_id] = int(damage_by_victim.get(victim_id, 0)) + int(spec["damage"])
+	if not damage_by_victim.is_empty():
+		_hit_confirm.rpc(shooter_id)
+		for victim_id in damage_by_victim:
+			_apply_damage(int(victim_id), shooter_id, mini(100, int(damage_by_victim[victim_id])))
 
 func request_reload(player_id: int) -> void:
 	if multiplayer.is_server():
@@ -886,14 +963,20 @@ func _request_reload() -> void:
 func _server_reload(player_id: int) -> void:
 	if not multiplayer.is_server() or not round_active or not players.has(player_id):
 		return
-	if int(players[player_id].get("health")) <= 0 or reload_deadlines.has(player_id):
+	if int(players[player_id].get("health")) <= 0 or reload_deadlines.has(player_id) or not player_loadouts.has(player_id):
 		return
-	var ammo := int(weapon_ammo.get(player_id, 0))
-	var reserve := int(weapon_reserve.get(player_id, 0))
-	if ammo >= 30 or reserve <= 0:
+	var weapon_id := str(current_weapons.get(player_id, "carbine"))
+	var spec := _weapon_spec(weapon_id)
+	var loadout: Dictionary = player_loadouts[player_id]
+	var state: Dictionary = loadout[weapon_id]
+	var ammo := int(state["ammo"])
+	var reserve := int(state["reserve"])
+	if ammo >= int(spec["magazine"]) or reserve <= 0:
 		return
-	reload_deadlines[player_id] = Time.get_ticks_msec() / 1000.0 + 1.65
-	_sync_weapon_state.rpc(player_id, ammo, reserve, true)
+	var reload_duration := float(spec["reload_time"])
+	reload_deadlines[player_id] = Time.get_ticks_msec() / 1000.0 + reload_duration
+	reload_weapons[player_id] = weapon_id
+	_sync_weapon_state.rpc(player_id, weapon_id, ammo, reserve, true)
 
 func _process_reload_timers() -> void:
 	var now := Time.get_ticks_msec() / 1000.0
@@ -901,20 +984,34 @@ func _process_reload_timers() -> void:
 		if now < float(reload_deadlines[id]):
 			continue
 		var player_id := int(id)
-		var ammo := int(weapon_ammo.get(player_id, 0))
-		var reserve := int(weapon_reserve.get(player_id, 0))
-		var amount := mini(30 - ammo, reserve)
-		weapon_ammo[player_id] = ammo + amount
-		weapon_reserve[player_id] = reserve - amount
+		var weapon_id := str(reload_weapons.get(player_id, "carbine"))
+		var spec := _weapon_spec(weapon_id)
+		if not player_loadouts.has(player_id):
+			reload_deadlines.erase(id)
+			reload_weapons.erase(player_id)
+			continue
+		var loadout: Dictionary = player_loadouts[player_id]
+		var state: Dictionary = loadout[weapon_id]
+		var ammo := int(state["ammo"])
+		var reserve := int(state["reserve"])
+		var amount := mini(int(spec["magazine"]) - ammo, reserve)
+		state["ammo"] = ammo + amount
+		state["reserve"] = reserve - amount
+		loadout[weapon_id] = state
+		player_loadouts[player_id] = loadout
 		reload_deadlines.erase(id)
-		_sync_weapon_state.rpc(player_id, ammo + amount, reserve - amount, false)
+		reload_weapons.erase(player_id)
+		if str(current_weapons.get(player_id, "carbine")) == weapon_id:
+			weapon_ammo[player_id] = ammo + amount
+			weapon_reserve[player_id] = reserve - amount
+		_sync_weapon_state.rpc(player_id, weapon_id, ammo + amount, reserve - amount, false)
 
 @rpc("authority", "call_local", "reliable")
-func _sync_weapon_state(player_id: int, ammo: int, reserve: int, reloading: bool) -> void:
-	if players.has(player_id):
+func _sync_weapon_state(player_id: int, weapon_id: String, ammo: int, reserve: int, reloading: bool) -> void:
+	if players.has(player_id) and str(players[player_id].get("current_weapon")) == weapon_id:
 		players[player_id].ammo = ammo
 		players[player_id].reserve_ammo = reserve
-		players[player_id].reload_time = 1.65 if reloading else 0.0
+		players[player_id].reload_time = float(_weapon_spec(weapon_id)["reload_time"]) if reloading else 0.0
 
 func bot_fire(bot_id: int, origin: Vector3, direction: Vector3) -> void:
 	if multiplayer.is_server() and round_active:
@@ -1100,10 +1197,12 @@ func _update_hud() -> void:
 	var local_player: Node3D = players.get(multiplayer.get_unique_id()) as Node3D
 	if local_player:
 		health_label.text = "VITALS   %03d / 100" % int(local_player.get("health"))
-		ammo_label.text = "RIFLE  |  %02d / %03d\n[ R ] RELOAD" % [int(local_player.get("ammo")), int(local_player.get("reserve_ammo"))]
+		var weapon_id := str(local_player.get("current_weapon"))
+		var weapon_name := str(_weapon_spec(weapon_id)["display_name"])
+		ammo_label.text = "%s  |  %02d / %03d\n[1] CARBINE  [2] SCATTER  [R] RELOAD" % [weapon_name, int(local_player.get("ammo")), int(local_player.get("reserve_ammo"))]
 	else:
 		health_label.text = "VITALS   --"
-		ammo_label.text = "RIFLE  |  -- / --"
+		ammo_label.text = "WEAPON  |  -- / --"
 
 func _draw_minimap() -> void:
 	var rect := Rect2(Vector2.ZERO, Vector2(160, 160))
