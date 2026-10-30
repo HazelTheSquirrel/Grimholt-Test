@@ -179,5 +179,13 @@ func _update_hud() -> void:
     if inventory == null:
         return
     var mode_text := "BAUMODUS: %s (1 Fundament / 2 Wand / 3 Dach)" % selected_piece if build_mode else "E: Ressource ernten | B: Baumodus | C: Holzplanken herstellen"
-    var feedback_text := interaction_feedback if not interaction_feedback.is_empty() else "Tipp: Starte direkt vor der Eiche – sie ist in Reichweite."
+    var feedback_text := interaction_feedback
+    if feedback_text.is_empty():
+        var target_hit := _raycast()
+        if not target_hit.is_empty():
+            var target := target_hit.get("collider") as Object
+            if target != null and target.has_method("harvest"):
+                feedback_text = "E: %s ernten" % String(target.get("display_name"))
+        if feedback_text.is_empty():
+            feedback_text = "Richte das Fadenkreuz auf einen Baum, Erz oder eine Pflanze."
     status_label.text = "GRIMHOLT – FANTASY SANDBOX\nWASD: Bewegen | SHIFT: Sprint | LEERTASTE: Springen | Maus: Kamera | ESC: Maus lösen\n%s\n%s\n%s" % [mode_text, feedback_text, inventory.get_summary()]
