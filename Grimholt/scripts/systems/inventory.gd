@@ -6,10 +6,21 @@ signal inventory_changed
 var items: Dictionary = {}
 
 func add_item(item_id: String, amount: int = 1) -> bool:
-    if not GrimholtItemCatalog.exists(item_id) or amount <= 0:
+    if not can_add_items({item_id: amount}):
         return false
     items[item_id] = int(items.get(item_id, 0)) + amount
     inventory_changed.emit()
+    return true
+
+func can_add_items(additions: Dictionary) -> bool:
+    for item_id in additions:
+        var amount := int(additions[item_id])
+        var definition := GrimholtItemCatalog.get_item(String(item_id))
+        if definition.is_empty() or amount <= 0:
+            return false
+        var stack_limit := int(definition.get("stack", 0))
+        if stack_limit <= 0 or get_item_count(String(item_id)) + amount > stack_limit:
+            return false
     return true
 
 func get_item_count(item_id: String) -> int:
@@ -17,7 +28,10 @@ func get_item_count(item_id: String) -> int:
 
 func has_items(requirements: Dictionary) -> bool:
     for item_id in requirements:
-        if get_item_count(String(item_id)) < int(requirements[item_id]):
+        var amount := int(requirements[item_id])
+        if not GrimholtItemCatalog.exists(String(item_id)) or amount <= 0:
+            return false
+        if get_item_count(String(item_id)) < amount:
             return false
     return true
 
