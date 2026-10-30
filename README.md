@@ -1,6 +1,6 @@
 # Grimholt: Arena
 
-Grimholt ist ein eigenständiger, reiner Multiplayer-3D-Arena-Shooter. Es gibt keine Einzelspieler-Kampagne. Das Spielgefühl orientiert sich an klassischen Arena-Shootern und militärischen Multiplayer-Shootern; Karten, Waffen, Figuren, UI und Weltgestaltung bleiben eigenständig.
+Grimholt ist ein eigenständiger, reiner Multiplayer-3D-Arena-Shooter. Es gibt keine Einzelspieler-Kampagne. Die gestalterische und spielerische Qualitätsreferenz ist Halo 3: lesbare Arena-Gefechte, ein fokussiertes Spieler-Dashboard, eine klare Waffen-Sandbox und eine hochwertige Multiplayer-Präsentation. Grimholt bleibt dabei vollständig eigenständig: Karten, Waffen, Figuren, UI, Namen, Audio und Weltgestaltung werden eigens entwickelt; geschützte Bungie-/Microsoft-Inhalte werden nicht übernommen.
 
 ## Aktueller Prototyp
 
@@ -12,7 +12,7 @@ Grimholt ist ein eigenständiger, reiner Multiplayer-3D-Arena-Shooter. Es gibt k
 - 100 Lebenspunkte, Respawn und exakt **1 Punkt pro bestätigtem Kill**; ein bereits besiegtes Ziel kann keine weiteren Punkte geben.
 - Der Countdown basiert auf einer monotonen Echtzeituhr und wird regelmäßig an Clients synchronisiert; Teilsekunden werden aufgerundet, damit 00:00 erst beim tatsächlichen Ablauf erscheint.
 - Fünf servergesteuerte Arena-Bots als Gegner; Bot-Kills erhöhen nicht den FFA-Spielerpunktestand.
-- Militärisch inspiriertes, eigenständiges HUD: Matchzeit, Top-Fragger, Lebenspunkte, Munition, Killfeed und taktische Minimap.
+- Eigenständiges Arena-Shooter-HUD: Matchzeit, Top-Fragger, Lebenspunkte, Munition, Killfeed und Minimap; die Informationshierarchie wird auf Lesbarkeit und ein freies Sichtfeld ausgelegt.
 - Vollständige K/D-Scoreboard-Ansicht per Tab, Trefferbestätigung und automatisches Gewehrfeuer bei gehaltenem Linksklick.
 - Lokale Waffen- und Nachlade-Rückmeldung; finale Audioaufnahmen und räumlicher Mix stehen noch aus.
 - Serverseitige Bewegungsphysik: Clients senden nur validierte Eingaben (20 Hz); der Server simuliert Bewegung und verteilt Positions-Snapshots. Direkte clientseitige Positionsmeldungen werden nicht mehr akzeptiert.
@@ -37,12 +37,12 @@ Training startet einen lokalen Host mit fünf Bots. Auch beim Multiplayer-Hostin
 | Leertaste | Springen |
 | Strg (halten) | Ducken (Kamera und Kollisionskapsel werden abgesenkt) |
 | R | Nachladen |
-| ESC | Maus freigeben/einfangen |
+| ESC | Ingame-Menü öffnen/schließen |
 
 
 ## Architektur und eigene Assets
 
-Die frühere zentrale `main.gd` ist jetzt ein schlanker Composition Root. Die Gameplay-Logik liegt in getrennten GDScript-Schichten: `shooter_core.gd`, `shooter_ui_system.gd`, `shooter_network_system.gd`, `shooter_weapon_system.gd`, `shooter_combat_system.gd`, `shooter_match_system.gd` und `shooter_hud_system.gd`. Das ist eine erste wartbare Trennung; die nächste Ausbaustufe sollte daraus unabhängig instanzierte Manager mit klaren Datenverträgen machen.
+Die Gameplay-Logik wird derzeit durch einen zentralen Composition Root zusammengeführt. Die frühere zyklische Script-Vererbung wurde entfernt, damit alle GDScript-Dateien fehlerfrei laden. Die langfristige Architektur soll unabhängige Komponenten mit klaren Datenverträgen und Signalen verwenden; die aktuelle Zentralisierung ist noch ein Refactoring-Thema.
 
 Unter `Grimholt/assets/` liegen eigens für Grimholt gezeichnete SVG-Dateien: Gildenwappen, Waffeninsignie und gekacheltes Arenaboden-Material. Wappen und Bodenmaterial sind bereits im Menü bzw. in der Arena eingebunden. `actor_visual.gd` ergänzt Spieler und Bots außerdem um eigens zusammengesetzte Rüstungsdetails statt ausschließlich unveränderter Kapsel-Silhouetten. Es werden keine fremden Marken- oder Spielassets eingebunden.
 
