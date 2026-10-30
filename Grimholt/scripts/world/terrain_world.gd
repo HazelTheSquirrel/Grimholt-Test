@@ -24,6 +24,7 @@ var terrain_noise := FastNoiseLite.new()
 var detail_noise := FastNoiseLite.new()
 var terrain_mesh: ArrayMesh
 var generated_root: Node3D
+var known_resource_ids: Array[String] = []
 
 func _ready() -> void:
     generate()
@@ -131,6 +132,7 @@ func _add_colored_triangle(surface: SurfaceTool, a: Vector3, b: Vector3, c: Vect
     surface.add_vertex(c)
 
 func populate_resources(inventory: GrimholtInventory) -> void:
+    known_resource_ids.clear()
     var placements := [
         {"id": "tree", "name": "Eiche", "item": "wood", "amount": 4, "x": 0.0, "z": -2.8},
         {"id": "tree", "name": "Birke", "item": "wood", "amount": 3, "x": -12.0, "z": 8.0},
@@ -147,6 +149,7 @@ func populate_resources(inventory: GrimholtInventory) -> void:
         var entry: Dictionary = placements[index]
         var node: GrimholtResourceNode = ResourceNodeScript.new()
         node.persistent_id = "%s_%02d" % [String(entry["id"]), index]
+        known_resource_ids.append(node.persistent_id)
         node.configure(String(entry["id"]), String(entry["name"]), String(entry["item"]), int(entry["amount"]))
         var px := float(entry["x"])
         var pz := float(entry["z"])
@@ -208,17 +211,16 @@ func _populate_ground_cover() -> void:
     stone_instance.material_override = stone_material
     add_child(stone_instance)
 
+func has_resource_id(resource_key: String) -> bool:
+    return known_resource_ids.has(resource_key)
+
 func restore_depleted_resources(saved_ids: Variant) -> bool:
     if not saved_ids is Array:
         return false
-    var allowed_ids: Dictionary = {}
-    for child in get_children():
-        if child is GrimholtResourceNode:
-            allowed_ids[child.persistent_id] = child
     for resource_key in saved_ids:
-        if not resource_key is String or not allowed_ids.has(resource_key):
+        if not resource_key is String or not has_resource_id(resource_key):
             return false
-    for resource_key in saved_ids:
-        var resource: GrimholtResourceNode = allowed_ids[resource_key]
-        resource.free()
+    for child in get_children():
+        if child is GrimholtResourceNode and saved_ids.has(child.persistent_id):
+            child.free()
     return true
