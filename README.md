@@ -6,7 +6,7 @@ Grimholt ist ein eigenständiger, reiner Multiplayer-3D-Arena-Shooter. Es gibt k
 
 - Free-for-All-Deathmatch mit 25 Abschüssen als Rundenziel und zehn Minuten Zeitlimit.
 - ENet-Host/Join über UDP-Port 27015.
-- Prozedurale Greybox-Arena mit Deckung und acht Spawnpositionen.
+- Fest gespeicherte Greybox-Arena-Szene mit sichtbarer Geometrie, Kollisionen, Licht, Vorschaukamera, Deckung und acht Spawnpositionen.
 - First-Person-Steuerung, Mausblick, Springen und Hitscan-Gewehr.
 - 30-Schuss-Magazin, Reserve-Munition und Nachladen.
 - 100 Lebenspunkte, Respawn und Kill-Punkte.
@@ -19,10 +19,10 @@ Grimholt ist ein eigenständiger, reiner Multiplayer-3D-Arena-Shooter. Es gibt k
 1. Godot 4.7.2 installieren.
 2. `Grimholt/project.godot` importieren.
 3. Projekt starten.
-4. Auf einem Rechner **Spiel hosten** wählen.
-5. Andere Spieler geben die Server-IP ein und wählen **Server beitreten**.
+4. Im Startbildschirm **Training starten** wählen, um sofort auf der Karte gegen fünf Bots zu spielen.
+5. Für Multiplayer stattdessen **Server hosten** wählen. Andere Spieler geben die Server-IP ein und wählen **Server beitreten**.
 
-Der Host startet das Match und spawnt fünf Bots. Der Standardport ist UDP 27015.
+Training startet einen lokalen Host mit fünf Bots. Auch beim Multiplayer-Hosting startet der Host das Match und spawnt fünf Bots. Der Standardport ist UDP 27015.
 
 ## Steuerung
 
