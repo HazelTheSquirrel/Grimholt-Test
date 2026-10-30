@@ -53,11 +53,15 @@ func _rebuild_noise() -> void:
     river_noise.frequency = 0.000035
     _terrain_material = _make_terrain_material()
 
+func _smoothstep(edge_a: float, edge_b: float, value: float) -> float:
+    var t := clampf((value - edge_a) / (edge_b - edge_a), 0.0, 1.0)
+    return t * t * (3.0 - 2.0 * t)
+
 func height_at(x: float, z: float) -> float:
     # Broad continental forms, mountain ridges and a carved, meandering river basin.
     var continental := terrain_noise.get_noise_2d(x, z)
     var ridge := 1.0 - absf(ridge_noise.get_noise_2d(x, z))
-    var mountain_mask := smoothstep(0.18, 0.62, continental + ridge * 0.28)
+    var mountain_mask := _smoothstep(0.18, 0.62, continental + ridge * 0.28)
     var mountains := pow(ridge, 2.2) * 720.0 * mountain_mask
     var hills := continental * 115.0
     var detail := detail_noise.get_noise_2d(x, z) * 9.0
