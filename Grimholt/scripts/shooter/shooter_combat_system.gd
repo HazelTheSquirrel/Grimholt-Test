@@ -1,8 +1,11 @@
 extends "res://scripts/shooter/shooter_weapon_system.gd"
 
-@rpc("any_peer", "call_remote", "reliable")
 @rpc("authority", "call_local", "reliable")
 func _apply_damage(victim_id: int, attacker_id: int, amount: int) -> void:
+	if not multiplayer.is_server() or amount <= 0 or amount > 100:
+		return
+	if not players.has(attacker_id) and not bots.has(attacker_id):
+		return
 	var target: Node = null
 	if players.has(victim_id):
 		target = players[victim_id]
