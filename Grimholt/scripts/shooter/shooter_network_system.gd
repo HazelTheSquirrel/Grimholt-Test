@@ -126,9 +126,6 @@ func _on_peer_disconnected(peer_id: int) -> void:
 		players.erase(peer_id)
 		scores.erase(peer_id)
 		deaths.erase(peer_id)
-		last_positions.erase(peer_id)
-		last_position_times.erase(peer_id)
-		last_transform_packet_msec.erase(peer_id)
 		last_shot_times.erase(peer_id)
 		weapon_ammo.erase(peer_id)
 		weapon_reserve.erase(peer_id)
@@ -146,8 +143,6 @@ func _spawn_player(peer_id: int) -> void:
 	players[peer_id] = player
 	scores[peer_id] = 0
 	deaths[peer_id] = 0
-	last_positions[peer_id] = player.global_position
-	last_position_times[peer_id] = Time.get_ticks_msec()
 	last_shot_times[peer_id] = -1000.0
 	weapon_ammo[peer_id] = 30
 	weapon_reserve[peer_id] = 120
@@ -215,18 +210,16 @@ func _sync_bot_states(states: Array) -> void:
 			bots[id].rotation.y = state[2]
 			bots[id].health = int(state[3])
 
-func _is_transform_update_valid(pos: Vector3, yaw: float, pitch: float, previous: Vector3, elapsed: float) -> bool:
-	if not pos.is_finite() or not is_finite(yaw) or not is_finite(pitch) or not previous.is_finite():
+func _is_player_input_valid(input_vector: Vector2, yaw: float, pitch: float) -> bool:
+	if not input_vector.is_finite() or not is_finite(yaw) or not is_finite(pitch):
+		return false
+	if input_vector.length() > 1.05:
 		return false
 	if absf(pitch) > deg_to_rad(85.5) or absf(yaw) > TAU * 1000.0:
 		return false
-	if absf(pos.x) > 30.0 or absf(pos.z) > 30.0 or pos.y < -2.0 or pos.y > 20.0:
-		return false
-	# Plausibility guard only; the movement simulation is not yet server-authoritative.
-	var maximum_distance := MAX_REPORTED_SPEED * maxf(0.0, elapsed) + TRANSFORM_DISTANCE_TOLERANCE
-	return previous.distance_to(pos) <= maximum_distance
+	return true
 
-func _accept_transform_packet(sender: int, now_msec: int) -> bool:
+func _accept_input_packet(sender: int, now_msec: int) -> bool:
 	if not players.has(sender):
 		return false
 	var previous_packet_msec := int(last_transform_packet_msec.get(sender, 0))
@@ -236,26 +229,44 @@ func _accept_transform_packet(sender: int, now_msec: int) -> bool:
 	return true
 
 @rpc("any_peer", "call_remote", "unreliable")
-func _submit_transform(pos: Vector3, yaw: float, pitch: float) -> void:
+func _submit_input(input_vector: Vector2, jump_requested: bool, wants_crouch: bool, yaw: float, pitch: float) -> void:
 	if not multiplayer.is_server():
 		return
 	var sender := multiplayer.get_remote_sender_id()
-	if not players.has(sender):
+	if not _is_player_input_valid(input_vector, yaw, pitch):
 		return
 	var now_msec := Time.get_ticks_msec()
-	var previous: Vector3 = last_positions.get(sender, players[sender].global_position)
-	var last_accepted_msec := int(last_position_times.get(sender, now_msec))
-	var elapsed := maxf(0.001, float(now_msec - last_accepted_msec) / 1000.0)
-	if not _is_transform_update_valid(pos, yaw, pitch, previous, elapsed):
+	if not _accept_input_packet(sender, now_msec):
 		return
-	if not _accept_transform_packet(sender, now_msec):
-		return
-	last_positions[sender] = pos
-	last_position_times[sender] = now_msec
-	players[sender].global_position = pos
-	players[sender].rotation.y = yaw
-	players[sender].get_node("Head").rotation.x = pitch
-	_relay_transform.rpc(sender, pos, yaw, pitch)
+	var player: Node = players[sender]
+	player.set("remote_move_input", input_vector.limit_length(1.0))
+	player.set("remote_jump_requested", jump_requested)
+	player.set("remote_crouch_requested", wants_crouch)
+	player.set("remote_yaw", yaw)
+	player.set("remote_pitch", pitch)
+	player.set("remote_input_received_msec", now_msec)
+
+func _collect_player_states() -> Array:
+	var states: Array = []
+	for id in players:
+		var player: Node3D = players[id]
+		var head := player.get_node_or_null("Head") as Node3D
+		if head != null:
+			states.append([int(id), player.global_position, player.rotation.y, head.rotation.x])
+	return states
+
+@rpc("authority", "call_remote", "unreliable")
+func _sync_player_states(states: Array) -> void:
+	for state in states:
+		var id := int(state[0])
+		if not players.has(id):
+			continue
+		var player: Node3D = players[id]
+		player.global_position = player.global_position.lerp(state[1], 0.45)
+		player.rotation.y = state[2]
+		var head := player.get_node_or_null("Head") as Node3D
+		if head != null:
+			head.rotation.x = state[3]
 
 @rpc("authority", "call_remote", "unreliable")
 func _relay_transform(peer_id: int, pos: Vector3, yaw: float, pitch: float) -> void:
