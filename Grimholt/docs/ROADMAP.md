@@ -21,7 +21,12 @@ Grimholt ist ein polygonbasiertes Fantasy-Sandbox-RPG mit natürlichem Terrain, 
 - [x] Unterscheidbare Platzhalter-Silhouetten für Eiche, Birke und Fichte
 - [x] Prozedurale Materialien für Baumstämme, Laub, Sträucher, Erz und Kräuter
 - [x] Erste Gebäudeabmessungen auf 3-m-Raster und menschliche Referenzmaße abgestimmt
-- [ ] Terrain-Streaming, LOD und Profiling
+- [x] 100 × 100 km Weltgrundfläche (10.000 km²) als deterministisches prozedurales Gebiet
+- [x] 1-km-Weltabschnitte mit 3×3-Nachbarschafts-Streaming und Mesh-Kollision
+- [x] Kontinentale Höhenformen, prozedurale Gebirgsrücken, Flusssenke und Biom-Farbzonen
+- [x] Prozedurale, nahtlose Noise-Albedo-Textur und instanzierte Wald-/Grasvegetation
+- [ ] Höhleninnenräume, echte Fluss-Wasserkörper, Biome-spezifische Flora/Fauna und POIs
+- [ ] Terrain-LOD, asynchrones Streaming, Profiling und Weltgrenzen-Polish
 - [ ] Windows-Grafiktest auf Zielhardware
 - [x] Editor-Umgebung bleibt zur Laufzeit erhalten; Licht-/Nebeleinstellungen ergänzen sie nur
 
