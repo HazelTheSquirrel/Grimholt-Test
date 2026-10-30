@@ -54,3 +54,18 @@ Die Weltgrundfläche ist auf **100.000 × 100.000 m** (10.000 km²) ausgelegt. S
 ### Noch nicht als fertig behaupten
 
 Der aktuelle Meilenstein erzeugt die Großlandschaft und streamt Terrain-Chunks. Sichtbare Wasseroberflächen mit Uferübergängen, begehbare Höhleninnenräume, echte Tal-/Schlucht-Setpieces, markante handgebaute Orte, Flora-Varianten je Biom, Tierwelt, Navmesh und Terrain-LOD sind weitere Arbeitspakete. Die prozedurale Noise-Textur ist eine eigenständige Texturbasis, aber noch kein vollständiges handgemaltes PBR-Set aus Albedo, Normal, Roughness und AO.
+
+
+## Gewässer, Höhlen, Landmarken und Streaming-Erweiterung
+
+- Flussoberflächen werden pro Chunk aus derselben globalen Mäanderfunktion abgeleitet. Dadurch treffen die Segmente an Chunk-Grenzen auf denselben Flussverlauf; die Uferzone wird durch die aus dem Höhenfeld geformte Senke freigehalten.
+- Eine Wasserfall-Landmarke mit Fallfläche und Becken liegt im Chunk (3, -2).
+- Ein Dungeon-Eingang im Chunk (-7, -4) führt in einen geformten Tunnel mit wiederholten Felsbögen, begehbarem Boden samt Kollision und einer Endkammer.
+- Weitere feste POIs: zerstörter Wachturm (3, -2), verlassenes Dorf (-4, 2), Steinkreis (6, 5).
+- Vegetationsmaterialien variieren nach Biom; Baumstamm- und Grasfarben sind je Klimazone angepasst.
+- Terrain-LOD: 32 × 32 Zellen für den direkten Nachbarchunk, 12 × 12 für die äußere aktive Nachbarschaft.
+- Neue Chunks werden gestaffelt mit maximal einem Chunk-Neubau pro Prozess-Frame eingereiht, damit nicht alle Chunk-Nodes im selben Frame erzeugt werden.
+
+### Technische Grenze
+
+Das gestaffelte Einreihen ist noch keine echte Worker-Thread-Berechnung: Noise-Abtastung, Mesh-Erzeugung und Node-Aufbau laufen weiterhin auf dem Hauptthread. Für echte asynchrone Erzeugung müssen reine Mesh-Daten in Worker-Threads berechnet und Nodes anschließend sicher auf dem Hauptthread erstellt werden. LOD-Übergangsmorphing, Wasserphysik, Höhlen-Navigation/Beleuchtung und Performanceprofiling bleiben weitere Qualitätsarbeit.
