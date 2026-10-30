@@ -60,6 +60,11 @@ func _make_terrain_material() -> StandardMaterial3D:
     albedo_texture.height = 512
     albedo_texture.seamless = true
     albedo_texture.noise = texture_noise
+    var texture_ramp := Gradient.new()
+    texture_ramp.set_color(0, Color(0.76, 0.79, 0.70, 1.0))
+    texture_ramp.add_point(0.5, Color(0.90, 0.92, 0.84, 1.0))
+    texture_ramp.set_color(1, Color(1.0, 1.0, 1.0, 1.0))
+    albedo_texture.color_ramp = texture_ramp
     var material := StandardMaterial3D.new()
     material.albedo_texture = albedo_texture
     material.vertex_color_use_as_albedo = true
@@ -127,9 +132,9 @@ func _add_colored_triangle(surface: SurfaceTool, a: Vector3, b: Vector3, c: Vect
 
 func populate_resources(inventory: GrimholtInventory) -> void:
     var placements := [
-        {"id": "tree", "name": "Eiche", "item": "wood", "amount": 4, "x": -9.0, "z": -5.0},
-        {"id": "tree", "name": "Birke", "item": "wood", "amount": 3, "x": -5.0, "z": 8.0},
-        {"id": "tree", "name": "Fichte", "item": "wood", "amount": 5, "x": 10.0, "z": 7.0},
+        {"id": "tree", "name": "Eiche", "item": "wood", "amount": 4, "x": 0.0, "z": -2.8},
+        {"id": "tree", "name": "Birke", "item": "wood", "amount": 3, "x": -12.0, "z": 8.0},
+        {"id": "tree", "name": "Fichte", "item": "wood", "amount": 5, "x": 12.0, "z": 7.0},
         {"id": "iron_vein", "name": "Eisenader", "item": "iron_ore", "amount": 3, "x": 12.0, "z": -9.0},
         {"id": "iron_vein", "name": "Eisenader", "item": "iron_ore", "amount": 3, "x": -14.0, "z": -12.0},
         {"id": "herb", "name": "Heilkraut", "item": "herb", "amount": 2, "x": 5.0, "z": -14.0},
