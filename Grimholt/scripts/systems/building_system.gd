@@ -72,7 +72,7 @@ func restore_from_save(saved_pieces: Variant) -> bool:
             if not (coordinate is int or coordinate is float) or not is_finite(float(coordinate)):
                 return false
     for child in get_children():
-        child.queue_free()
+        child.free()
     for entry in saved_pieces:
         var coordinates: Array = entry["position"]
         var position := Vector3(float(coordinates[0]), float(coordinates[1]), float(coordinates[2]))
