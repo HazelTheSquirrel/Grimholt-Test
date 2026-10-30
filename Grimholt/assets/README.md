@@ -1,6 +1,6 @@
 # Grimholt – Seamless World Asset Pack
 
-Original, project-authored 256 × 256 SVG textures. Every texture is a repeating vector pattern with no external image dependencies. The SVGs tile seamlessly by design and remain crisp when imported at different resolutions.
+Original, project-authored SVG textures. The ground surfaces use seamless repeating vector patterns; the sky is a 2:1 panoramic SVG designed for Godot's PanoramaSkyMaterial.
 
 ## Textures
 
@@ -8,17 +8,20 @@ Original, project-authored 256 × 256 SVG textures. Every texture is a repeating
 |---|---|
 | `grass_meadow.svg` | Meadow ground and open grassland |
 | `forest_moss.svg` | Shaded forest floor |
-| `rock_slate.svg` | Mountain rock and cliff faces |
-| `earth_dirt.svg` | Soil, paths and exposed earth |
+| `rock_slate.svg` | Mountain rock and steep slopes |
+| `earth_dirt.svg` | Soil and subtle ground variation |
 | `gravel_sand.svg` | River banks, dry ground and gravel |
 | `snow_ice.svg` | Alpine snow and ice |
 | `bark_wood.svg` | Tree trunks and wood props |
 | `leaves_canopy.svg` | Foliage and canopy detail |
+| `sky_dawn_panorama.svg` | Custom dawn sky panorama with sun glow and layered clouds |
 
 ## Materials
 
-Reusable Godot 4 StandardMaterial3D resources are in `../materials`. The terrain material uses triplanar projection to avoid stretched UVs across steep slopes; vertex colors from the procedural biome system tint the grass texture. Bark and canopy materials are assigned to the instanced trees.
+`materials/terrain_grass.tres` is a ShaderMaterial using `terrain_blend.gdshader`. It triplanarly projects grass, moss, rock, dirt and snow maps in world space; steep slopes transition to rock and high elevations to snow. Existing biome vertex colors tint the surface. This avoids relying on a single grass image across every biome.
+
+`environment/world_environment.tres` now uses the custom panoramic sky texture through PanoramaSkyMaterial. The other reusable StandardMaterial3D resources cover rock, bark and foliage.
 
 ## Import
 
-Open the project in Godot 4.7.2 and allow the SVG importer to finish. Do not move the textures without updating their material resource paths. All source textures are vector SVG files; no third-party textures are included.
+Open the project in Godot 4.7.2 and allow the SVG importer to finish. Do not move textures without updating their resource paths. All source textures are project-authored SVG files; no third-party textures are included. A headless resource-load test checks the shader parameters and panorama resource, but final appearance still requires an in-editor GPU review.
