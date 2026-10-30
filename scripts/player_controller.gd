@@ -18,9 +18,26 @@ var gravity: float = ProjectSettings.get_setting("physics/3d/default_gravity")
 var status_label: Label
 
 func _ready() -> void:
+    _configure_input_actions()
     _create_body()
     _create_hud()
     Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
+
+func _configure_input_actions() -> void:
+    _add_key_action("move_forward", KEY_W)
+    _add_key_action("move_backward", KEY_S)
+    _add_key_action("move_left", KEY_A)
+    _add_key_action("move_right", KEY_D)
+
+func _add_key_action(action_name: String, key: Key) -> void:
+    if not InputMap.has_action(action_name):
+        InputMap.add_action(action_name)
+    for existing in InputMap.action_get_events(action_name):
+        if existing is InputEventKey and existing.physical_keycode == key:
+            return
+    var event := InputEventKey.new()
+    event.physical_keycode = key
+    InputMap.action_add_event(action_name, event)
 
 func _create_body() -> void:
     var collider := CollisionShape3D.new()
@@ -96,7 +113,7 @@ func _physics_process(delta: float) -> void:
         velocity.y -= gravity * delta
     elif Input.is_key_pressed(KEY_SPACE):
         velocity.y = JUMP_VELOCITY
-    var input_vector := Input.get_vector("ui_left", "ui_right", "ui_up", "ui_down")
+    var input_vector := Input.get_vector("move_left", "move_right", "move_forward", "move_backward")
     var local_direction := Vector3(input_vector.x, 0.0, input_vector.y)
     var direction := camera_pivot.global_transform.basis * local_direction
     direction.y = 0.0
