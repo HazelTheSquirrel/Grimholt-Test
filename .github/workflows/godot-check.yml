@@ -22,10 +22,10 @@ jobs:
           include-templates: false
 
       - name: Import and parse project
-        run: godot --headless --editor --path . --quit
+        run: godot --headless --editor --path Grimholt --quit
 
       - name: Headless startup smoke test
-        run: godot --headless --path . --quit-after 10
+        run: godot --headless --path Grimholt --quit-after 10
 
       - name: Gameplay systems regression test
-        run: godot --headless --path . --script res://tests/gameplay_systems_test.gd
+        run: godot --headless --path Grimholt --script res://tests/gameplay_systems_test.gd

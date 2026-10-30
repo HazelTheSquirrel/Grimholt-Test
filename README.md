@@ -4,6 +4,16 @@
 
 Das langfristige Ziel sind eine lebendige Fantasywelt, umfangreiche Berufe und Handwerksketten, Spielerbau, Erkundung und Rollenspiel. Das Spiel soll sowohl im Singleplayer als auch auf privat betriebenen Multiplayer-Servern funktionieren. Es sind keine offiziellen zentralen Spielserver vorgesehen.
 
+## Download und Start
+
+1. Dieses Repository über **Code → Download ZIP** herunterladen oder mit Git klonen.
+2. Den Ordner `Grimholt` aus dem Repository beibehalten – er enthält das vollständige Godot-Projekt.
+3. Godot **4.7.2** starten.
+4. Im Godot-Projektmanager **Importieren** wählen und die Datei `Grimholt/project.godot` auswählen.
+5. Projekt öffnen und mit F6/F5 starten.
+
+**Wichtig:** Nicht die Repository-Wurzel, sondern `Grimholt/project.godot` ist die Godot-Projektdatei.
+
 ## Aktueller Prototyp
 
 Der aktuelle Repository-Stand ist ein technischer Gameplay-Vertikalschnitt und noch kein fertiges Spiel:
@@ -22,13 +32,6 @@ Der aktuelle Repository-Stand ist ein technischer Gameplay-Vertikalschnitt und n
 - Automatisierte Headless-Prüfungen für Projektimport, Start, Inventar, Crafting, Berufserfahrung und Ressourcenernte.
 
 Die aktuell erzeugten Ressourcen und Bauteile sind Platzhalter-Prototypen. Hochwertige Charaktermodelle, Animationen, finale Umgebungsassets, vollständige Gebäude-Snap-Verbindungen und eine ausgearbeitete Benutzeroberfläche sind noch nicht enthalten.
-
-## Starten
-
-1. Godot 4.7.2 installieren und starten.
-2. Im Projektmanager **Importieren** wählen.
-3. Die Datei project.godot aus diesem Repository auswählen.
-4. Projekt öffnen und mit F6/F5 starten.
 
 ## Steuerung
 
@@ -71,20 +74,26 @@ Die Architektur soll langfristig serverautoritative Singleplayer- und Multiplaye
 
 ## Projektstruktur
 
-    project.godot
-    scenes/main.tscn
-    scripts/main.gd
-    scripts/player_controller.gd
-    scripts/data/item_catalog.gd
-    scripts/systems/inventory.gd
-    scripts/systems/profession_system.gd
-    scripts/systems/crafting_system.gd
-    scripts/systems/building_system.gd
-    scripts/world/terrain_world.gd
-    scripts/world/resource_node.gd
-    tests/gameplay_systems_test.gd
-    docs/ROADMAP.md
-    .github/workflows/godot-check.yml
+```text
+Grimholt/
+├── project.godot
+├── scenes/
+├── scripts/
+│   ├── data/
+│   ├── systems/
+│   └── world/
+├── tests/
+└── docs/
+    └── ROADMAP.md
+
+.github/
+└── workflows/
+    └── godot-check.yml
+README.md
+.gitignore
+```
+
+Alle Godot-Projektdateien, Skripte, Szenen, Tests und die spielbezogene Roadmap liegen gesammelt im Ordner `Grimholt/`. Die GitHub-Actions-Konfiguration bleibt außerhalb, damit GitHub sie automatisch erkennt.
 
 ## Technische Leitlinien
 
