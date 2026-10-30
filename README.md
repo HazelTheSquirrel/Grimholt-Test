@@ -1,138 +1,46 @@
-# Grimholt
+# Grimholt: Arena
 
-**Grimholt** ist ein Fantasy-Sandbox-RPG in Godot 4.7.2. Die technische und visuelle Grundlage ist eine polygonbasierte 3D-Welt mit natürlichem Terrain, modularen Gebäuden und sammelbaren Weltressourcen – ausdrücklich kein Voxel- oder Blockspiel.
-
-Das langfristige Ziel sind eine lebendige Fantasywelt, umfangreiche Berufe und Handwerksketten, Spielerbau, Erkundung und Rollenspiel. Das Spiel soll sowohl im Singleplayer als auch auf privat betriebenen Multiplayer-Servern funktionieren. Es sind keine offiziellen zentralen Spielserver vorgesehen.
-
-## Download und Start
-
-1. Dieses Repository über **Code → Download ZIP** herunterladen oder mit Git klonen.
-2. Den Ordner `Grimholt` aus dem Repository beibehalten – er enthält das vollständige Godot-Projekt.
-3. Godot **4.7.2** starten.
-4. Im Godot-Projektmanager **Importieren** wählen und die Datei `Grimholt/project.godot` auswählen.
-5. Projekt öffnen und mit F6/F5 starten.
-
-**Wichtig:** Nicht die Repository-Wurzel, sondern `Grimholt/project.godot` ist die Godot-Projektdatei.
+Grimholt ist ein eigenständiger, reiner Multiplayer-3D-Arena-Shooter. Es gibt keine Einzelspieler-Kampagne. Das Spielgefühl orientiert sich an klassischen Arena-Shootern und militärischen Multiplayer-Shootern; Karten, Waffen, Figuren, UI und Weltgestaltung bleiben eigenständig.
 
 ## Aktueller Prototyp
 
-Der aktuelle Repository-Stand ist ein technischer Gameplay-Vertikalschnitt und noch kein fertiges Spiel:
+- Free-for-All-Deathmatch mit 25 Abschüssen als Rundenziel und zehn Minuten Zeitlimit.
+- ENet-Host/Join über UDP-Port 27015.
+- Prozedurale Greybox-Arena mit Deckung und acht Spawnpositionen.
+- First-Person-Steuerung, Mausblick, Springen und Hitscan-Gewehr.
+- 30-Schuss-Magazin, Reserve-Munition und Nachladen.
+- 100 Lebenspunkte, Respawn und Kill-Punkte.
+- Fünf servergesteuerte Arena-Bots als Gegner.
+- Militärisch inspiriertes, eigenständiges HUD: Matchzeit, Top-Fragger, Lebenspunkte, Munition, Killfeed und taktische Minimap.
+- Server prüft eingehende Bewegungsupdates anhand der maximal plausiblen Laufgeschwindigkeit.
 
-- Godot 4.7.2 mit Forward+ Renderer.
-- Prozedural erzeugtes polygonales Höhen-Terrain mit Mesh-Kollision, Grasbüscheln, Steinstreuung und sichtbaren Gelände-Farbzonen.
-- Editor-zugewiesener Fantasy-Himmel mit Umgebungslicht.
-- Unterschiedliche Platzhalter-Silhouetten für Eiche, Birke und Fichte.
-- Third-Person-Spielersteuerung und Schulterkamera.
-- Interaktionsbasierte Ressourcengewinnung über natürliche Weltobjekte:
-  - Bäume liefern Rundholz.
-  - Eisenadern liefern Eisenerz.
-  - Kräuter liefern Alchemiezutaten.
-- Datenbasierter Item-Katalog und Inventar.
-- Erste Crafting-Rezepte für Eisenbarren, Holzplanken und Heiltränke.
-- Berufserfahrung und einfache Levelberechnung für Schmiedekunst, Schreinerei und Alchemie.
-- Modulares Platzieren von Holzfundamenten, Wänden und Dachsegmenten im Baumodus.
-- Automatisierte Headless-Prüfungen für Projektimport, Start, Inventar, Crafting, Berufserfahrung, Landschaftsaufbau und die tatsächliche Ernte über die Spieler-Kamera.
+## Starten
 
-Der lokale Spielstand speichert aktuell Spielerposition, Inventar, Berufserfahrung, bereits geerntete Ressourcen und platzierte Bauteile automatisch beim Schließen; F5 speichert manuell und F9 lädt den letzten Stand. Ressourcen-Erntezustände werden anhand stabiler Welt-IDs gesichert; übrige Weltveränderungen, Respawn und dynamische Weltzustände sind noch nicht Teil des Spielstands.
+1. Godot 4.7.2 installieren.
+2. `Grimholt/project.godot` importieren.
+3. Projekt starten.
+4. Auf einem Rechner **Spiel hosten** wählen.
+5. Andere Spieler geben die Server-IP ein und wählen **Server beitreten**.
 
-Die aktuell erzeugten Ressourcen, Vegetation und Bauteile sind eigene prozedurale Platzhalter-Prototypen. Die Ernte-HUD zeigt beim Anvisieren einer Ressource die passende E-Aktion an. Hochwertige Charaktermodelle, Animationen, finale Umgebungsassets, vollständige Gebäude-Snap-Verbindungen und eine ausgearbeitete Benutzeroberfläche sind noch nicht enthalten.
+Der Host startet das Match und spawnt fünf Bots. Der Standardport ist UDP 27015.
 
 ## Steuerung
 
-| Eingabe | Funktion |
+| Taste | Funktion |
 |---|---|
-| W A S D | Bewegen |
-| Maus | Kamera drehen |
-| Shift | Sprinten |
+| WASD | Bewegen |
+| Maus | Zielen |
+| Linksklick | Schießen |
 | Leertaste | Springen |
-| E | Anvisierte Ressource ernten |
-| C | Holzplanken herstellen (benötigt Rundholz) |
-| F5 | Spielstand speichern |
-| F9 | Spielstand laden |
-| B | Baumodus ein-/ausschalten |
-| 1 | Holzfundament auswählen |
-| 2 | Holzwand auswählen |
-| 3 | Dachsegment auswählen |
-| Linksklick im Baumodus | Bauteil platzieren |
-| ESC | Maus freigeben |
+| R | Nachladen |
+| ESC | Maus freigeben/einfangen |
 
-## Spielsysteme und Designrichtung
+## Entwicklungsstand und bekannte Grenzen
 
-### Welt und Ressourcen
+Dies ist weiterhin ein früher Gameplay-Prototyp, kein fertiges oder öffentlich serverfestes Spiel. Die Arena, HUD-Elemente und Bots sind Platzhalter. Die Bot-KI nutzt einfache direkte Verfolgung und Hitscan-Angriffe; sie navigiert noch nicht intelligent um Deckung. Die Minimap zeigt Positionsmarker, keine Sichtlinien- oder Aufklärungsdaten.
 
-Die Spielwelt besteht aus polygonalem Terrain, natürlichen Landschaftsformen und eigenständigen 3D-Objekten. Ressourcen sind Vorkommen in der Welt, keine abbaubaren Würfel. Geplant sind unter anderem Erzadern, Baumarten, Kräuter, Pilze, Jagdbeute, Stein, Lehm und seltene magische Materialien.
-
-Ressourcen sollen über passende Werkzeuge und Sammelberufe gewonnen werden. Vorkommen, Respawn-Regeln, Werkzeugstufen und Ressourcenknoten werden serverseitig verwaltet werden, sobald Multiplayer implementiert wird.
-
-### Berufe und Crafting
-
-Die Datenstruktur ist auf voneinander abhängige Produktionsketten ausgelegt. Vorgesehene Sammelberufe sind Bergbau, Holzfällerei, Jagd, Fischerei und Kräuterkunde. Herstellungsberufe umfassen unter anderem Schmiedekunst, Schreinerei, Lederverarbeitung, Schneiderei, Alchemie und Kochen.
-
-Der Prototyp enthält bereits ein kleines Rezept- und Berufssystem. Werkstattanforderungen, Rezeptfreischaltungen, Qualitätsstufen, Spezialisierungen und Wirtschaft sind Ausbauziele.
-
-### Bausystem
-
-Gebäude sollen aus modularen polygonalen Bauteilen entstehen, nicht aus Voxelblöcken. Vorgesehen sind Fundamente, Böden, Wände, Fenster, Türen, Dächer, Treppen, Zäune, Werkstätten und Lager. Das aktuelle Baumodus-Grundgerüst platziert einfache Holzfundamente, Wände und Dächer und zieht die Materialkosten aus dem Inventar ab.
-
-### Multiplayer und private Server
-
-Die Architektur soll langfristig serverautoritative Singleplayer- und Multiplayer-Simulation ermöglichen. Inventar, Ressourcen, Crafting, Bauplatzierung, Charakterdaten und Weltzustand dürfen im Multiplayer nicht vom Client allein bestimmt werden. Dedicated Server, private Serverkonfiguration, Persistenz, Administration und Backups sind noch nicht implementiert.
+Noch offen sind unter anderem echte Waffenwechsel und Pickups, Animationen, Audio, Trefferfeedback, Team-Deathmatch, Lobby/Matchmaking, Kartenrotation, dedizierte Serverkonfiguration, vollständige serverautoritativ simulierte Bewegung und Schussvalidierung, Lag Compensation, Anti-Cheat-Härtung, Tests mit mehreren echten Clients sowie finale Grafik und Levelgestaltung.
 
 ## Projektstruktur
 
-```text
-Grimholt/
-├── project.godot
-├── scenes/
-├── scripts/
-│   ├── data/
-│   ├── systems/
-│   └── world/
-├── tests/
-└── docs/
-    └── ROADMAP.md
-
-.github/
-└── workflows/
-    └── godot-check.yml
-README.md
-.gitignore
-```
-
-Alle Godot-Projektdateien, Skripte, Szenen, Tests und die spielbezogene Roadmap liegen gesammelt im Ordner `Grimholt/`. Die GitHub-Actions-Konfiguration bleibt außerhalb, damit GitHub sie automatisch erkennt.
-
-## Technische Leitlinien
-
-1. Polygonbasierte Weltgeometrie; keine Voxel- oder Blockwelt als Spielgrundlage.
-2. Datengetriebene Definitionen für Items, Ressourcen, Rezepte, Berufe und Bauteile.
-3. Weltobjekte und Ressourcen haben persistente IDs und serverseitig kontrollierte Zustände (für die spätere Multiplayer-Ausbaustufe).
-4. Terrain, Vegetation, Gebäude und Props benötigen LOD, Instancing, Streaming und Profiling, bevor die Welt groß wird.
-5. Singleplayer und Multiplayer sollen dieselben Gameplay-Regeln verwenden.
-6. Keine offiziellen zentralen Spielserver; private Server bleiben das Ziel.
-
-## Noch nicht fertig
-
-Es fehlen unter anderem finale Art-Assets, Charaktererstellung, ausgereifte Animationen, Werkzeugsystem und Abbauzeiten, Respawn und Persistenz von Ressourcen, vollständige Berufe und Rezeptfreischaltungen, Händler und Spielerwirtschaft, Gebäude-Snap-System, Baurechte und Grundstücke, NPCs, Quests, Kampf, Speichern/Laden von Charakteren und Gebäuden, Multiplayer, Serveradministration sowie Windows-Installer.
-
-## Validierung
-
-GitHub Actions importiert und parst das Projekt mit Godot 4.7.2, führt einen Headless-Starttest aus und testet die zentralen Inventar-, Crafting-, Berufs- und Ressourcenernte-Funktionen. Diese automatisierten Prüfungen ersetzen keinen manuellen visuellen Spieltest unter Windows.
-
-
-## Großwelt
-
-Die prozedurale Welt ist auf **10.000 km² (100 × 100 km)** ausgelegt. Terrain wird in 1-km-Chunks erzeugt; um den Spieler bleiben aktuell neun Abschnitte aktiv. Höhenformen, Gebirgsrücken, Flusssenke, Biom-Farbzonen, Gras und Wald-Instancing sind seed-deterministisch. Die Noise-Albedo-Textur wird im Projekt selbst erzeugt und nahtlos gekachelt.
-
-**Hinweis zum Entwicklungsstand:** Das ist das technische Großwelt-Fundament, noch kein fertig ausgestaltetes Open World Level. Sichtbare Fluss-Wasserflächen, begehbare Höhlen, besondere Täler/Schluchten, handgebaute Orte, Biom-spezifische Vegetation, LOD und Performanceprofiling stehen noch aus.
-
-
-### Welt-Features (aktueller Ausbau)
-
-Die gestreamte Welt enthält nun sichtbare Flussbänder, einen Wasserfall mit Becken, eine begehbare Höhlen-Tunnel-Landmarke mit Bodenkollision, biomabhängige Vegetationspaletten sowie seed-stabile POIs (Wachturmruine, verlassenes Dorf, Steinkreis und Dungeon-Eingang). Das Terrain nutzt zwei Meshauflösungen je Chunkdistanz. Chunk-Erzeugung wird pro Frame gestaffelt.
-
-**Noch offen:** Die Mesh-/Noise-Berechnung läuft weiterhin auf dem Hauptthread; echte Worker-Thread-Erzeugung, LOD-Übergangsmorphing, vollständige Flussufer-/Wasserphysik, Höhlen-Navigation/Beleuchtung und Profiling sind nicht abgeschlossen. Die Landmarken sind prozedurale Gameplay-Blockouts, keine final handmodellierten Dungeons oder Dörfer.
-
-
-### Spawn und World-Art-Assets
-
-Der Spawn-Chunk wird samt Kollision synchron erzeugt, bevor der Spieler platziert wird. Der Startpunkt wird aus dem tatsächlichen Terrain-Höhenfeld berechnet; zufällige Bäume halten Abstand zum Spawn. Das eigene Texturpaket liegt unter [Grimholt/assets](Grimholt/assets/README.md): acht nahtlos kachelbare SVG-Texturen und vier wiederverwendbare Godot-Materialien. Der erweiterte Test prüft Spawn-Kollision sowie das Laden aller Asset-Ressourcen. Eine visuelle Prüfung in Godot auf der Zielhardware steht weiterhin aus.
+Das Godot-Projekt liegt unter `Grimholt/`. Shooter-Szenen und -Skripte liegen unter `Grimholt/scenes/shooter/` und `Grimholt/scripts/shooter/`. GitHub Actions importiert das Projekt und führt einen Headless-Starttest aus. Ein erfolgreicher CI-Lauf und ein visueller Test mit mehreren Clients müssen vor einer Freigabe geprüft werden.
