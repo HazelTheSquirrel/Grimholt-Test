@@ -1,35 +1,46 @@
 # Grimholt: Arena
 
-Grimholt wird zu einem **reinen Multiplayer-3D-Arena-Shooter** umgebaut. Das frühere Fantasy-Sandbox-RPG ist nicht mehr die Spielrichtung.
+Grimholt ist ein eigenständiger, reiner Multiplayer-3D-Arena-Shooter. Es gibt keine Einzelspieler-Kampagne. Das Spielgefühl orientiert sich an klassischen Arena-Shootern und militärischen Multiplayer-Shootern; Karten, Waffen, Figuren, UI und Weltgestaltung bleiben eigenständig.
 
-## Spielidee
+## Aktueller Prototyp
 
-Klassisches, schnelles Arena-Deathmatch mit dem Gefühl der Arena-Shooter-Ära: klare Kartenlayouts, lesbare Gefechte, kontrollierbare Waffen-Spawns und ein direktes Punktelimit. Halo 3 und Battlefield: Bad Company 2 sind Inspirationsquellen für das Spielgefühl, nicht für kopierte Inhalte. Welt, Fraktionen, Waffen, Karten und visuelle Identität werden eigenständig entwickelt.
+- Free-for-All-Deathmatch mit 25 Abschüssen als Rundenziel und zehn Minuten Zeitlimit.
+- ENet-Host/Join über UDP-Port 27015.
+- Prozedurale Greybox-Arena mit Deckung und acht Spawnpositionen.
+- First-Person-Steuerung, Mausblick, Springen und Hitscan-Gewehr.
+- 30-Schuss-Magazin, Reserve-Munition und Nachladen.
+- 100 Lebenspunkte, Respawn und Kill-Punkte.
+- Fünf servergesteuerte Arena-Bots als Gegner.
+- Militärisch inspiriertes, eigenständiges HUD: Matchzeit, Top-Fragger, Lebenspunkte, Munition, Killfeed und taktische Minimap.
+- Server prüft eingehende Bewegungsupdates anhand der maximal plausiblen Laufgeschwindigkeit.
 
-- Ausschließlich Multiplayer; keine Einzelspieler-Kampagne.
-- Free-for-All als erster Modus; Team-Modi können später ergänzt werden.
-- Abschüsse bringen Punkte; zuerst 25 Punkte gewinnt.
-- LAN/Internet-Host über ENet, Standardport UDP 27015.
-- Geplantes Ziel: serverautoritatives Gameplay und dedizierte Server.
-
-## Start
+## Starten
 
 1. Godot 4.7.2 installieren.
-2. Grimholt/project.godot importieren.
+2. `Grimholt/project.godot` importieren.
 3. Projekt starten.
-4. Auf einem Rechner Spiel hosten wählen.
-5. Andere Spieler geben die Server-IP ein und wählen Server beitreten.
+4. Auf einem Rechner **Spiel hosten** wählen.
+5. Andere Spieler geben die Server-IP ein und wählen **Server beitreten**.
+
+Der Host startet das Match und spawnt fünf Bots. Der Standardport ist UDP 27015.
 
 ## Steuerung
 
-- WASD: Bewegung
-- Maus: Zielen
-- Linksklick: Schießen
-- Leertaste: Springen
-- ESC: Maus freigeben/einfangen
+| Taste | Funktion |
+|---|---|
+| WASD | Bewegen |
+| Maus | Zielen |
+| Linksklick | Schießen |
+| Leertaste | Springen |
+| R | Nachladen |
+| ESC | Maus freigeben/einfangen |
 
-## Entwicklungsstand
+## Entwicklungsstand und bekannte Grenzen
 
-Der aktuelle Branch enthält den ersten technischen Arena-Schnitt: prozedural aufgebaute Testarena, FPS-Spieler, ENet-Host/Join-Oberfläche, Deathmatch-Punktestand und Treffer-/Kill-RPC-Grundlage. Noch nicht fertig sind Waffenmodelle, Animationen, Audio, echte Respawn-Logik, Lag Compensation, Anti-Cheat-Härtung, Lobby/Matchmaking, Team-Modi, Kartenrotation, Menüs und finale Art-Assets.
+Dies ist weiterhin ein früher Gameplay-Prototyp, kein fertiges oder öffentlich serverfestes Spiel. Die Arena, HUD-Elemente und Bots sind Platzhalter. Die Bot-KI nutzt einfache direkte Verfolgung und Hitscan-Angriffe; sie navigiert noch nicht intelligent um Deckung. Die Minimap zeigt Positionsmarker, keine Sichtlinien- oder Aufklärungsdaten.
 
-Der Umbau erfolgt schrittweise. Die alte RPG-Implementierung bleibt vorerst in der Git-Historie nachvollziehbar und wird erst nach Prüfung vollständig aus dem Projekt entfernt.
+Noch offen sind unter anderem echte Waffenwechsel und Pickups, Animationen, Audio, Trefferfeedback, Team-Deathmatch, Lobby/Matchmaking, Kartenrotation, dedizierte Serverkonfiguration, vollständige serverautoritativ simulierte Bewegung und Schussvalidierung, Lag Compensation, Anti-Cheat-Härtung, Tests mit mehreren echten Clients sowie finale Grafik und Levelgestaltung.
+
+## Projektstruktur
+
+Das Godot-Projekt liegt unter `Grimholt/`. Shooter-Szenen und -Skripte liegen unter `Grimholt/scenes/shooter/` und `Grimholt/scripts/shooter/`. GitHub Actions importiert das Projekt und führt einen Headless-Starttest aus. Ein erfolgreicher CI-Lauf und ein visueller Test mit mehreren Clients müssen vor einer Freigabe geprüft werden.

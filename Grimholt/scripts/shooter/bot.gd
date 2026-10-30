@@ -22,6 +22,7 @@ func configure(id: int, controller: Node) -> void:
 
 func _ready() -> void:
 	add_to_group("combatants")
+	add_to_group("bots")
 	set_meta("actor_id", bot_id)
 	var capsule := CapsuleMesh.new()
 	capsule.radius = 0.37
