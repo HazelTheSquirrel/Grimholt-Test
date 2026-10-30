@@ -30,7 +30,6 @@ var bot_sync_timer := 0.0
 
 func _ready() -> void:
 	_configure_inputs()
-	_build_arena()
 	_build_menu()
 	_build_hud()
 	if OS.has_feature("dedicated_server"):
@@ -113,20 +112,27 @@ func _build_menu() -> void:
 	title.text = "GRIMHOLT // ARENA"
 	title.add_theme_font_size_override("font_size", 26)
 	column.add_child(title)
+	var intro := Label.new()
+	intro.text = "FREE-FOR-ALL  |  25 KILLS  |  10 MIN"
+	column.add_child(intro)
+	var training_button := Button.new()
+	training_button.text = "TRAINING STARTEN  //  SOFORT SPIELEN"
+	training_button.pressed.connect(host_game)
+	column.add_child(training_button)
 	address_input = LineEdit.new()
 	address_input.placeholder_text = "Server-IP"
 	address_input.text = "127.0.0.1"
 	column.add_child(address_input)
 	var host_button := Button.new()
-	host_button.text = "Spiel hosten"
+	host_button.text = "MULTIPLAYER // SERVER HOSTEN"
 	host_button.pressed.connect(host_game)
 	column.add_child(host_button)
 	var join_button := Button.new()
-	join_button.text = "Server beitreten"
+	join_button.text = "MULTIPLAYER // SERVER BEITRETEN"
 	join_button.pressed.connect(join_game)
 	column.add_child(join_button)
 	var status_title := Label.new()
-	status_title.text = "DEATHMATCH // 25 KILLS TO WIN"
+	status_title.text = "WASD bewegen  |  Maus zielen  |  Linksklick feuern"
 	column.add_child(status_title)
 	status_label = Label.new()
 	status_label.text = "Noch nicht verbunden"
@@ -211,9 +217,12 @@ func join_game() -> void:
 		status_label.text = "Verbindung fehlgeschlagen: %s" % error
 		return
 	multiplayer.multiplayer_peer = peer
-	multiplayer.connected_to_server.connect(func(): status_label.text = "Verbunden – warte auf Match")
+	multiplayer.connected_to_server.connect(_on_connected_to_server)
 	multiplayer.connection_failed.connect(func(): status_label.text = "Verbindung fehlgeschlagen")
 	multiplayer.server_disconnected.connect(func(): status_label.text = "Server getrennt")
+
+func _on_connected_to_server() -> void:
+	status_label.text = "Verbunden // Spieler wird gespawnt"
 
 func _start_match() -> void:
 	round_active = true
