@@ -13,7 +13,13 @@ Eigenständiger Multiplayer-3D-Arena-Shooter mit klassischem Free-for-All-Deathm
 - [x] Gewehr mit Magazin, Reserve-Munition und Nachladen
 - [x] Servergesteuerte Bots als Match-Gegner
 - [ ] Vollständig serverautoritatives Movement und Combat
+- [x] Offline-Solo-Start ohne ENet-Server
+- [x] Halte-Ducken mit abgesenkter Kamera und Kollisionskapsel
+- [x] Prozedurales First-Person-Gewehr-Viewmodel
+- [x] Serverseitige Plausibilitätsprüfung für Schussrichtung und Feuerrate
 - [ ] Mehrclient-Tests, Paketverlust- und Disconnect-Tests
+- [ ] Serverseitige Munitions- und Nachladeautorität
+- [ ] Serverautoritatives Movement statt clientseitig gemeldeter Positionen
 
 ## Phase 2 – HUD und Spielgefühl
 - [x] Eigenständiges militärisches HUD
