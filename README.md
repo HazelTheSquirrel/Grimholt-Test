@@ -42,7 +42,7 @@ Training startet einen lokalen Host mit fünf Bots. Auch beim Multiplayer-Hostin
 
 ## Architektur und eigene Assets
 
-Die frühere zentrale `main.gd` ist jetzt ein schlanker Composition Root. Die Gameplay-Logik liegt in getrennten GDScript-Schichten: `shooter_core.gd`, `shooter_ui_system.gd`, `shooter_network_system.gd`, `shooter_combat_system.gd` und `shooter_hud_system.gd`. Das ist eine erste wartbare Trennung; die nächste Ausbaustufe sollte daraus unabhängig instanzierte Manager mit klaren Datenverträgen machen.
+Die frühere zentrale `main.gd` ist jetzt ein schlanker Composition Root. Die Gameplay-Logik liegt in getrennten GDScript-Schichten: `shooter_core.gd`, `shooter_ui_system.gd`, `shooter_network_system.gd`, `shooter_weapon_system.gd`, `shooter_combat_system.gd`, `shooter_match_system.gd` und `shooter_hud_system.gd`. Das ist eine erste wartbare Trennung; die nächste Ausbaustufe sollte daraus unabhängig instanzierte Manager mit klaren Datenverträgen machen.
 
 Unter `Grimholt/assets/` liegen eigens für Grimholt gezeichnete SVG-Dateien: Gildenwappen, Waffeninsignie und gekacheltes Arenaboden-Material. Wappen und Bodenmaterial sind bereits im Menü bzw. in der Arena eingebunden. Es werden keine fremden Marken- oder Spielassets eingebunden.
 
