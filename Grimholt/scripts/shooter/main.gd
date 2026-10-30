@@ -612,7 +612,7 @@ func bot_fire(bot_id: int, origin: Vector3, direction: Vector3) -> void:
 			if target is CharacterBody3D and target.is_in_group("combatants"):
 				var victim_id := int(target.get_meta("actor_id", -1))
 				if victim_id != bot_id:
-					_apply_damage(victim_id, bot_id, 20)
+					_apply_damage(victim_id, bot_id, 8)
 
 func _apply_damage(victim_id: int, attacker_id: int, amount: int) -> void:
 	var target: Node = null
