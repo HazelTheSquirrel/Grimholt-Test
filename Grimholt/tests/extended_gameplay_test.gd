@@ -55,10 +55,12 @@ func _run() -> void:
     if not foliage_found:
         _fail("Chunk foliage and ground cover were not generated.")
         return
-    var center_chunk: Node3D = live_terrain.active_chunks.get(Vector2i(0, 0))
-    if center_chunk == null or center_chunk.get_node_or_null("RiverWater") == null:
-        _fail("Streamed chunk is missing its river water surface.")
+    var river_chunk: Node3D = live_terrain._create_chunk(12, 0)
+    if river_chunk.get_node_or_null("RiverWater") == null:
+        _fail("River corridor chunk is missing its water surface.")
+        river_chunk.free()
         return
+    river_chunk.free()
     var distant_chunk: Node3D = live_terrain._create_chunk(3, -2)
     if distant_chunk.get_node_or_null("MountainWaterfall") == null or distant_chunk.get_node_or_null("Landmark_watchtower_ruin") == null:
         _fail("Waterfall or watchtower ruin landmark was not generated.")
