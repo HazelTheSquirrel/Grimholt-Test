@@ -36,7 +36,7 @@ func _ready() -> void:
 	ACTOR_VISUAL.build(visual, material.albedo_color, Color(0.94, 0.67, 0.25))
 
 func _physics_process(delta: float) -> void:
-	if not multiplayer.is_server() or not game.round_active or health <= 0:
+	if not multiplayer.is_server() or not bool(game.get("round_active")) or health <= 0:
 		return
 	fire_timer = maxf(0.0, fire_timer - delta)
 	think_timer -= delta
@@ -68,14 +68,15 @@ func _find_target() -> Node3D:
 	var nearest: Node3D
 	var best_distance := DETECT_RANGE
 	for actor in get_tree().get_nodes_in_group("combatants"):
-		if actor == self or not actor is Node3D or actor.health <= 0:
+		if actor == self or not actor is CharacterBody3D:
 			continue
-		if actor.is_in_group("bots"):
+		var candidate := actor as CharacterBody3D
+		if int(candidate.get("health")) <= 0 or candidate.is_in_group("bots"):
 			continue
-		var distance := global_position.distance_to(actor.global_position)
+		var distance := global_position.distance_to(candidate.global_position)
 		if distance < best_distance:
 			best_distance = distance
-			nearest = actor
+			nearest = candidate
 	return nearest
 
 func _shoot_at_target() -> void:
@@ -87,4 +88,4 @@ func _shoot_at_target() -> void:
 	# Bots deliberately have imperfect aim; the first prototype should allow
 	# players time to react, use cover, and learn the combat loop.
 	aim = (aim + Vector3(randf_range(-0.075, 0.075), randf_range(-0.045, 0.045), randf_range(-0.075, 0.075))).normalized()
-	game.bot_fire(bot_id, origin, aim)
+	game.call("bot_fire", bot_id, origin, aim)
