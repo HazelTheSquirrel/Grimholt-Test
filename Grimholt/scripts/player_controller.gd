@@ -62,7 +62,7 @@ func _create_body() -> void:
     add_child(camera_pivot)
     camera = Camera3D.new()
     camera.position = Vector3(0.0, 0.45, 5.2)
-    camera.rotation.x = deg_to_rad(-9.0)
+    camera.rotation.x = deg_to_rad(12.0)
     camera.fov = 72.0
     camera.current = true
     camera_pivot.add_child(camera)
