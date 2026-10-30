@@ -81,6 +81,13 @@ func _run() -> void:
     if live_player.building_system.get_child_count() != 1:
         _fail("Save/load did not restore the placed foundation.")
         return
+    if not live_terrain.has_resource_id("tree_00"):
+        _fail("Starter resource does not have a stable world identity.")
+        return
+    for world_child in live_terrain.get_children():
+        if world_child is GrimholtResourceNode and world_child.persistent_id == "tree_00":
+            _fail("Save/load respawned a resource already harvested in this world.")
+            return
     DirAccess.remove_absolute(ProjectSettings.globalize_path("user://grimholt_save.json"))
     live_scene.queue_free()
     await process_frame
