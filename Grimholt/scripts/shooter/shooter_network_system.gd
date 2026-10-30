@@ -93,6 +93,7 @@ func _start_match() -> void:
 	# Host local starten; RPC nur für weitere Clients verwenden.
 	_match_started(ROUND_SECONDS * 1000)
 
+@rpc("authority", "call_local", "reliable")
 func _match_started(remaining_msec: int) -> void:
 	round_active = true
 	round_time = float(remaining_msec) / 1000.0
@@ -100,6 +101,7 @@ func _match_started(remaining_msec: int) -> void:
 	next_timer_sync_msec = Time.get_ticks_msec() + 1000
 	menu_layer.visible = false
 
+@rpc("authority", "call_local", "reliable")
 func _sync_round_timer(remaining_msec: int) -> void:
 	if not round_active:
 		return
@@ -152,6 +154,7 @@ func _spawn_player(peer_id: int) -> void:
 	_spawn_player_remote.rpc(peer_id, player.global_position)
 	_sync_scores.rpc(scores, deaths)
 
+@rpc("authority", "call_remote", "reliable")
 func _spawn_player_remote(peer_id: int, spawn_position: Vector3) -> void:
 	if players.has(peer_id):
 		return
@@ -173,6 +176,7 @@ func _spawn_bot(bot_id: int) -> void:
 	bots[bot_id] = bot
 	_spawn_bot_remote.rpc(bot_id, bot.global_position)
 
+@rpc("authority", "call_remote", "reliable")
 func _spawn_bot_remote(bot_id: int, spawn_position: Vector3) -> void:
 	if bots.has(bot_id):
 		return
@@ -186,6 +190,7 @@ func _spawn_bot_remote(bot_id: int, spawn_position: Vector3) -> void:
 	bot.set_process(false)
 	bot.set_physics_process(false)
 
+@rpc("authority", "call_local", "reliable")
 func _remove_actor(actor_id: int) -> void:
 	var path := "Player_%d" % actor_id
 	var node := get_node_or_null(path)
@@ -200,6 +205,7 @@ func _collect_bot_states() -> Array:
 		states.append([int(id), bot.global_position, bot.rotation.y, bot.health])
 	return states
 
+@rpc("authority", "call_remote", "unreliable")
 func _sync_bot_states(states: Array) -> void:
 	for state in states:
 		var id := int(state[0])
@@ -208,6 +214,7 @@ func _sync_bot_states(states: Array) -> void:
 			bots[id].rotation.y = state[2]
 			bots[id].health = int(state[3])
 
+@rpc("any_peer", "call_remote", "unreliable")
 func _submit_transform(pos: Vector3, yaw: float, pitch: float) -> void:
 	if not multiplayer.is_server():
 		return
@@ -231,6 +238,7 @@ func _submit_transform(pos: Vector3, yaw: float, pitch: float) -> void:
 	players[sender].get_node("Head").rotation.x = pitch
 	_relay_transform.rpc(sender, pos, yaw, pitch)
 
+@rpc("authority", "call_remote", "unreliable")
 func _relay_transform(peer_id: int, pos: Vector3, yaw: float, pitch: float) -> void:
 	if players.has(peer_id) and multiplayer.get_unique_id() != peer_id:
 		players[peer_id].global_position = players[peer_id].global_position.lerp(pos, 0.7)
