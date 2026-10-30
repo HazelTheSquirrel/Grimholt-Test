@@ -28,10 +28,18 @@ var known_resource_ids: Array[String] = []
 var active_chunks: Dictionary = {}
 var _last_center := Vector2i(2147483647, 2147483647)
 var _terrain_material: StandardMaterial3D
+var _pending_chunks: Array[Vector2i] = []
 
 func _ready() -> void:
     _rebuild_noise()
     generate()
+
+func _process(_delta: float) -> void:
+    if _pending_chunks.is_empty():
+        return
+    var key: Vector2i = _pending_chunks.pop_front()
+    if generated_root != null and is_instance_valid(generated_root) and not active_chunks.has(key):
+        active_chunks[key] = _create_chunk(key.x, key.y)
 
 func _rebuild_noise() -> void:
     terrain_noise.seed = terrain_seed
@@ -136,6 +144,7 @@ func generate() -> void:
     generated_root.name = "StreamedWorld"
     add_child(generated_root)
     active_chunks.clear()
+    _pending_chunks.clear()
     _last_center = Vector2i(2147483647, 2147483647)
     update_streaming(Vector3.ZERO)
 
@@ -153,8 +162,14 @@ func update_streaming(world_position: Vector3) -> void:
                 continue
             var key := Vector2i(cx, cz)
             wanted[key] = true
-            if not active_chunks.has(key):
-                active_chunks[key] = _create_chunk(cx, cz)
+            if not active_chunks.has(key) and not _pending_chunks.has(key):
+                _pending_chunks.append(key)
+    var pending_remove: Array[Vector2i] = []
+    for pending_key in _pending_chunks:
+        if not wanted.has(pending_key):
+            pending_remove.append(pending_key)
+    for pending_key in pending_remove:
+        _pending_chunks.erase(pending_key)
     var remove_keys: Array = []
     for key in active_chunks.keys():
         if not wanted.has(key):
@@ -200,6 +215,8 @@ func _create_chunk(chunk_x: int, chunk_z: int) -> Node3D:
     body.add_child(collision)
     chunk.add_child(body)
     _populate_chunk_foliage(chunk, chunk_x, chunk_z)
+    _create_river_water(chunk)
+    _create_landmark(chunk, chunk_x, chunk_z)
     if chunk_x == 0 and chunk_z == 0:
         terrain_mesh = mesh
     return chunk
@@ -286,6 +303,130 @@ func _populate_chunk_foliage(chunk: Node3D, chunk_x: int, chunk_z: int) -> void:
     grass.multimesh = grass_batch
     grass.material_override = grass_mat
     chunk.add_child(grass)
+
+
+func _river_center(z: float) -> float:
+    return 12500.0 + river_noise.get_noise_2d(0.0, z * 0.42) * 10500.0
+
+func _create_river_water(chunk: Node3D) -> void:
+    var surface := SurfaceTool.new()
+    surface.begin(Mesh.PRIMITIVE_TRIANGLES)
+    for i in range(48):
+        var z0 := float(i) / 48.0 * CHUNK_SIZE
+        var z1 := float(i + 1) / 48.0 * CHUNK_SIZE
+        var wx0 := _river_center(chunk.position.z + z0) - chunk.position.x
+        var wx1 := _river_center(chunk.position.z + z1) - chunk.position.x
+        var w0 := 42.0 + absf(river_noise.get_noise_2d(z0, 33.0)) * 24.0
+        var w1 := 42.0 + absf(river_noise.get_noise_2d(z1, 33.0)) * 24.0
+        var a := Vector3(wx0 - w0, height_at(chunk.position.x + wx0, chunk.position.z + z0) - 2.0, z0)
+        var b := Vector3(wx0 + w0, a.y, z0)
+        var c := Vector3(wx1 - w1, height_at(chunk.position.x + wx1, chunk.position.z + z1) - 2.0, z1)
+        var d := Vector3(wx1 + w1, c.y, z1)
+        surface.set_color(Color(0.12, 0.38, 0.52, 0.88))
+        surface.add_vertex(a)
+        surface.add_vertex(c)
+        surface.add_vertex(b)
+        surface.add_vertex(b)
+        surface.add_vertex(c)
+        surface.add_vertex(d)
+    var water := MeshInstance3D.new()
+    water.name = "RiverWater"
+    water.mesh = surface.commit()
+    var material := StandardMaterial3D.new()
+    material.albedo_color = Color(0.16, 0.43, 0.58, 0.82)
+    material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+    material.roughness = 0.14
+    material.metallic = 0.12
+    material.cull_mode = BaseMaterial3D.CULL_DISABLED
+    water.material_override = material
+    chunk.add_child(water)
+
+func _landmark_box(parent: Node3D, label: String, size: Vector3, pos: Vector3, tint: Color) -> void:
+    var instance := MeshInstance3D.new()
+    instance.name = label
+    var mesh := BoxMesh.new()
+    mesh.size = size
+    instance.mesh = mesh
+    var material := StandardMaterial3D.new()
+    material.albedo_color = tint
+    material.roughness = 0.95
+    instance.material_override = material
+    instance.position = pos
+    parent.add_child(instance)
+
+func _create_landmark(chunk: Node3D, cx: int, cz: int) -> void:
+    var id := ""
+    if cx == 3 and cz == -2:
+        id = "watchtower_ruin"
+    elif cx == -4 and cz == 2:
+        id = "abandoned_village"
+    elif cx == 6 and cz == 5:
+        id = "stone_circle"
+    elif cx == -7 and cz == -4:
+        id = "dungeon_entrance"
+    if id.is_empty():
+        return
+    var site := Node3D.new()
+    site.name = "Landmark_" + id
+    site.position = Vector3(500.0, height_at(chunk.position.x + 500.0, chunk.position.z + 500.0), 500.0)
+    chunk.add_child(site)
+    if id == "watchtower_ruin":
+        _landmark_box(site, "KeepFoundation", Vector3(20, 2, 20), Vector3.ZERO, Color(0.35, 0.35, 0.33))
+        for i in range(4):
+            _landmark_box(site, "BrokenWall_%d" % i, Vector3(17, 7 + float(i % 2) * 3, 1.5), Vector3(0, 4, -8 + i * 5.3), Color(0.42, 0.41, 0.37))
+        _landmark_box(site, "TowerRemnant", Vector3(5, 14, 5), Vector3(5, 6, 4), Color(0.32, 0.33, 0.32))
+    elif id == "abandoned_village":
+        for i in range(7):
+            var p := Vector3(float(i % 3) * 17.0 - 17.0, 2.5, float(i / 3) * 18.0 - 18.0)
+            _landmark_box(site, "House_%d" % i, Vector3(10, 5, 9), p, Color(0.43, 0.31, 0.20))
+            _landmark_box(site, "Roof_%d" % i, Vector3(12, 2, 11), p + Vector3(0, 3.5, 0), Color(0.24, 0.16, 0.12))
+    elif id == "stone_circle":
+        for i in range(9):
+            var angle := TAU * float(i) / 9.0
+            _landmark_box(site, "StandingStone_%d" % i, Vector3(2.2, 5, 1.4), Vector3(cos(angle) * 18, 2.5, sin(angle) * 18), Color(0.39, 0.42, 0.43))
+    else:
+        _landmark_box(site, "DungeonLintel", Vector3(15, 3, 3), Vector3(0, 7, -8), Color(0.23, 0.24, 0.23))
+        for side in [-1.0, 1.0]:
+            _landmark_box(site, "DungeonPillar", Vector3(3, 12, 3), Vector3(side * 6, 6, -8), Color(0.30, 0.31, 0.30))
+        _create_walkable_cave(site)
+
+func _create_walkable_cave(parent: Node3D) -> void:
+    var cave := Node3D.new()
+    cave.name = "WalkableCaveInterior"
+    cave.position = Vector3(0, 0, -12)
+    parent.add_child(cave)
+    var floor_material := StandardMaterial3D.new()
+    floor_material.albedo_color = Color(0.24, 0.23, 0.21)
+    for i in range(12):
+        var floor := MeshInstance3D.new()
+        floor.name = "CaveFloor_%02d" % i
+        var box := BoxMesh.new()
+        box.size = Vector3(7, 0.5, 5)
+        floor.mesh = box
+        floor.material_override = floor_material
+        floor.position = Vector3(0, -0.25, -float(i) * 5.0)
+        cave.add_child(floor)
+        var arch := TorusMesh.new()
+        arch.inner_radius = 3.0
+        arch.outer_radius = 4.2
+        arch.rings = 12
+        arch.ring_segments = 16
+        var rib := MeshInstance3D.new()
+        rib.name = "CaveArch_%02d" % i
+        rib.mesh = arch
+        rib.material_override = floor_material
+        rib.position = Vector3(0, 3.5, -float(i) * 5.0)
+        rib.rotation.x = PI * 0.5
+        cave.add_child(rib)
+    var chamber := MeshInstance3D.new()
+    chamber.name = "CaveEndChamber"
+    var sphere := SphereMesh.new()
+    sphere.radius = 8
+    sphere.height = 8
+    chamber.mesh = sphere
+    chamber.material_override = floor_material
+    chamber.position = Vector3(0, 3.5, -60)
+    cave.add_child(chamber)
 
 func populate_resources(inventory: GrimholtInventory) -> void:
     known_resource_ids.clear()
