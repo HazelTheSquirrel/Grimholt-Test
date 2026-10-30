@@ -38,12 +38,35 @@ func _terrain_color(position: Vector3, normal: Vector3) -> Color:
     var height_factor := clampf((position.y - 1.0) / 8.0, 0.0, 1.0)
     var slope := 1.0 - normal.dot(Vector3.UP)
     var variation := detail_noise.get_noise_2d(position.x * 1.7, position.z * 1.7) * 0.045
-    var grass := Color(0.24, 0.39, 0.19)
-    var moss := Color(0.34, 0.39, 0.19)
-    var stone := Color(0.39, 0.40, 0.39)
-    var color := grass.lerp(moss, clampf((0.2 - height_factor) * 2.5, 0.0, 1.0))
-    color = color.lerp(stone, clampf(maxf(slope * 1.35, height_factor * 0.85), 0.0, 0.88))
+    var grass := Color(0.22, 0.36, 0.16)
+    var moss := Color(0.34, 0.37, 0.18)
+    var stone := Color(0.43, 0.43, 0.42)
+    var scree := Color(0.30, 0.32, 0.32)
+    var color := grass.lerp(moss, clampf((0.25 - height_factor) * 2.2, 0.0, 1.0))
+    color = color.lerp(stone, clampf(maxf(slope * 1.5, height_factor * 0.9), 0.0, 0.92))
+    if slope > 0.48:
+        color = color.lerp(scree, clampf((slope - 0.48) * 1.8, 0.0, 0.7))
     return color.lightened(variation)
+
+func _make_terrain_material() -> StandardMaterial3D:
+    var texture_noise := FastNoiseLite.new()
+    texture_noise.seed = terrain_seed + 1201
+    texture_noise.noise_type = FastNoiseLite.TYPE_SIMPLEX
+    texture_noise.frequency = 0.035
+    texture_noise.fractal_type = FastNoiseLite.FRACTAL_FBM
+    texture_noise.fractal_octaves = 4
+    var albedo_texture := NoiseTexture2D.new()
+    albedo_texture.width = 512
+    albedo_texture.height = 512
+    albedo_texture.seamless = true
+    albedo_texture.noise = texture_noise
+    var material := StandardMaterial3D.new()
+    material.albedo_texture = albedo_texture
+    material.vertex_color_use_as_albedo = true
+    material.uv1_triplanar = true
+    material.uv1_scale = Vector3(0.16, 0.16, 0.16)
+    material.roughness = 1.0
+    return material
 
 func generate() -> void:
     if not is_inside_tree():
@@ -78,14 +101,12 @@ func generate() -> void:
             _add_colored_triangle(surface, b, c, d)
     surface.generate_normals()
     terrain_mesh = surface.commit()
-    var terrain_material := StandardMaterial3D.new()
-    terrain_material.vertex_color_use_as_albedo = true
-    terrain_material.roughness = 1.0
     var terrain_visual := MeshInstance3D.new()
     terrain_visual.name = "TerrainSurface"
     terrain_visual.mesh = terrain_mesh
-    terrain_visual.material_override = terrain_material
+    terrain_visual.material_override = _make_terrain_material()
     generated_root.add_child(terrain_visual)
+
     var terrain_body := StaticBody3D.new()
     terrain_body.name = "TerrainCollision"
     var terrain_collision := CollisionShape3D.new()
@@ -112,7 +133,10 @@ func populate_resources(inventory: GrimholtInventory) -> void:
         {"id": "iron_vein", "name": "Eisenader", "item": "iron_ore", "amount": 3, "x": 12.0, "z": -9.0},
         {"id": "iron_vein", "name": "Eisenader", "item": "iron_ore", "amount": 3, "x": -14.0, "z": -12.0},
         {"id": "herb", "name": "Heilkraut", "item": "herb", "amount": 2, "x": 5.0, "z": -14.0},
-        {"id": "herb", "name": "Heilkraut", "item": "herb", "amount": 2, "x": -12.0, "z": 11.0}
+        {"id": "herb", "name": "Heilkraut", "item": "herb", "amount": 2, "x": -12.0, "z": 11.0},
+        {"id": "shrub", "name": "Waldstrauch", "item": "", "amount": 0, "x": -14.0, "z": 3.0},
+        {"id": "shrub", "name": "Waldstrauch", "item": "", "amount": 0, "x": 15.0, "z": 1.0},
+        {"id": "shrub", "name": "Waldstrauch", "item": "", "amount": 0, "x": 2.0, "z": 15.0}
     ]
     for entry in placements:
         var node: GrimholtResourceNode = ResourceNodeScript.new()
