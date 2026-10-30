@@ -440,6 +440,15 @@ func _create_walkable_cave(parent: Node3D) -> void:
         floor.material_override = floor_material
         floor.position = Vector3(0, -0.25, -float(i) * 5.0)
         cave.add_child(floor)
+        var floor_body := StaticBody3D.new()
+        floor_body.name = "CaveFloorCollision_%02d" % i
+        var floor_collision := CollisionShape3D.new()
+        var floor_shape := BoxShape3D.new()
+        floor_shape.size = Vector3(7.0, 0.5, 5.0)
+        floor_collision.shape = floor_shape
+        floor_collision.position = floor.position
+        floor_body.add_child(floor_collision)
+        cave.add_child(floor_body)
         var arch := TorusMesh.new()
         arch.inner_radius = 3.0
         arch.outer_radius = 4.2
