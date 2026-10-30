@@ -138,14 +138,24 @@ func _add_box(node_name: String, pos: Vector3, dimensions: Vector3, color: Color
 
 func _build_menu() -> void:
 	menu_layer = CanvasLayer.new()
+	menu_layer.layer = 10
 	add_child(menu_layer)
+
+	# Use a full-viewport Control + CenterContainer so the menu is laid out
+	# reliably at different window sizes and scaling settings.
+	var menu_root := Control.new()
+	menu_root.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	menu_root.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	menu_layer.add_child(menu_root)
+
+	var center := CenterContainer.new()
+	center.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	center.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	menu_root.add_child(center)
+
 	var panel := PanelContainer.new()
-	panel.set_anchors_and_offsets_preset(Control.PRESET_CENTER)
-	panel.offset_left = -230
-	panel.offset_top = -260
-	panel.offset_right = 230
-	panel.offset_bottom = 260
-	menu_layer.add_child(panel)
+	panel.custom_minimum_size = Vector2(460, 520)
+	center.add_child(panel)
 
 	var column := VBoxContainer.new()
 	column.add_theme_constant_override("separation", 12)
@@ -259,6 +269,7 @@ func _on_master_volume_changed(value: float) -> void:
 
 func _build_hud() -> void:
 	hud_layer = CanvasLayer.new()
+	hud_layer.layer = 5
 	add_child(hud_layer)
 	var top := HBoxContainer.new()
 	top.set_anchors_and_offsets_preset(Control.PRESET_TOP_WIDE)
@@ -335,6 +346,11 @@ func _build_hud() -> void:
 	scoreboard_panel.add_child(scoreboard_label)
 
 func _unhandled_input(event: InputEvent) -> void:
+	if menu_layer != null and menu_layer.visible and event is InputEventKey and event.pressed and not event.echo:
+		if event.keycode == KEY_ENTER or event.keycode == KEY_KP_ENTER or event.keycode == KEY_SPACE:
+			start_solo_game()
+			get_viewport().set_input_as_handled()
+			return
 	if event is InputEventKey and event.keycode == KEY_TAB:
 		if event.pressed and not event.echo and scoreboard_panel != null:
 			scoreboard_panel.visible = true
