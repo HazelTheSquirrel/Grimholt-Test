@@ -54,12 +54,9 @@ func _physics_process(delta: float) -> void:
 	move_and_slide()
 	fire_cooldown = maxf(0.0, fire_cooldown - delta)
 	network_timer += delta
-	if network_timer >= 0.05 and multiplayer.multiplayer_peer != null:
+	if network_timer >= 0.05 and multiplayer.multiplayer_peer != null and not multiplayer.is_server():
 		network_timer = 0.0
-		if multiplayer.is_server():
-			get_parent()._relay_transform.rpc(get_multiplayer_authority(), global_position, rotation.y, head.rotation.x)
-		else:
-			get_parent()._submit_transform.rpc_id(1, global_position, rotation.y, head.rotation.x)
+		get_parent()._submit_transform.rpc_id(1, global_position, rotation.y, head.rotation.x)
 
 func _fire() -> void:
 	if fire_cooldown > 0.0 or multiplayer.multiplayer_peer == null:
