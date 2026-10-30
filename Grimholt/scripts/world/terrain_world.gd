@@ -111,28 +111,15 @@ func _terrain_color(position: Vector3, normal: Vector3) -> Color:
     return base.lightened(variation)
 
 func _make_terrain_material() -> StandardMaterial3D:
-    var texture_noise := FastNoiseLite.new()
-    texture_noise.seed = terrain_seed + 1201
-    texture_noise.noise_type = FastNoiseLite.TYPE_SIMPLEX
-    texture_noise.frequency = 0.035
-    texture_noise.fractal_type = FastNoiseLite.FRACTAL_FBM
-    texture_noise.fractal_octaves = 5
-    var albedo_texture := NoiseTexture2D.new()
-    albedo_texture.width = 512
-    albedo_texture.height = 512
-    albedo_texture.seamless = true
-    albedo_texture.noise = texture_noise
-    var ramp := Gradient.new()
-    ramp.set_color(0, Color(0.72, 0.75, 0.65))
-    ramp.add_point(0.5, Color(0.91, 0.91, 0.83))
-    ramp.set_color(1, Color(1.0, 1.0, 1.0))
-    albedo_texture.color_ramp = ramp
-    var material := StandardMaterial3D.new()
-    material.albedo_texture = albedo_texture
-    material.vertex_color_use_as_albedo = true
-    material.uv1_triplanar = true
-    material.uv1_scale = Vector3(0.10, 0.10, 0.10)
-    material.roughness = 1.0
+    var material := load("res://assets/materials/terrain_grass.tres") as StandardMaterial3D
+    if material == null:
+        push_error("Grimholt asset pack: terrain_grass.tres could not be loaded.")
+        material = StandardMaterial3D.new()
+        material.albedo_color = Color(0.28, 0.38, 0.20)
+        material.roughness = 1.0
+        material.uv1_triplanar = true
+        material.uv1_scale = Vector3(0.055, 0.055, 0.055)
+        material.vertex_color_use_as_albedo = true
     return material
 
 func generate() -> void:
@@ -147,6 +134,14 @@ func generate() -> void:
     _pending_chunks.clear()
     _last_center = Vector2i(2147483647, 2147483647)
     update_streaming(Vector3.ZERO)
+    # Build the spawn chunk immediately so the player never drops through a not-yet-created collider.
+    var spawn_key := Vector2i.ZERO
+    if not active_chunks.has(spawn_key):
+        active_chunks[spawn_key] = _create_chunk(spawn_key.x, spawn_key.y)
+    _pending_chunks.erase(spawn_key)
+
+func get_safe_spawn_position() -> Vector3:
+    return Vector3(0.0, height_at(0.0, 0.0) + 1.25, 0.0)
 
 func update_streaming(world_position: Vector3) -> void:
     if generated_root == null or not is_instance_valid(generated_root):
@@ -253,6 +248,9 @@ func _populate_chunk_foliage(chunk: Node3D, chunk_x: int, chunk_z: int) -> void:
     var crown_mat := StandardMaterial3D.new()
     crown_mat.albedo_color = [Color(0.20, 0.39, 0.15), Color(0.12, 0.31, 0.13), Color(0.08, 0.23, 0.17), Color(0.34, 0.35, 0.30), Color(0.45, 0.39, 0.22)][forest_biome]
     crown_mat.roughness = 1.0
+    crown_mat.albedo_texture = load("res://assets/textures/leaves_canopy.svg") as Texture2D
+    crown_mat.uv1_triplanar = true
+    crown_mat.uv1_scale = Vector3(0.12, 0.12, 0.12)
     var crown_batch := MultiMesh.new()
     crown_batch.transform_format = MultiMesh.TRANSFORM_3D
     crown_batch.mesh = crown_mesh
@@ -274,6 +272,8 @@ func _populate_chunk_foliage(chunk: Node3D, chunk_x: int, chunk_z: int) -> void:
         var wx := chunk.position.x + px
         var wz := chunk.position.z + pz
         var biome := biome_at(wx, wz)
+        if Vector2(px, pz).length() < 28.0:
+            continue
         var river_x := 12500.0 + river_noise.get_noise_2d(0.0, wz * 0.42) * 10500.0
         if biome == 3 or absf(wx - river_x) < 360.0 or rng.randf() > (0.78 if biome == 1 else 0.43):
             continue
