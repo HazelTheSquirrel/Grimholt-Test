@@ -20,6 +20,7 @@ Eigenständiger Multiplayer-3D-Arena-Shooter mit klassischem Free-for-All-Deathm
 - [ ] Mehrclient-Tests, Paketverlust- und Disconnect-Tests
 - [ ] Serverseitige Munitions- und Nachladeautorität
 - [ ] Serverautoritatives Movement statt clientseitig gemeldeter Positionen
+- [x] Rate-Limit und Plausibilitätsprüfung für gemeldete Spielerpositionen (Übergangsschutz, kein Ersatz für Serverphysik)
 
 ## Phase 2 – HUD und Spielgefühl
 - [x] Eigenständiges militärisches HUD
