@@ -32,6 +32,32 @@ func _run() -> void:
     for frame in range(125):
         await physics_frame
     var live_player := live_scene.get_node("Player") as GrimholtPlayer
+    var terrain_for_spawn := live_scene.get_node("TerrainWorld") as GrimholtTerrainWorld
+    var spawn_chunk: Node3D = terrain_for_spawn.active_chunks.get(Vector2i.ZERO)
+    if spawn_chunk == null or spawn_chunk.get_node_or_null("TerrainCollision") == null:
+        _fail("Spawn chunk collision was not built synchronously before player spawn.")
+        return
+    if absf(live_player.global_position.y - terrain_for_spawn.height_at(0.0, 0.0) - 1.25) > 0.01:
+        _fail("Player did not start at the configured safe terrain spawn height.")
+        return
+    var texture_paths := [
+        "res://assets/textures/grass_meadow.svg",
+        "res://assets/textures/forest_moss.svg",
+        "res://assets/textures/rock_slate.svg",
+        "res://assets/textures/earth_dirt.svg",
+        "res://assets/textures/gravel_sand.svg",
+        "res://assets/textures/snow_ice.svg",
+        "res://assets/textures/bark_wood.svg",
+        "res://assets/textures/leaves_canopy.svg"
+    ]
+    for texture_path in texture_paths:
+        if not ResourceLoader.exists(texture_path) or ResourceLoader.load(texture_path) == null:
+            _fail("Seamless texture asset failed to load: " + texture_path)
+            return
+    for material_path in ["res://assets/materials/terrain_grass.tres", "res://assets/materials/terrain_rock.tres", "res://assets/materials/wood_bark.tres", "res://assets/materials/foliage_leaves.tres"]:
+        if not ResourceLoader.exists(material_path) or not ResourceLoader.load(material_path) is StandardMaterial3D:
+            _fail("World material failed to load: " + material_path)
+            return
     if live_player == null or not live_player.is_on_floor():
         _fail("Live player did not reach the terrain before interaction.")
         return
