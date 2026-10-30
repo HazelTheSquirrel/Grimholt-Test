@@ -222,10 +222,10 @@ func _is_player_input_valid(input_vector: Vector2, yaw: float, pitch: float) -> 
 func _accept_input_packet(sender: int, now_msec: int) -> bool:
 	if not players.has(sender):
 		return false
-	var previous_packet_msec := int(last_transform_packet_msec.get(sender, 0))
+	var previous_packet_msec := int(last_input_packet_msec.get(sender, 0))
 	if previous_packet_msec > 0 and now_msec - previous_packet_msec < INPUT_MIN_INTERVAL_MSEC:
 		return false
-	last_transform_packet_msec[sender] = now_msec
+	last_input_packet_msec[sender] = now_msec
 	return true
 
 @rpc("any_peer", "call_remote", "unreliable")
