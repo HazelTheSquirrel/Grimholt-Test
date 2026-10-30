@@ -125,7 +125,7 @@ func _on_peer_disconnected(peer_id: int) -> void:
 		players.erase(peer_id)
 		scores.erase(peer_id)
 		deaths.erase(peer_id)
-		last_transform_packet_msec.erase(peer_id)
+		last_input_packet_msec.erase(peer_id)
 		last_shot_times.erase(peer_id)
 		weapon_ammo.erase(peer_id)
 		weapon_reserve.erase(peer_id)
@@ -223,7 +223,7 @@ func _accept_input_packet(sender: int, now_msec: int) -> bool:
 	if not players.has(sender):
 		return false
 	var previous_packet_msec := int(last_transform_packet_msec.get(sender, 0))
-	if previous_packet_msec > 0 and now_msec - previous_packet_msec < TRANSFORM_MIN_INTERVAL_MSEC:
+	if previous_packet_msec > 0 and now_msec - previous_packet_msec < INPUT_MIN_INTERVAL_MSEC:
 		return false
 	last_transform_packet_msec[sender] = now_msec
 	return true
