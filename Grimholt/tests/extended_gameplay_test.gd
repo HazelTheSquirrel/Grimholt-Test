@@ -46,6 +46,42 @@ func _run() -> void:
     if live_player.inventory.get_item_count("wood") != 4:
         _fail("Starter oak harvest did not add the configured four wood to the live player inventory.")
         return
+    var live_environment := live_scene.get_node("WorldEnvironment") as WorldEnvironment
+    if live_environment.environment.sky == null or not live_environment.environment.volumetric_fog_enabled:
+        _fail("Runtime environment setup replaced or damaged the editor-assigned sky resource.")
+        return
+    if not live_player.inventory.add_item("wooden_plank", 6):
+        _fail("Could not prepare save/load building regression test.")
+        return
+    live_player.professions.add_experience("carpentry", 125)
+    if not live_player.building_system.place_piece("foundation", Vector3(3.0, 0.0, 3.0), live_player.inventory):
+        _fail("Could not place a foundation before saving.")
+        return
+    var saved_position := Vector3(8.0, 4.0, 9.0)
+    live_player.global_position = saved_position
+    if not bool(live_scene.call("_save_game", false)):
+        _fail("Save manager failed to write a valid game snapshot.")
+        return
+    live_player.global_position = Vector3(-20.0, 30.0, -20.0)
+    live_player.inventory.set_items_from_save({})
+    live_player.professions.set_experience_from_save({})
+    live_player.building_system.restore_from_save([])
+    if not bool(live_scene.call("_load_game", false)):
+        _fail("Save manager failed to restore a valid game snapshot.")
+        return
+    if not live_player.global_position.is_equal_approx(saved_position):
+        _fail("Save/load did not restore the player position.")
+        return
+    if live_player.inventory.get_item_count("wood") != 4 or live_player.inventory.get_item_count("wooden_plank") != 0:
+        _fail("Save/load did not restore the exact inventory snapshot.")
+        return
+    if live_player.professions.get_experience("carpentry") != 125:
+        _fail("Save/load did not restore profession experience.")
+        return
+    if live_player.building_system.get_child_count() != 1:
+        _fail("Save/load did not restore the placed foundation.")
+        return
+    DirAccess.remove_absolute(ProjectSettings.globalize_path("user://grimholt_save.json"))
     live_scene.queue_free()
     await process_frame
 
