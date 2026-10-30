@@ -124,3 +124,10 @@ GitHub Actions importiert und parst das Projekt mit Godot 4.7.2, führt einen He
 Die prozedurale Welt ist auf **10.000 km² (100 × 100 km)** ausgelegt. Terrain wird in 1-km-Chunks erzeugt; um den Spieler bleiben aktuell neun Abschnitte aktiv. Höhenformen, Gebirgsrücken, Flusssenke, Biom-Farbzonen, Gras und Wald-Instancing sind seed-deterministisch. Die Noise-Albedo-Textur wird im Projekt selbst erzeugt und nahtlos gekachelt.
 
 **Hinweis zum Entwicklungsstand:** Das ist das technische Großwelt-Fundament, noch kein fertig ausgestaltetes Open World Level. Sichtbare Fluss-Wasserflächen, begehbare Höhlen, besondere Täler/Schluchten, handgebaute Orte, Biom-spezifische Vegetation, LOD und Performanceprofiling stehen noch aus.
+
+
+### Welt-Features (aktueller Ausbau)
+
+Die gestreamte Welt enthält nun sichtbare Flussbänder, einen Wasserfall mit Becken, eine begehbare Höhlen-Tunnel-Landmarke mit Bodenkollision, biomabhängige Vegetationspaletten sowie seed-stabile POIs (Wachturmruine, verlassenes Dorf, Steinkreis und Dungeon-Eingang). Das Terrain nutzt zwei Meshauflösungen je Chunkdistanz. Chunk-Erzeugung wird pro Frame gestaffelt.
+
+**Noch offen:** Die Mesh-/Noise-Berechnung läuft weiterhin auf dem Hauptthread; echte Worker-Thread-Erzeugung, LOD-Übergangsmorphing, vollständige Flussufer-/Wasserphysik, Höhlen-Navigation/Beleuchtung und Profiling sind nicht abgeschlossen. Die Landmarken sind prozedurale Gameplay-Blockouts, keine final handmodellierten Dungeons oder Dörfer.
