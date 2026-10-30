@@ -30,6 +30,7 @@ var feed_label: Label
 var minimap: Control
 var last_positions: Dictionary = {}
 var last_position_times: Dictionary = {}
+var last_shot_times: Dictionary = {}
 var bot_sync_timer := 0.0
 
 func _ready() -> void:
@@ -392,6 +393,7 @@ func _on_peer_disconnected(peer_id: int) -> void:
 		scores.erase(peer_id)
 		last_positions.erase(peer_id)
 		last_position_times.erase(peer_id)
+		last_shot_times.erase(peer_id)
 		_sync_scores.rpc(scores)
 
 func _spawn_player(peer_id: int) -> void:
@@ -406,6 +408,7 @@ func _spawn_player(peer_id: int) -> void:
 	scores[peer_id] = 0
 	last_positions[peer_id] = player.global_position
 	last_position_times[peer_id] = Time.get_ticks_msec() / 1000.0
+	last_shot_times[peer_id] = -1000.0
 	_spawn_player_remote.rpc(peer_id, player.global_position)
 	_sync_scores.rpc(scores)
 
@@ -477,10 +480,14 @@ func _submit_transform(pos: Vector3, yaw: float, pitch: float) -> void:
 	if not players.has(sender):
 		return
 	var now := Time.get_ticks_msec() / 1000.0
+	if not pos.is_finite() or not is_finite(yaw) or not is_finite(pitch):
+		return
+	if absf(pitch) > deg_to_rad(85.5) or absf(yaw) > TAU * 1000.0:
+		return
 	var previous: Vector3 = last_positions.get(sender, players[sender].global_position)
 	var elapsed := maxf(0.05, now - float(last_position_times.get(sender, now)))
 	var allowed := 8.0 * elapsed + 1.5
-	if previous.distance_to(pos) > allowed:
+	if previous.distance_to(pos) > allowed or absf(pos.x) > 30.0 or absf(pos.z) > 30.0 or pos.y < -2.0 or pos.y > 20.0:
 		return
 	last_positions[sender] = pos
 	last_position_times[sender] = now
@@ -502,12 +509,23 @@ func _request_shot(origin: Vector3, direction: Vector3) -> void:
 		_process_shot(multiplayer.get_remote_sender_id(), origin, direction)
 
 func _process_shot(shooter_id: int, origin: Vector3, direction: Vector3) -> void:
-	if not round_active or not players.has(shooter_id):
+	if not round_active or not players.has(shooter_id) or direction.length_squared() < 0.8:
 		return
 	var shooter: Node3D = players[shooter_id]
-	if shooter.global_position.distance_to(origin) > 4.0:
+	if int(shooter.get("health")) <= 0:
 		return
-	var query := PhysicsRayQueryParameters3D.create(origin, origin + direction.normalized() * 120.0)
+	var now := Time.get_ticks_msec() / 1000.0
+	if now - float(last_shot_times.get(shooter_id, -1000.0)) < 0.115:
+		return
+	var head := shooter.get_node_or_null("Head") as Node3D
+	if head == null:
+		return
+	var expected_origin := head.global_position
+	var expected_direction := -head.global_transform.basis.z.normalized()
+	if expected_origin.distance_to(origin) > 1.25 or expected_direction.dot(direction.normalized()) < 0.94:
+		return
+	last_shot_times[shooter_id] = now
+	var query := PhysicsRayQueryParameters3D.create(expected_origin, expected_origin + expected_direction * 120.0)
 	query.exclude = [shooter.get_rid()]
 	var hit := get_world_3d().direct_space_state.intersect_ray(query)
 	if hit.is_empty():
