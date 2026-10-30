@@ -12,6 +12,7 @@ const SPAWNS := [Vector3(-17, 1, -17), Vector3(17, 1, 17), Vector3(-17, 1, 17), 
 var players: Dictionary = {}
 var bots: Dictionary = {}
 var scores: Dictionary = {}
+var deaths: Dictionary = {}
 var round_time := ROUND_SECONDS
 var round_active := false
 var hud_layer: CanvasLayer
@@ -28,6 +29,10 @@ var ammo_label: Label
 var health_label: Label
 var feed_label: Label
 var minimap: Control
+var scoreboard_panel: PanelContainer
+var scoreboard_label: RichTextLabel
+var hitmarker_label: Label
+var hitmarker_timer := 0.0
 var last_positions: Dictionary = {}
 var last_position_times: Dictionary = {}
 var last_shot_times: Dictionary = {}
@@ -64,6 +69,9 @@ func _process(delta: float) -> void:
 		if round_time <= 0.0:
 			_finish_round()
 	_update_hud()
+	if hitmarker_timer > 0.0:
+		hitmarker_timer = maxf(0.0, hitmarker_timer - delta)
+		hitmarker_label.visible = hitmarker_timer > 0.0
 	if minimap != null:
 		minimap.queue_redraw()
 
@@ -281,6 +289,36 @@ func _build_hud() -> void:
 	minimap.draw.connect(_draw_minimap)
 	hud_layer.add_child(minimap)
 
+	hitmarker_label = Label.new()
+	hitmarker_label.text = "✕"
+	hitmarker_label.visible = false
+	hitmarker_label.set_anchors_and_offsets_preset(Control.PRESET_CENTER)
+	hitmarker_label.add_theme_font_size_override("font_size", 34)
+	hitmarker_label.add_theme_color_override("font_color", Color(1.0, 0.88, 0.35))
+	hud_layer.add_child(hitmarker_label)
+
+	scoreboard_panel = PanelContainer.new()
+	scoreboard_panel.set_anchors_and_offsets_preset(Control.PRESET_CENTER)
+	scoreboard_panel.offset_left = -310
+	scoreboard_panel.offset_top = -250
+	scoreboard_panel.offset_right = 310
+	scoreboard_panel.offset_bottom = 250
+	scoreboard_panel.visible = false
+	hud_layer.add_child(scoreboard_panel)
+	scoreboard_label = RichTextLabel.new()
+	scoreboard_label.bbcode_enabled = true
+	scoreboard_label.fit_content = true
+	scoreboard_label.scroll_active = false
+	scoreboard_panel.add_child(scoreboard_label)
+
+func _unhandled_input(event: InputEvent) -> void:
+	if event is InputEventKey and event.keycode == KEY_TAB:
+		if event.pressed and not event.echo and scoreboard_panel != null:
+			scoreboard_panel.visible = true
+			_update_scoreboard()
+		elif not event.pressed and scoreboard_panel != null:
+			scoreboard_panel.visible = false
+
 func _on_training_pressed() -> void:
 	start_solo_game()
 
@@ -292,6 +330,7 @@ func start_solo_game() -> void:
 	players.clear()
 	bots.clear()
 	scores.clear()
+	deaths.clear()
 	last_positions.clear()
 	last_position_times.clear()
 	for child in get_children():
@@ -388,7 +427,7 @@ func _on_peer_connected(peer_id: int) -> void:
 			_spawn_player_remote.rpc_id(peer_id, int(id), players[id].global_position)
 	for id in bots:
 		_spawn_bot_remote.rpc_id(peer_id, int(id), bots[id].global_position)
-	_sync_scores.rpc_id(peer_id, scores)
+	_sync_scores.rpc_id(peer_id, scores, deaths)
 	_match_started.rpc_id(peer_id, int(ceil(round_time)))
 
 func _on_peer_disconnected(peer_id: int) -> void:
@@ -396,13 +435,14 @@ func _on_peer_disconnected(peer_id: int) -> void:
 		_remove_actor.rpc(peer_id)
 		players.erase(peer_id)
 		scores.erase(peer_id)
+		deaths.erase(peer_id)
 		last_positions.erase(peer_id)
 		last_position_times.erase(peer_id)
 		last_shot_times.erase(peer_id)
 		weapon_ammo.erase(peer_id)
 		weapon_reserve.erase(peer_id)
 		reload_deadlines.erase(peer_id)
-		_sync_scores.rpc(scores)
+		_sync_scores.rpc(scores, deaths)
 
 func _spawn_player(peer_id: int) -> void:
 	if players.has(peer_id):
@@ -414,6 +454,7 @@ func _spawn_player(peer_id: int) -> void:
 	add_child(player)
 	players[peer_id] = player
 	scores[peer_id] = 0
+	deaths[peer_id] = 0
 	last_positions[peer_id] = player.global_position
 	last_position_times[peer_id] = Time.get_ticks_msec() / 1000.0
 	last_shot_times[peer_id] = -1000.0
@@ -421,7 +462,7 @@ func _spawn_player(peer_id: int) -> void:
 	weapon_reserve[peer_id] = 120
 	_sync_weapon_state.rpc(peer_id, 30, 120, false)
 	_spawn_player_remote.rpc(peer_id, player.global_position)
-	_sync_scores.rpc(scores)
+	_sync_scores.rpc(scores, deaths)
 
 @rpc("authority", "call_remote", "reliable")
 func _spawn_player_remote(peer_id: int, spawn_position: Vector3) -> void:
@@ -555,6 +596,7 @@ func _server_fire(shooter_id: int) -> void:
 	if target is CharacterBody3D and target.is_in_group("combatants"):
 		var victim_id := int(target.get_meta("actor_id", -1))
 		if victim_id != shooter_id:
+				_hit_confirm.rpc(shooter_id)
 			_apply_damage(victim_id, shooter_id, 34)
 
 func request_reload(player_id: int) -> void:
@@ -627,11 +669,13 @@ func _apply_damage(victim_id: int, attacker_id: int, amount: int) -> void:
 	_actor_health.rpc(victim_id, remaining_health)
 	if remaining_health == 0:
 		scores[attacker_id] = int(scores.get(attacker_id, 0)) + 1
-		_sync_scores.rpc(scores)
+		_sync_scores.rpc(scores, deaths)
 		var attacker_name := _actor_name(attacker_id)
 		var victim_name := _actor_name(victim_id)
 		_kill_feed.rpc("%s  »  %s" % [attacker_name, victim_name])
 		if players.has(victim_id):
+			deaths[victim_id] = int(deaths.get(victim_id, 0)) + 1
+			_sync_scores.rpc(scores, deaths)
 			_respawn_player_later(victim_id)
 		else:
 			_respawn_bot_later(victim_id)
@@ -679,8 +723,33 @@ func _respawn_actor(actor_id: int, pos: Vector3, hp: int) -> void:
 			(actor as CharacterBody3D).velocity = Vector3.ZERO
 
 @rpc("authority", "call_local", "reliable")
-func _sync_scores(new_scores: Dictionary) -> void:
+func _sync_scores(new_scores: Dictionary, new_deaths: Dictionary) -> void:
 	scores = new_scores.duplicate(true)
+	deaths = new_deaths.duplicate(true)
+	_update_scoreboard()
+
+@rpc("authority", "call_local", "reliable")
+func _hit_confirm(shooter_id: int) -> void:
+	if shooter_id == multiplayer.get_unique_id() and hitmarker_label != null:
+		hitmarker_timer = 0.16
+		hitmarker_label.visible = true
+
+func _update_scoreboard() -> void:
+	if scoreboard_label == null:
+		return
+	var ranking: Array = []
+	for id in scores:
+		ranking.append([int(id), int(scores[id]), int(deaths.get(id, 0))])
+	ranking.sort_custom(func(a, b):
+		if a[1] == b[1]:
+			return a[2] < b[2]
+		return a[1] > b[1]
+	)
+	var output := "[center][b]GRIMHOLT // SCOREBOARD[/b]\n[b]PLAYER                         K       D[/b]\n"
+	for row in ranking:
+		output += "%s    %02d    %02d\n" % [_actor_name(row[0]), row[1], row[2]]
+	output += "[/center]"
+	scoreboard_label.text = output
 
 func _finish_round() -> void:
 	if not multiplayer.is_server() or not round_active:
@@ -711,6 +780,8 @@ func _update_hud() -> void:
 	for row in ranking.slice(0, 5):
 		rows.append("%s  %02d" % [_actor_name(row[0]), row[1]])
 	score_label.text = "TOP FRAGGERS\n" + "\n".join(rows)
+	if scoreboard_panel != null and scoreboard_panel.visible:
+		_update_scoreboard()
 	var local_player: Node3D = players.get(multiplayer.get_unique_id()) as Node3D
 	if local_player:
 		health_label.text = "VITALS   %03d / 100" % int(local_player.get("health"))
