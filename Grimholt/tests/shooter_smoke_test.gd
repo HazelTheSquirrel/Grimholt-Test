@@ -18,6 +18,12 @@ func _run_smoke_test() -> void:
 	assert(game.bots.size() == 5, "Expected five bots in solo mode")
 	assert(game.SCORE_LIMIT == 50, "Round kill limit should be 50")
 	assert(game.ROUND_SECONDS == 900, "Round duration should be 15 minutes")
+	assert(game._format_round_time(900000) == "15:00", "900 seconds must display as 15:00")
+	assert(game._format_round_time(61000) == "01:01", "Countdown must use real seconds")
+	assert(game._format_round_time(60000) == "01:00", "Minute boundary must display correctly")
+	assert(game._format_round_time(999) == "00:01", "Timer must not show 00:00 before expiry")
+	assert(game._format_round_time(0) == "00:00", "Expired timer must display 00:00")
+	assert(game.round_end_time_msec > Time.get_ticks_msec(), "Round must use a future monotonic deadline")
 	assert(game.scoreboard_panel != null, "Scoreboard UI was not created")
 	assert(game.hitmarker_label != null, "Hit confirmation UI was not created")
 	var player: Node = game.players[1]
@@ -32,5 +38,11 @@ func _run_smoke_test() -> void:
 	await create_timer(3.2).timeout
 	assert(game.bots.has(1000), "Bot should respawn after its delay")
 	assert(game.bots[1000].health == 100, "Respawned bot should have full health")
-	print("SHOOTER_SMOKE_TEST_OK: scene, input, player, bots, HUD, one-point kill scoring, bot death/respawn")
+	# A short real-time deadline proves the clock expires by elapsed wall time,
+	# rather than by a minutes/seconds formatting or frame-count shortcut.
+	game.round_end_time_msec = Time.get_ticks_msec() + 1100
+	await create_timer(1.25).timeout
+	assert(not game.round_active, "Round must finish when the real-time deadline reaches zero")
+	assert(game.timer_label.text.ends_with("00:00"), "Expired round must show 00:00")
+	print("SHOOTER_SMOKE_TEST_OK: scene, input, player, bots, HUD, real-time countdown, one-point kill scoring, bot death/respawn")
 	quit(0)
