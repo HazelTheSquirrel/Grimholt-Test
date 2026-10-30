@@ -23,10 +23,14 @@ func _run_smoke_test() -> void:
 	var player: Node = game.players[1]
 	assert(player.get_node_or_null("Head/Camera3D") != null, "Player camera is missing")
 	assert(player.get_node("Head/Camera3D").current, "Local player camera is not current")
+	var score_before_kill := int(game.scores.get(1, 0))
 	game._apply_damage(1000, 1, 100)
+	assert(int(game.scores.get(1, 0)) == score_before_kill + 1, "Every kill must award exactly one point")
+	game._apply_damage(1000, 1, 100)
+	assert(int(game.scores.get(1, 0)) == score_before_kill + 1, "A dead target must not award duplicate kill points")
 	assert(not game.bots.has(1000), "Dead bot should be removed immediately")
 	await create_timer(3.2).timeout
 	assert(game.bots.has(1000), "Bot should respawn after its delay")
 	assert(game.bots[1000].health == 100, "Respawned bot should have full health")
-	print("SHOOTER_SMOKE_TEST_OK: scene, input, player, bots, HUD, bot death/respawn")
+	print("SHOOTER_SMOKE_TEST_OK: scene, input, player, bots, HUD, one-point kill scoring, bot death/respawn")
 	quit(0)
