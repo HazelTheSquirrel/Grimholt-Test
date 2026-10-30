@@ -147,7 +147,7 @@ func _spawn_player(peer_id: int) -> void:
 	scores[peer_id] = 0
 	deaths[peer_id] = 0
 	last_positions[peer_id] = player.global_position
-	last_position_times[peer_id] = Time.get_ticks_msec() / 1000.0
+	last_position_times[peer_id] = Time.get_ticks_msec()
 	last_shot_times[peer_id] = -1000.0
 	weapon_ammo[peer_id] = 30
 	weapon_reserve[peer_id] = 120
