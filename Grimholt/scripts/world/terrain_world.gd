@@ -186,9 +186,11 @@ func _create_chunk(chunk_x: int, chunk_z: int) -> Node3D:
     generated_root.add_child(chunk)
     var surface := SurfaceTool.new()
     surface.begin(Mesh.PRIMITIVE_TRIANGLES)
-    var step := CHUNK_SIZE / float(CHUNK_RESOLUTION)
-    for z in range(CHUNK_RESOLUTION):
-        for x in range(CHUNK_RESOLUTION):
+    var chunk_distance := Vector2(float(chunk_x - _last_center.x), float(chunk_z - _last_center.y)).length()
+    var lod_resolution := 32 if chunk_distance <= 1.0 else 12
+    var step := CHUNK_SIZE / float(lod_resolution)
+    for z in range(lod_resolution):
+        for x in range(lod_resolution):
             var x0 := float(x) * step
             var x1 := float(x + 1) * step
             var z0 := float(z) * step
@@ -216,6 +218,7 @@ func _create_chunk(chunk_x: int, chunk_z: int) -> Node3D:
     chunk.add_child(body)
     _populate_chunk_foliage(chunk, chunk_x, chunk_z)
     _create_river_water(chunk)
+    _create_waterfall(chunk, chunk_x, chunk_z)
     _create_landmark(chunk, chunk_x, chunk_z)
     if chunk_x == 0 and chunk_z == 0:
         terrain_mesh = mesh
@@ -238,7 +241,8 @@ func _populate_chunk_foliage(chunk: Node3D, chunk_x: int, chunk_z: int) -> void:
     trunk_mesh.bottom_radius = 0.30
     trunk_mesh.height = 5.0
     var trunk_mat := StandardMaterial3D.new()
-    trunk_mat.albedo_color = Color(0.25, 0.16, 0.09)
+    var forest_biome := biome_at(chunk.position.x + 500.0, chunk.position.z + 500.0)
+    trunk_mat.albedo_color = Color(0.68, 0.66, 0.55) if forest_biome == 1 else (Color(0.22, 0.14, 0.09) if forest_biome == 2 else Color(0.34, 0.22, 0.13))
     var trunk_batch := MultiMesh.new()
     trunk_batch.transform_format = MultiMesh.TRANSFORM_3D
     trunk_batch.mesh = trunk_mesh
@@ -247,7 +251,7 @@ func _populate_chunk_foliage(chunk: Node3D, chunk_x: int, chunk_z: int) -> void:
     crown_mesh.radius = 2.6
     crown_mesh.height = 5.8
     var crown_mat := StandardMaterial3D.new()
-    crown_mat.albedo_color = Color(0.12, 0.27, 0.11)
+    crown_mat.albedo_color = [Color(0.20, 0.39, 0.15), Color(0.12, 0.31, 0.13), Color(0.08, 0.23, 0.17), Color(0.34, 0.35, 0.30), Color(0.45, 0.39, 0.22)][forest_biome]
     crown_mat.roughness = 1.0
     var crown_batch := MultiMesh.new()
     crown_batch.transform_format = MultiMesh.TRANSFORM_3D
@@ -258,7 +262,7 @@ func _populate_chunk_foliage(chunk: Node3D, chunk_x: int, chunk_z: int) -> void:
     grass_mesh.bottom_radius = 0.045
     grass_mesh.height = 0.38
     var grass_mat := StandardMaterial3D.new()
-    grass_mat.albedo_color = Color(0.29, 0.43, 0.19)
+    grass_mat.albedo_color = [Color(0.34, 0.48, 0.20), Color(0.22, 0.39, 0.16), Color(0.25, 0.34, 0.22), Color(0.37, 0.37, 0.32), Color(0.49, 0.43, 0.25)][forest_biome]
     var grass_batch := MultiMesh.new()
     grass_batch.transform_format = MultiMesh.TRANSFORM_3D
     grass_batch.mesh = grass_mesh
@@ -340,6 +344,36 @@ func _create_river_water(chunk: Node3D) -> void:
     material.cull_mode = BaseMaterial3D.CULL_DISABLED
     water.material_override = material
     chunk.add_child(water)
+
+
+func _create_waterfall(chunk: Node3D, cx: int, cz: int) -> void:
+    # Signature waterfall landmark in the northern mountain region.
+    if cx != 3 or cz != -2:
+        return
+    var cascade := MeshInstance3D.new()
+    cascade.name = "MountainWaterfall"
+    var plane := PlaneMesh.new()
+    plane.size = Vector2(34.0, 62.0)
+    cascade.mesh = plane
+    var material := StandardMaterial3D.new()
+    material.albedo_color = Color(0.35, 0.68, 0.79, 0.78)
+    material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+    material.roughness = 0.12
+    material.cull_mode = BaseMaterial3D.CULL_DISABLED
+    cascade.material_override = material
+    cascade.position = Vector3(500.0, height_at(chunk.position.x + 500.0, chunk.position.z + 500.0) + 30.0, 500.0)
+    cascade.rotation.y = PI * 0.5
+    chunk.add_child(cascade)
+    var plunge_pool := MeshInstance3D.new()
+    plunge_pool.name = "WaterfallPlungePool"
+    var pool := CylinderMesh.new()
+    pool.top_radius = 24.0
+    pool.bottom_radius = 24.0
+    pool.height = 1.2
+    plunge_pool.mesh = pool
+    plunge_pool.material_override = material
+    plunge_pool.position = cascade.position + Vector3(20.0, -29.0, 0.0)
+    chunk.add_child(plunge_pool)
 
 func _landmark_box(parent: Node3D, label: String, size: Vector3, pos: Vector3, tint: Color) -> void:
     var instance := MeshInstance3D.new()
