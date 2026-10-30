@@ -32,3 +32,6 @@ jobs:
 
       - name: Player movement and terrain collision regression test
         run: godot --headless --path Grimholt --script res://tests/player_physics_test.gd
+
+      - name: Editable scene hierarchy regression test
+        run: godot --headless --path Grimholt --script res://tests/scene_structure_test.gd
