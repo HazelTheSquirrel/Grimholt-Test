@@ -11,6 +11,7 @@ const MAX_PLAYERS := 12
 const SCORE_LIMIT := 50
 const KILL_SCORE_POINTS := 1
 const ROUND_SECONDS := 900
+const SETTINGS_PATH := "user://grimholt_settings.cfg"
 const BOT_COUNT := 5
 const INPUT_MIN_INTERVAL_MSEC := 40
 const SPAWNS := [Vector3(-17, 1, -17), Vector3(17, 1, 17), Vector3(-17, 1, 17), Vector3(17, 1, -17), Vector3(0, 1, -18), Vector3(0, 1, 18), Vector3(-18, 1, 0), Vector3(18, 1, 0)]
@@ -57,6 +58,7 @@ var bot_sync_timer := 0.0
 
 func _ready() -> void:
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+	_load_settings()
 	_configure_inputs()
 	_build_menu()
 	_build_hud()
@@ -331,12 +333,23 @@ func _build_pause_menu() -> void:
 	options_heading.text = "OPTIONEN"
 	options_heading.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	pause_options.add_child(options_heading)
-	_add_menu_button(pause_options, "GRAFIK", func(): _show_pause_option_detail("Grafik", "Vollbild und Anzeigeoptionen werden hier verwaltet."))
-	_add_menu_button(pause_options, "SOUND", func(): _show_pause_option_detail("Sound", "Audio-Mix und Lautstärke werden hier verwaltet."))
-	_add_menu_button(pause_options, "STEUERUNG", func(): _show_pause_option_detail("Steuerung", "Tastenbelegung und Maus-Empfindlichkeit werden hier verwaltet."))
-	_add_menu_button(pause_options, "EXTRAS", func(): _show_pause_option_detail("Extras", "HUD-, Barrierefreiheits- und weitere Spieloptionen werden hier verwaltet."))
+	var pause_fullscreen := CheckButton.new()
+	pause_fullscreen.text = "Vollbild"
+	pause_fullscreen.button_pressed = DisplayServer.window_get_mode() == DisplayServer.WINDOW_MODE_FULLSCREEN
+	pause_fullscreen.toggled.connect(_on_fullscreen_toggled)
+	pause_options.add_child(pause_fullscreen)
+	var pause_volume_label := Label.new()
+	pause_volume_label.text = "Master-Lautstärke"
+	pause_options.add_child(pause_volume_label)
+	var pause_volume := HSlider.new()
+	pause_volume.min_value = 0.0
+	pause_volume.max_value = 1.0
+	pause_volume.step = 0.05
+	pause_volume.value = db_to_linear(AudioServer.get_bus_volume_db(0))
+	pause_volume.value_changed.connect(_on_master_volume_changed)
+	pause_options.add_child(pause_volume)
 	pause_option_detail = Label.new()
-	pause_option_detail.text = "Wähle einen Optionsbereich."
+	pause_option_detail.text = "Anzeige und Master-Audio werden lokal gespeichert. Weitere Steuerungsoptionen folgen erst, wenn sie tatsächlich umgesetzt sind."
 	pause_option_detail.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	pause_options.add_child(pause_option_detail)
 	_add_menu_button(pause_options, "ZURÜCK", func(): _show_pause_section("home"))
@@ -406,12 +419,31 @@ func _show_menu_section(section: String) -> void:
 	custom_games_container.visible = section == "custom"
 	options_container.visible = section == "options"
 
+func _load_settings() -> void:
+	var config := ConfigFile.new()
+	if config.load(SETTINGS_PATH) != OK:
+		return
+	var fullscreen := bool(config.get_value("display", "fullscreen", false))
+	var volume := clampf(float(config.get_value("audio", "master_volume", 1.0)), 0.0, 1.0)
+	DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_FULLSCREEN if fullscreen else DisplayServer.WINDOW_MODE_WINDOWED)
+	AudioServer.set_bus_volume_linear(0, volume)
+
+func _save_settings() -> void:
+	var config := ConfigFile.new()
+	config.set_value("display", "fullscreen", DisplayServer.window_get_mode() == DisplayServer.WINDOW_MODE_FULLSCREEN)
+	config.set_value("audio", "master_volume", db_to_linear(AudioServer.get_bus_volume_db(0)))
+	var error := config.save(SETTINGS_PATH)
+	if error != OK:
+		push_warning("Grimholt settings could not be saved: %s" % error)
+
 func _on_fullscreen_toggled(enabled: bool) -> void:
 	var mode := DisplayServer.WINDOW_MODE_FULLSCREEN if enabled else DisplayServer.WINDOW_MODE_WINDOWED
 	DisplayServer.window_set_mode(mode)
+	_save_settings()
 
 func _on_master_volume_changed(value: float) -> void:
 	AudioServer.set_bus_volume_linear(0, value)
+	_save_settings()
 
 func _build_hud() -> void:
 	hud_layer = CanvasLayer.new()
