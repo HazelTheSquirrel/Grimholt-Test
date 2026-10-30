@@ -36,3 +36,21 @@ Die aktuellen Texturen werden prozedural in Godot erzeugt. Es werden keine exter
 ## Testabdeckung
 
 Der CI-Testlauf prüft Import/Parser, Start, Inventar/Crafting/Ressourcen, Spieler-Bodenkollision und Bewegung, Szenenstruktur sowie Maße und Baukosten. Nicht automatisch abgedeckt sind vollständige Maus-/Tastaturbedienung, Langzeit-Performance, alle Grafiktreiber, Speichern/Laden und Multiplayer – diese Funktionen sind teils noch nicht implementiert.
+
+
+## Großwelt – 10.000 km²
+
+Die Weltgrundfläche ist auf **100.000 × 100.000 m** (10.000 km²) ausgelegt. Sie wird nicht als ein einzelnes Mesh geladen: Der Generator hält eine 3×3-Nachbarschaft aus 1-km-Abschnitten um den Spieler aktiv. Jeder Abschnitt besitzt eigene Terrain-Kollision, deterministische Höhenwerte, Vegetations-Instancing und dieselbe globale Noise-Abtastung an den Abschnittsgrenzen.
+
+### Landschaftsaufbau
+
+- Kontinentale Hügel und breite Hochlandformen aus mehrskaligem Simplex-/FBM-Noise.
+- Gebirgsrücken mit höhenabhängiger Fels- und Schneefärbung.
+- Ein mäandrierender Flusskorridor mit breiter Erosionssenke und tieferem Flussbett-Profil.
+- Fünf Höhen-/Klimazonen: Wiesen/Mischwald, dichter Wald, Hochland/Nadelwald, alpines Felsland und Heide.
+- Deterministisch platzierte Waldkronen, Stämme und Grasbüschel je Chunk.
+- Prozedurale Noise-Albedo-Textur mit nahtloser Noise-Generierung und triplanarer Projektion.
+
+### Noch nicht als fertig behaupten
+
+Der aktuelle Meilenstein erzeugt die Großlandschaft und streamt Terrain-Chunks. Sichtbare Wasseroberflächen mit Uferübergängen, begehbare Höhleninnenräume, echte Tal-/Schlucht-Setpieces, markante handgebaute Orte, Flora-Varianten je Biom, Tierwelt, Navmesh und Terrain-LOD sind weitere Arbeitspakete. Die prozedurale Noise-Textur ist eine eigenständige Texturbasis, aber noch kein vollständiges handgemaltes PBR-Set aus Albedo, Normal, Roughness und AO.
