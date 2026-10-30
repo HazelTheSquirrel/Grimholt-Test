@@ -19,7 +19,7 @@ func _ready() -> void:
     var inventory := player.get_node("Inventory") as GrimholtInventory
     player.inventory = inventory
     player.building_system = building_system
-    player.global_position = Vector3(0.0, terrain.height_at(0.0, 0.0) + 5.0, 0.0)
+    player.global_position = terrain.get_safe_spawn_position()
     terrain.populate_resources(inventory)
     for child in terrain.get_children():
         if child is GrimholtResourceNode:
