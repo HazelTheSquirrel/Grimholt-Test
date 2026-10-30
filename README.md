@@ -117,3 +117,10 @@ Es fehlen unter anderem finale Art-Assets, Charaktererstellung, ausgereifte Anim
 ## Validierung
 
 GitHub Actions importiert und parst das Projekt mit Godot 4.7.2, führt einen Headless-Starttest aus und testet die zentralen Inventar-, Crafting-, Berufs- und Ressourcenernte-Funktionen. Diese automatisierten Prüfungen ersetzen keinen manuellen visuellen Spieltest unter Windows.
+
+
+## Großwelt
+
+Die prozedurale Welt ist auf **10.000 km² (100 × 100 km)** ausgelegt. Terrain wird in 1-km-Chunks erzeugt; um den Spieler bleiben aktuell neun Abschnitte aktiv. Höhenformen, Gebirgsrücken, Flusssenke, Biom-Farbzonen, Gras und Wald-Instancing sind seed-deterministisch. Die Noise-Albedo-Textur wird im Projekt selbst erzeugt und nahtlos gekachelt.
+
+**Hinweis zum Entwicklungsstand:** Das ist das technische Großwelt-Fundament, noch kein fertig ausgestaltetes Open World Level. Sichtbare Fluss-Wasserflächen, begehbare Höhlen, besondere Täler/Schluchten, handgebaute Orte, Biom-spezifische Vegetation, LOD und Performanceprofiling stehen noch aus.
