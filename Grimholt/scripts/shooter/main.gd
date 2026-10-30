@@ -31,6 +31,9 @@ var minimap: Control
 var last_positions: Dictionary = {}
 var last_position_times: Dictionary = {}
 var last_shot_times: Dictionary = {}
+var weapon_ammo: Dictionary = {}
+var weapon_reserve: Dictionary = {}
+var reload_deadlines: Dictionary = {}
 var bot_sync_timer := 0.0
 
 func _ready() -> void:
@@ -50,6 +53,8 @@ func _configure_inputs() -> void:
 		InputMap.action_add_event(pair[0], event)
 
 func _process(delta: float) -> void:
+	if multiplayer.is_server():
+		_process_reload_timers()
 	if multiplayer.is_server() and round_active:
 		round_time = maxf(0.0, round_time - delta)
 		bot_sync_timer += delta
@@ -394,6 +399,9 @@ func _on_peer_disconnected(peer_id: int) -> void:
 		last_positions.erase(peer_id)
 		last_position_times.erase(peer_id)
 		last_shot_times.erase(peer_id)
+		weapon_ammo.erase(peer_id)
+		weapon_reserve.erase(peer_id)
+		reload_deadlines.erase(peer_id)
 		_sync_scores.rpc(scores)
 
 func _spawn_player(peer_id: int) -> void:
@@ -409,6 +417,9 @@ func _spawn_player(peer_id: int) -> void:
 	last_positions[peer_id] = player.global_position
 	last_position_times[peer_id] = Time.get_ticks_msec() / 1000.0
 	last_shot_times[peer_id] = -1000.0
+	weapon_ammo[peer_id] = 30
+	weapon_reserve[peer_id] = 120
+	_sync_weapon_state.rpc(peer_id, 30, 120, false)
 	_spawn_player_remote.rpc(peer_id, player.global_position)
 	_sync_scores.rpc(scores)
 
@@ -503,29 +514,39 @@ func _relay_transform(peer_id: int, pos: Vector3, yaw: float, pitch: float) -> v
 		players[peer_id].rotation.y = yaw
 		players[peer_id].get_node("Head").rotation.x = pitch
 
-@rpc("any_peer", "call_remote", "reliable")
-func _request_shot(origin: Vector3, direction: Vector3) -> void:
+func request_fire(shooter_id: int) -> void:
 	if multiplayer.is_server():
-		_process_shot(multiplayer.get_remote_sender_id(), origin, direction)
+		_server_fire(shooter_id)
+	else:
+		_request_fire.rpc_id(1)
 
-func _process_shot(shooter_id: int, origin: Vector3, direction: Vector3) -> void:
-	if not round_active or not players.has(shooter_id) or direction.length_squared() < 0.8:
+@rpc("any_peer", "call_remote", "reliable")
+func _request_fire() -> void:
+	if multiplayer.is_server():
+		_server_fire(multiplayer.get_remote_sender_id())
+
+func _server_fire(shooter_id: int) -> void:
+	if not multiplayer.is_server() or not round_active or not players.has(shooter_id):
 		return
 	var shooter: Node3D = players[shooter_id]
-	if int(shooter.get("health")) <= 0:
+	if int(shooter.get("health")) <= 0 or reload_deadlines.has(shooter_id):
+		return
+	var ammo := int(weapon_ammo.get(shooter_id, 0))
+	if ammo <= 0:
+		_sync_weapon_state.rpc(shooter_id, ammo, int(weapon_reserve.get(shooter_id, 0)), false)
 		return
 	var now := Time.get_ticks_msec() / 1000.0
-	if now - float(last_shot_times.get(shooter_id, -1000.0)) < 0.115:
+	if now - float(last_shot_times.get(shooter_id, -1000.0)) < 0.12:
 		return
 	var head := shooter.get_node_or_null("Head") as Node3D
 	if head == null:
 		return
-	var expected_origin := head.global_position
-	var expected_direction := -head.global_transform.basis.z.normalized()
-	if expected_origin.distance_to(origin) > 1.25 or expected_direction.dot(direction.normalized()) < 0.94:
-		return
+	var origin := head.global_position
+	var direction := -head.global_transform.basis.z.normalized()
+	weapon_ammo[shooter_id] = ammo - 1
 	last_shot_times[shooter_id] = now
-	var query := PhysicsRayQueryParameters3D.create(expected_origin, expected_origin + expected_direction * 120.0)
+	_sync_weapon_state.rpc(shooter_id, ammo - 1, int(weapon_reserve.get(shooter_id, 0)), false)
+	var query := PhysicsRayQueryParameters3D.create(origin, origin + direction * 120.0)
 	query.exclude = [shooter.get_rid()]
 	var hit := get_world_3d().direct_space_state.intersect_ray(query)
 	if hit.is_empty():
@@ -533,9 +554,52 @@ func _process_shot(shooter_id: int, origin: Vector3, direction: Vector3) -> void
 	var target: Object = hit.collider
 	if target is CharacterBody3D and target.is_in_group("combatants"):
 		var victim_id := int(target.get_meta("actor_id", -1))
-		if victim_id == shooter_id:
-			return
-		_apply_damage(victim_id, shooter_id, 34)
+		if victim_id != shooter_id:
+			_apply_damage(victim_id, shooter_id, 34)
+
+func request_reload(player_id: int) -> void:
+	if multiplayer.is_server():
+		_server_reload(player_id)
+	else:
+		_request_reload.rpc_id(1)
+
+@rpc("any_peer", "call_remote", "reliable")
+func _request_reload() -> void:
+	if multiplayer.is_server():
+		_server_reload(multiplayer.get_remote_sender_id())
+
+func _server_reload(player_id: int) -> void:
+	if not multiplayer.is_server() or not round_active or not players.has(player_id):
+		return
+	if int(players[player_id].get("health")) <= 0 or reload_deadlines.has(player_id):
+		return
+	var ammo := int(weapon_ammo.get(player_id, 0))
+	var reserve := int(weapon_reserve.get(player_id, 0))
+	if ammo >= 30 or reserve <= 0:
+		return
+	reload_deadlines[player_id] = Time.get_ticks_msec() / 1000.0 + 1.65
+	_sync_weapon_state.rpc(player_id, ammo, reserve, true)
+
+func _process_reload_timers() -> void:
+	var now := Time.get_ticks_msec() / 1000.0
+	for id in reload_deadlines.keys():
+		if now < float(reload_deadlines[id]):
+			continue
+		var player_id := int(id)
+		var ammo := int(weapon_ammo.get(player_id, 0))
+		var reserve := int(weapon_reserve.get(player_id, 0))
+		var amount := mini(30 - ammo, reserve)
+		weapon_ammo[player_id] = ammo + amount
+		weapon_reserve[player_id] = reserve - amount
+		reload_deadlines.erase(id)
+		_sync_weapon_state.rpc(player_id, ammo + amount, reserve - amount, false)
+
+@rpc("authority", "call_local", "reliable")
+func _sync_weapon_state(player_id: int, ammo: int, reserve: int, reloading: bool) -> void:
+	if players.has(player_id):
+		players[player_id].ammo = ammo
+		players[player_id].reserve_ammo = reserve
+		players[player_id].reload_time = 1.65 if reloading else 0.0
 
 func bot_fire(bot_id: int, origin: Vector3, direction: Vector3) -> void:
 	if multiplayer.is_server() and round_active:
