@@ -58,7 +58,7 @@ func build_mesh(world: Node) -> void:
                 var world_z := chunk_coord.y * Config.CHUNK_SIZE + z
                 for face in range(directions.size()):
                     var direction: Vector3i = directions[face]
-                    if world.get_voxel(Vector3i(world_x, y, world_z) + direction) == Blocks.AIR:
+                    if int(world.call("get_voxel", Vector3i(world_x, y, world_z) + direction)) == Blocks.AIR:
                         _append_face(surface, Vector3(x, y, z), face, Blocks.color_for(block_id))
     var mesh := surface.commit()
     if mesh_instance == null:
