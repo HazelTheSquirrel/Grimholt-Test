@@ -69,6 +69,8 @@ func _run() -> void:
     for i in range(30):
         await physics_frame
     Input.action_release("move_forward")
+    for i in range(30):
+        await physics_frame
     var distance := Vector2(player.global_position.x - start.x, player.global_position.z - start.z).length()
     if distance < 0.5:
         _fail("Forward input did not move the player. distance=%f" % distance)
