@@ -55,6 +55,23 @@ func _run() -> void:
     if not foliage_found:
         _fail("Chunk foliage and ground cover were not generated.")
         return
+    var center_chunk: Node3D = live_terrain.active_chunks.get(Vector2i(0, 0))
+    if center_chunk == null or center_chunk.get_node_or_null("RiverWater") == null:
+        _fail("Streamed chunk is missing its river water surface.")
+        return
+    var distant_chunk: Node3D = live_terrain._create_chunk(3, -2)
+    if distant_chunk.get_node_or_null("MountainWaterfall") == null or distant_chunk.get_node_or_null("Landmark_watchtower_ruin") == null:
+        _fail("Waterfall or watchtower ruin landmark was not generated.")
+        distant_chunk.free()
+        return
+    distant_chunk.free()
+    var dungeon_chunk: Node3D = live_terrain._create_chunk(-7, -4)
+    var cave := dungeon_chunk.find_child("WalkableCaveInterior", true, false)
+    if cave == null or cave.find_child("CaveFloorCollision_00", true, false) == null:
+        _fail("Dungeon cave interior or walkable floor collision is missing.")
+        dungeon_chunk.free()
+        return
+    dungeon_chunk.free()
     var harvest_key := InputEventKey.new()
     harvest_key.keycode = KEY_E
     harvest_key.pressed = true
