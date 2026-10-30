@@ -19,7 +19,9 @@ Das langfristige Ziel sind eine lebendige Fantasywelt, umfangreiche Berufe und H
 Der aktuelle Repository-Stand ist ein technischer Gameplay-Vertikalschnitt und noch kein fertiges Spiel:
 
 - Godot 4.7.2 mit Forward+ Renderer.
-- Prozedural erzeugtes polygonales Höhen-Terrain mit Mesh-Kollision.
+- Prozedural erzeugtes polygonales Höhen-Terrain mit Mesh-Kollision, Grasbüscheln, Steinstreuung und sichtbaren Gelände-Farbzonen.
+- Editor-zugewiesener Fantasy-Himmel mit Umgebungslicht.
+- Unterschiedliche Platzhalter-Silhouetten für Eiche, Birke und Fichte.
 - Third-Person-Spielersteuerung und Schulterkamera.
 - Interaktionsbasierte Ressourcengewinnung über natürliche Weltobjekte:
   - Bäume liefern Rundholz.
@@ -29,9 +31,9 @@ Der aktuelle Repository-Stand ist ein technischer Gameplay-Vertikalschnitt und n
 - Erste Crafting-Rezepte für Eisenbarren, Holzplanken und Heiltränke.
 - Berufserfahrung und einfache Levelberechnung für Schmiedekunst, Schreinerei und Alchemie.
 - Modulares Platzieren von Holzfundamenten, Wänden und Dachsegmenten im Baumodus.
-- Automatisierte Headless-Prüfungen für Projektimport, Start, Inventar, Crafting, Berufserfahrung und Ressourcenernte.
+- Automatisierte Headless-Prüfungen für Projektimport, Start, Inventar, Crafting, Berufserfahrung, Landschaftsaufbau und die tatsächliche Ernte über die Spieler-Kamera.
 
-Die aktuell erzeugten Ressourcen und Bauteile sind Platzhalter-Prototypen. Hochwertige Charaktermodelle, Animationen, finale Umgebungsassets, vollständige Gebäude-Snap-Verbindungen und eine ausgearbeitete Benutzeroberfläche sind noch nicht enthalten.
+Die aktuell erzeugten Ressourcen, Vegetation und Bauteile sind eigene prozedurale Platzhalter-Prototypen. Die Ernte-HUD zeigt beim Anvisieren einer Ressource die passende E-Aktion an. Hochwertige Charaktermodelle, Animationen, finale Umgebungsassets, vollständige Gebäude-Snap-Verbindungen und eine ausgearbeitete Benutzeroberfläche sind noch nicht enthalten.
 
 ## Steuerung
 
