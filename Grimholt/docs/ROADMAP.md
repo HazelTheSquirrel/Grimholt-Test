@@ -19,7 +19,7 @@ Eigenständiger Multiplayer-3D-Arena-Shooter mit klassischem Free-for-All-Deathm
 - [x] Prozedurales First-Person-Gewehr-Viewmodel
 - [x] Serverseitige Plausibilitätsprüfung für Schussrichtung und Feuerrate
 - [ ] Mehrclient-Tests, Paketverlust- und Disconnect-Tests
-- [ ] Serverseitige Munitions- und Nachladeautorität
+- [x] Serverseitige Munitions- und Nachladeautorität
 - [x] Rate-Limit und Wertebereichsprüfung für Eingabe-RPCs
 
 ## Phase 2 – HUD und Spielgefühl
