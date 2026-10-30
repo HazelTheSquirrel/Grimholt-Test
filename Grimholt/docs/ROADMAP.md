@@ -7,6 +7,9 @@ Grimholt ist ein polygonbasiertes Fantasy-Sandbox-RPG mit natürlichem Terrain, 
 ## Phase 0 – Technischer Welt-Prototyp
 
 - [x] Godot 4.7.2 Projekt und Hauptszene
+- [x] Explizite, im Editor bearbeitbare Hauptszenen-Nodes für Welt, Spieler, Kamera, Inventar und HUD
+- [x] Editor-sichtbarer Terrain-Generator mit einstellbarer Ausdehnung, Zellgröße und Seed
+- [x] Erste lesbare Farbgebung für Grasland, Moos, Fels und sammelbare Ressourcen
 - [x] Wechsel auf Forward+ Renderer
 - [x] Polygonales prozedurales Höhen-Terrain mit Mesh-Kollision
 - [x] Third-Person-Spielergrundlage und Kamera
