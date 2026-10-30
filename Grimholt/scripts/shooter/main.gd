@@ -5,6 +5,7 @@ const BOT_SCENE := preload("res://scenes/shooter/bot.tscn")
 const PORT := 27015
 const MAX_PLAYERS := 12
 const SCORE_LIMIT := 50
+const KILL_SCORE_POINTS := 1
 const ROUND_SECONDS := 900
 const BOT_COUNT := 5
 const SPAWNS := [Vector3(-17, 1, -17), Vector3(17, 1, 17), Vector3(-17, 1, 17), Vector3(17, 1, -17), Vector3(0, 1, -18), Vector3(0, 1, 18), Vector3(-18, 1, 0), Vector3(18, 1, 0)]
@@ -668,7 +669,7 @@ func _apply_damage(victim_id: int, attacker_id: int, amount: int) -> void:
 	target.set("health", remaining_health)
 	_actor_health.rpc(victim_id, remaining_health)
 	if remaining_health == 0:
-		scores[attacker_id] = int(scores.get(attacker_id, 0)) + 1
+		scores[attacker_id] = int(scores.get(attacker_id, 0)) + KILL_SCORE_POINTS
 		_sync_scores.rpc(scores, deaths)
 		var attacker_name := _actor_name(attacker_id)
 		var victim_name := _actor_name(victim_id)
