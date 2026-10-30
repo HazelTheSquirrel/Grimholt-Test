@@ -1,23 +1,22 @@
 # Grimholt
 
-**Grimholt** ist ein kleines Godot-4.7.2-Testprojekt. Es bildet die technische Grundlage für ein späteres RPG-RP-Spiel.
+**Grimholt** ist ein Godot-4-Projekt für ein Voxel-Sandbox-RPG mit Rollenspiel-Fokus. Ziel sind Singleplayer-Welten und private Multiplayer-Server ohne zentrale offizielle Spielserver.
 
-## Aktueller Stand
+## Aktueller technischer Stand
 
-- Prozedural generierte Landschaft mit Höhenvariation
-- Farblich unterscheidbare Gras-, Erd-, Fels- und Uferbereiche
-- Wasserfläche als Orientierungspunkt
-- Statische Terrain-Kollision
-- Spielbarer First-Person-Character
-- Laufen, Sprinten, Springen und Maussteuerung
-- HUD mit Steuerungshinweisen
+- Seedbasierte prozedurale Voxel-Terrain-Generierung
+- 16 × 64 × 16 Voxel pro Chunk
+- Chunk-Nachbarschaftsladen rund um den Spieler und Entfernen entfernter Chunks
+- Mesh-Erzeugung nur für sichtbare Blockflächen
+- Separate statische Kollisionskörper pro Chunk
+- Zentrale Block-IDs und Materialfarben
+- First-Person-Bewegung mit Laufen, Sprinten und Springen
 
 ## Starten
 
-1. Godot **4.7.2** öffnen.
-2. Im Projektmanager **Importieren** wählen.
-3. Die Datei `project.godot` aus diesem Repository auswählen.
-4. Projekt öffnen und mit **F6/F5** starten.
+1. Godot 4.7.2 öffnen.
+2. Im Projektmanager **Importieren** wählen und project.godot auswählen.
+3. Projekt öffnen und mit F6/F5 starten.
 
 ## Steuerung
 
@@ -32,18 +31,26 @@
 
 ## Projektstruktur
 
-```
-project.godot
-scenes/
-  main.tscn
-scripts/
-  main.gd
-  player_controller.gd
-  world_generator.gd
-```
+    project.godot
+    scenes/main.tscn
+    scripts/main.gd
+    scripts/player_controller.gd
+    scripts/core/world_config.gd
+    scripts/world/block_registry.gd
+    scripts/world/voxel_chunk.gd
+    scripts/world/world_generator.gd
+    docs/ROADMAP.md
 
-## Technische Hinweise
+## Architektur
 
-Die Landschaft wird beim Start aus zwei `FastNoiseLite`-Feldern aufgebaut. Aus den Höhenwerten entsteht ein zusammenhängendes Terrain-Mesh inklusive Trimesh-Kollision. Der Character ist ein `CharacterBody3D` mit Capsule-Collider und First-Person-Kamera.
+- world_config.gd: zentrale Weltparameter und Dimensionen.
+- block_registry.gd: stabile Block-IDs und visuelle Grunddefinitionen.
+- voxel_chunk.gd: Voxel-Daten eines Chunks sowie Mesh-/Kollisionsaufbau.
+- world_generator.gd: Seed, Chunk-Verwaltung, Streaming und Weltabfragen.
+- player_controller.gd: Spielersteuerung ohne direkte Abhängigkeit von Terrain-Details.
 
-Dieses Repository ist ausdrücklich ein **Testprojekt**, kein fertiges Spiel. Noch nicht enthalten sind Chunk-Streaming, Speichern/Laden, Inventar, Abbauen/Platzieren, NPCs, Quests oder Multiplayer. Die nächste Ausbaustufe sollte die Welt in Chunks aufteilen, bevor größere Welten erzeugt werden.
+Voxel liegen in einem PackedByteArray, nicht als einzelne Nodes. Chunk-Meshes enthalten nur Flächen, deren Nachbarzelle Luft ist. Die aktuelle Generierung und Mesh-Erstellung laufen noch synchron auf dem Hauptthread. Das ist für den kleinen Prototypen bewusst einfach gehalten und muss vor großen Welten durch einen Worker-/Job-Ansatz ergänzt werden.
+
+## Noch nicht implementiert
+
+Blockabbau/-platzierung, Speichern veränderter Voxel, Biome/Vegetation/Höhlen, Inventar, Crafting, Charakterentwicklung, NPCs, Dialoge, Quests, persistente Welten, Multiplayer und Installer sind noch nicht enthalten. Diese Funktionen sind ausdrücklich nächste Entwicklungsziele und werden nicht als bereits fertig dargestellt.

@@ -1,20 +1,20 @@
 extends Node3D
 
-const WorldScript = preload("res://scripts/world_generator.gd")
+const WorldScript = preload("res://scripts/world/world_generator.gd")
 const PlayerScript = preload("res://scripts/player_controller.gd")
+const Config = preload("res://scripts/core/world_config.gd")
 
 func _ready() -> void:
     _setup_environment()
-
-    var world := WorldScript.new()
-    world.name = "GeneratedWorld"
+    var world: GrimholtWorld = WorldScript.new()
+    world.name = "World"
+    world.world_seed = Config.DEFAULT_SEED
     add_child(world)
-
-    var player := PlayerScript.new()
+    var player: GrimholtPlayer = PlayerScript.new()
     player.name = "Player"
     add_child(player)
-    player.global_position = Vector3(0.0, 26.0, 0.0)
-    player.world = world
+    player.global_position = Vector3(0.0, 43.0, 0.0)
+    world.set_player(player)
 
 func _setup_environment() -> void:
     var world_environment := WorldEnvironment.new()
@@ -32,7 +32,6 @@ func _setup_environment() -> void:
     environment.tonemap_mode = Environment.TONE_MAPPER_FILMIC
     world_environment.environment = environment
     add_child(world_environment)
-
     var sun := DirectionalLight3D.new()
     sun.rotation_degrees = Vector3(-48.0, -32.0, 0.0)
     sun.light_energy = 1.15
