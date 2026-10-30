@@ -596,7 +596,7 @@ func _server_fire(shooter_id: int) -> void:
 	if target is CharacterBody3D and target.is_in_group("combatants"):
 		var victim_id := int(target.get_meta("actor_id", -1))
 		if victim_id != shooter_id:
-				_hit_confirm.rpc(shooter_id)
+			_hit_confirm.rpc(shooter_id)
 			_apply_damage(victim_id, shooter_id, 34)
 
 func request_reload(player_id: int) -> void:
