@@ -206,9 +206,15 @@ func _on_join_pressed() -> void:
 	status_label.text = "VERBINDUNG WIRD AUFGEBAUT ..."
 	join_game()
 
+func _has_active_network_peer() -> bool:
+	var peer := multiplayer.multiplayer_peer
+	if peer == null or peer is OfflineMultiplayerPeer:
+		return false
+	return peer.get_connection_status() != MultiplayerPeer.CONNECTION_DISCONNECTED
+
 func host_game() -> void:
-	if multiplayer.multiplayer_peer != null:
-		status_label.text = "Es besteht bereits eine Netzwerkverbindung."
+	if _has_active_network_peer():
+		status_label.text = "Es besteht bereits eine aktive Netzwerkverbindung."
 		return
 	var peer := ENetMultiplayerPeer.new()
 	var error := peer.create_server(PORT, MAX_PLAYERS)
@@ -216,8 +222,10 @@ func host_game() -> void:
 		status_label.text = "Host fehlgeschlagen: %s" % error
 		return
 	multiplayer.multiplayer_peer = peer
-	multiplayer.peer_connected.connect(_on_peer_connected)
-	multiplayer.peer_disconnected.connect(_on_peer_disconnected)
+	if not multiplayer.peer_connected.is_connected(_on_peer_connected):
+		multiplayer.peer_connected.connect(_on_peer_connected)
+	if not multiplayer.peer_disconnected.is_connected(_on_peer_disconnected):
+		multiplayer.peer_disconnected.connect(_on_peer_disconnected)
 	status_label.text = "Server aktiv // UDP %d — Match startet" % PORT
 	_start_match()
 	_spawn_player(1)
@@ -225,8 +233,8 @@ func host_game() -> void:
 		_spawn_bot(i + 1000)
 
 func join_game() -> void:
-	if multiplayer.multiplayer_peer != null:
-		status_label.text = "Es besteht bereits eine Netzwerkverbindung."
+	if _has_active_network_peer():
+		status_label.text = "Es besteht bereits eine aktive Netzwerkverbindung."
 		return
 	var peer := ENetMultiplayerPeer.new()
 	var error := peer.create_client(address_input.text.strip_edges(), PORT)
@@ -236,8 +244,10 @@ func join_game() -> void:
 	if multiplayer.connected_to_server.is_connected(_on_connected_to_server):
 		multiplayer.connected_to_server.disconnect(_on_connected_to_server)
 	multiplayer.connected_to_server.connect(_on_connected_to_server)
-	multiplayer.connection_failed.connect(_on_connection_failed)
-	multiplayer.server_disconnected.connect(_on_server_disconnected)
+	if not multiplayer.connection_failed.is_connected(_on_connection_failed):
+		multiplayer.connection_failed.connect(_on_connection_failed)
+	if not multiplayer.server_disconnected.is_connected(_on_server_disconnected):
+		multiplayer.server_disconnected.connect(_on_server_disconnected)
 	multiplayer.multiplayer_peer = peer
 	status_label.text = "Verbinde mit %s:%d ..." % [address_input.text.strip_edges(), PORT]
 
