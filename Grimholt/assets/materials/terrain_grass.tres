@@ -14,5 +14,5 @@ shader_parameter/moss_texture = ExtResource("3_moss")
 shader_parameter/rock_texture = ExtResource("4_rock")
 shader_parameter/dirt_texture = ExtResource("5_dirt")
 shader_parameter/snow_texture = ExtResource("6_snow")
-shader_parameter/texture_scale = 0.045
+shader_parameter/texture_scale = 0.11
 shader_parameter/triplanar_sharpness = 4.0

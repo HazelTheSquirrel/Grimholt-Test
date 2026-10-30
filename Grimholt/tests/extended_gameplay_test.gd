@@ -69,6 +69,16 @@ func _run() -> void:
         if terrain_material.get_shader_parameter(shader_texture) == null:
             _fail("Terrain shader is missing texture parameter: " + shader_texture)
             return
+    var terrain_surface := spawn_chunk.get_node_or_null("TerrainSurface") as MeshInstance3D
+    if terrain_surface == null or terrain_surface.mesh == null or terrain_surface.mesh.get_surface_count() == 0:
+        _fail("Spawn terrain has no renderable ground mesh.")
+        return
+    if terrain_surface.material_override != terrain_material:
+        _fail("Spawn terrain mesh is not using the configured textured terrain material.")
+        return
+    if terrain_surface.mesh.surface_get_array_len(0) == 0:
+        _fail("Spawn terrain mesh has no generated vertices.")
+        return
     var sky_resource := ResourceLoader.load("res://environment/world_environment.tres") as Environment
     if sky_resource == null or sky_resource.sky == null or not sky_resource.sky.sky_material is PanoramaSkyMaterial:
         _fail("Custom panoramic sky material failed to load.")
