@@ -25,6 +25,11 @@ func _textured_material(base_color: Color, noise_scale: float = 0.12, metallic_v
     texture.width = 128
     texture.height = 128
     texture.noise = noise
+    var ramp := Gradient.new()
+    ramp.set_color(0, Color(0.72, 0.74, 0.68, 1.0))
+    ramp.add_point(0.5, Color(0.88, 0.90, 0.84, 1.0))
+    ramp.set_color(1, Color(1.0, 1.0, 1.0, 1.0))
+    texture.color_ramp = ramp
     var material := StandardMaterial3D.new()
     material.albedo_color = base_color
     material.albedo_texture = texture
@@ -51,24 +56,49 @@ func _build_visuals() -> void:
         trunk_shape.height = 7.4
         collision.shape = trunk_shape
         collision.position.y = 3.7
+        var bark_color := Color(0.30, 0.18, 0.10)
+        var foliage_color := Color(0.12, 0.30, 0.12)
+        if display_name == "Birke":
+            bark_color = Color(0.72, 0.70, 0.61)
+            foliage_color = Color(0.28, 0.43, 0.20)
+        elif display_name == "Fichte":
+            bark_color = Color(0.24, 0.15, 0.10)
+            foliage_color = Color(0.08, 0.24, 0.16)
         var trunk := CylinderMesh.new()
         trunk.top_radius = 0.28
         trunk.bottom_radius = 0.48
         trunk.height = 7.4
-        _add_mesh(trunk, "TreeTrunk", Vector3(0, 3.7, 0), _textured_material(Color(0.30, 0.18, 0.10), 0.2))
-        var foliage := _textured_material(Color(0.12, 0.30, 0.12), 0.07)
-        var crown := SphereMesh.new()
-        crown.radius = 2.4
-        crown.height = 4.2
-        _add_mesh(crown, "TreeCrown", Vector3(0, 8.0, 0), foliage)
-        var crown_left := SphereMesh.new()
-        crown_left.radius = 1.65
-        crown_left.height = 3.1
-        _add_mesh(crown_left, "TreeCrownLeft", Vector3(-1.35, 7.25, 0.45), foliage)
-        var crown_right := SphereMesh.new()
-        crown_right.radius = 1.7
-        crown_right.height = 3.2
-        _add_mesh(crown_right, "TreeCrownRight", Vector3(1.25, 7.4, -0.35), _textured_material(Color(0.17, 0.36, 0.14), 0.09))
+        _add_mesh(trunk, "TreeTrunk", Vector3(0, 3.7, 0), _textured_material(bark_color, 0.2))
+        var foliage := _textured_material(foliage_color, 0.07)
+        if display_name == "Fichte":
+            for tier_index in range(4):
+                var tier := ConeMesh.new()
+                tier.bottom_radius = 2.5 - float(tier_index) * 0.38
+                tier.top_radius = 0.05
+                tier.height = 2.8
+                _add_mesh(tier, "SpruceTier%d" % tier_index, Vector3(0, 4.8 + float(tier_index) * 1.15, 0), foliage)
+        elif display_name == "Birke":
+            var birch_crown := SphereMesh.new()
+            birch_crown.radius = 1.65
+            birch_crown.height = 5.4
+            _add_mesh(birch_crown, "BirchCrown", Vector3(0, 8.0, 0), foliage)
+            var birch_side := SphereMesh.new()
+            birch_side.radius = 1.35
+            birch_side.height = 3.0
+            _add_mesh(birch_side, "BirchCrownSide", Vector3(0.8, 7.5, 0.2), foliage)
+        else:
+            var crown := SphereMesh.new()
+            crown.radius = 2.4
+            crown.height = 4.2
+            _add_mesh(crown, "TreeCrown", Vector3(0, 8.0, 0), foliage)
+            var crown_left := SphereMesh.new()
+            crown_left.radius = 1.65
+            crown_left.height = 3.1
+            _add_mesh(crown_left, "TreeCrownLeft", Vector3(-1.35, 7.25, 0.45), foliage)
+            var crown_right := SphereMesh.new()
+            crown_right.radius = 1.7
+            crown_right.height = 3.2
+            _add_mesh(crown_right, "TreeCrownRight", Vector3(1.25, 7.4, -0.35), _textured_material(Color(0.17, 0.36, 0.14), 0.09))
     elif resource_id == "iron_vein":
         var sphere := SphereShape3D.new()
         sphere.radius = 1.1
