@@ -12,7 +12,6 @@ const JUMP_VELOCITY := 6.0
 const MOUSE_SENSITIVITY := 0.0022
 const MAGAZINE_SIZE := 30
 const RESERVE_START := 120
-const FIRE_INTERVAL := 0.12
 const DAMAGE_RANGE := 120.0
 
 @onready var head: Node3D = $Head
@@ -32,6 +31,10 @@ var remote_input_received_msec := 0
 var health := 100
 var ammo := MAGAZINE_SIZE
 var reserve_ammo := RESERVE_START
+var current_weapon := "carbine"
+var weapon_viewmodel: Node3D
+var carbine_model: Node3D
+var scatter_model: Node3D
 var reload_time := 0.0
 var is_crouched := false
 var fire_held := false
@@ -75,6 +78,10 @@ func _unhandled_input(event: InputEvent) -> void:
 			_fire()
 	elif event is InputEventKey and event.pressed and event.keycode == KEY_R:
 		_reload()
+	elif event is InputEventKey and event.pressed and event.keycode == KEY_1:
+		get_parent().request_weapon_switch(get_multiplayer_authority(), "carbine")
+	elif event is InputEventKey and event.pressed and event.keycode == KEY_2:
+		get_parent().request_weapon_switch(get_multiplayer_authority(), "scatter")
 
 func _physics_process(delta: float) -> void:
 	var local_control := is_multiplayer_authority()
@@ -156,10 +163,14 @@ func _make_tone(frequency: float, duration: float, amplitude: float, noisy: bool
 	return stream
 
 func _build_weapon_viewmodel() -> void:
-	var weapon := Node3D.new()
-	weapon.name = "RifleViewmodel"
-	weapon.position = Vector3(0.24, -0.20, -0.42)
-	camera.add_child(weapon)
+	weapon_viewmodel = Node3D.new()
+	weapon_viewmodel.name = "WeaponViewmodel"
+	weapon_viewmodel.position = Vector3(0.24, -0.20, -0.42)
+	camera.add_child(weapon_viewmodel)
+
+	carbine_model = Node3D.new()
+	carbine_model.name = "Carbine"
+	weapon_viewmodel.add_child(carbine_model)
 	var dark := StandardMaterial3D.new()
 	dark.albedo_color = Color(0.075, 0.09, 0.105)
 	dark.metallic = 0.62
@@ -167,13 +178,42 @@ func _build_weapon_viewmodel() -> void:
 	var polymer := StandardMaterial3D.new()
 	polymer.albedo_color = Color(0.16, 0.19, 0.21)
 	polymer.roughness = 0.72
-	_add_weapon_box(weapon, "Receiver", Vector3(0.0, 0.0, 0.0), Vector3(0.12, 0.13, 0.38), dark)
-	_add_weapon_box(weapon, "Barrel", Vector3(0.0, 0.015, -0.29), Vector3(0.055, 0.055, 0.30), dark)
-	_add_weapon_box(weapon, "Muzzle", Vector3(0.0, 0.015, -0.45), Vector3(0.075, 0.075, 0.055), polymer)
-	_add_weapon_box(weapon, "Stock", Vector3(0.0, 0.015, 0.27), Vector3(0.105, 0.10, 0.22), polymer)
-	_add_weapon_box(weapon, "Magazine", Vector3(0.0, -0.12, 0.045), Vector3(0.085, 0.19, 0.12), polymer)
-	_add_weapon_box(weapon, "Grip", Vector3(0.0, -0.12, 0.16), Vector3(0.075, 0.16, 0.085), dark)
-	_add_weapon_box(weapon, "Sight", Vector3(0.0, 0.105, -0.02), Vector3(0.055, 0.065, 0.12), polymer)
+	_add_weapon_box(carbine_model, "Receiver", Vector3(0.0, 0.0, 0.0), Vector3(0.12, 0.13, 0.38), dark)
+	_add_weapon_box(carbine_model, "Barrel", Vector3(0.0, 0.015, -0.29), Vector3(0.055, 0.055, 0.30), dark)
+	_add_weapon_box(carbine_model, "Muzzle", Vector3(0.0, 0.015, -0.45), Vector3(0.075, 0.075, 0.055), polymer)
+	_add_weapon_box(carbine_model, "Stock", Vector3(0.0, 0.015, 0.27), Vector3(0.105, 0.10, 0.22), polymer)
+	_add_weapon_box(carbine_model, "Magazine", Vector3(0.0, -0.12, 0.045), Vector3(0.085, 0.19, 0.12), polymer)
+	_add_weapon_box(carbine_model, "Grip", Vector3(0.0, -0.12, 0.16), Vector3(0.075, 0.16, 0.085), dark)
+	_add_weapon_box(carbine_model, "Sight", Vector3(0.0, 0.105, -0.02), Vector3(0.055, 0.065, 0.12), polymer)
+
+	scatter_model = Node3D.new()
+	scatter_model.name = "ArcScatter"
+	weapon_viewmodel.add_child(scatter_model)
+	var shell := StandardMaterial3D.new()
+	shell.albedo_color = Color(0.13, 0.18, 0.20)
+	shell.metallic = 0.72
+	shell.roughness = 0.3
+	var coil := StandardMaterial3D.new()
+	coil.albedo_color = Color(0.18, 0.72, 0.68)
+	coil.emission_enabled = true
+	coil.emission = Color(0.08, 0.42, 0.38)
+	coil.emission_energy_multiplier = 0.8
+	_add_weapon_box(scatter_model, "ScatterReceiver", Vector3(0.0, 0.0, 0.0), Vector3(0.19, 0.16, 0.34), shell)
+	_add_weapon_box(scatter_model, "TwinEmitterLeft", Vector3(-0.065, 0.025, -0.29), Vector3(0.065, 0.065, 0.32), coil)
+	_add_weapon_box(scatter_model, "TwinEmitterRight", Vector3(0.065, 0.025, -0.29), Vector3(0.065, 0.065, 0.32), coil)
+	_add_weapon_box(scatter_model, "PowerCell", Vector3(0.0, -0.13, 0.055), Vector3(0.13, 0.18, 0.13), shell)
+	_add_weapon_box(scatter_model, "RearGrip", Vector3(0.0, -0.12, 0.17), Vector3(0.09, 0.16, 0.09), shell)
+	_add_weapon_box(scatter_model, "TopRail", Vector3(0.0, 0.11, -0.02), Vector3(0.13, 0.035, 0.22), coil)
+	set_weapon_visual(current_weapon)
+
+func set_weapon_visual(weapon_id: String) -> void:
+	current_weapon = weapon_id
+	if carbine_model != null:
+		carbine_model.visible = weapon_id == "carbine"
+	if scatter_model != null:
+		scatter_model.visible = weapon_id == "scatter"
+	if fire_audio != null:
+		fire_audio.stream = _make_tone(115.0, 0.075, 0.34, true) if weapon_id == "carbine" else _make_tone(72.0, 0.14, 0.42, true)
 
 func _add_weapon_box(parent: Node3D, part_name: String, part_position: Vector3, dimensions: Vector3, material: Material) -> void:
 	var part := MeshInstance3D.new()
@@ -210,13 +250,15 @@ func _update_crouch(wants_crouch: bool) -> void:
 func _fire() -> void:
 	if fire_cooldown > 0.0 or reload_time > 0.0:
 		return
-	fire_cooldown = FIRE_INTERVAL
+	var spec: Dictionary = get_parent()._weapon_spec(current_weapon)
+	fire_cooldown = float(spec["fire_interval"])
 	if fire_audio != null:
 		fire_audio.play()
 	get_parent().request_fire(get_multiplayer_authority())
 
 func _reload() -> void:
-	if reload_time <= 0.0 and ammo < MAGAZINE_SIZE and reserve_ammo > 0:
+	var spec: Dictionary = get_parent()._weapon_spec(current_weapon)
+	if reload_time <= 0.0 and ammo < int(spec["magazine"]) and reserve_ammo > 0:
 		if reload_audio != null:
 			reload_audio.play()
 		get_parent().request_reload(get_multiplayer_authority())
