@@ -35,3 +35,6 @@ jobs:
 
       - name: Editable scene hierarchy regression test
         run: godot --headless --path Grimholt --script res://tests/scene_structure_test.gd
+
+      - name: Extended gameplay and world-scale regression test
+        run: godot --headless --path Grimholt --script res://tests/extended_gameplay_test.gd
