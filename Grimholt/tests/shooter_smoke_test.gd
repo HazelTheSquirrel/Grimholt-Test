@@ -21,6 +21,7 @@ func _run_smoke_test() -> void:
 	game.start_solo_game()
 	await process_frame
 	assert(game.players.has(1), "Solo player did not spawn")
+	assert(game._collect_player_states().size() == 1, "Server snapshot should include the local player")
 	assert(game.bots.size() == 5, "Expected five bots in solo mode")
 	assert(game.SCORE_LIMIT == 50, "Round kill limit should be 50")
 	assert(game.ROUND_SECONDS == 900, "Round duration should be 15 minutes")
