@@ -1,18 +1,32 @@
 extends Node3D
 
 const PLAYER_SCENE := preload("res://scenes/shooter/player.tscn")
+const BOT_SCENE := preload("res://scenes/shooter/bot.tscn")
 const PORT := 27015
 const MAX_PLAYERS := 12
 const SCORE_LIMIT := 25
 const ROUND_SECONDS := 600
+const BOT_COUNT := 5
+const SPAWNS := [Vector3(-17, 1, -17), Vector3(17, 1, 17), Vector3(-17, 1, 17), Vector3(17, 1, -17), Vector3(0, 1, -18), Vector3(0, 1, 18), Vector3(-18, 1, 0), Vector3(18, 1, 0)]
 
 var players: Dictionary = {}
+var bots: Dictionary = {}
 var scores: Dictionary = {}
 var round_time := ROUND_SECONDS
-var round_active := true
-var hud: Label
-var status: Label
+var round_active := false
+var hud_layer: CanvasLayer
+var menu_layer: CanvasLayer
+var status_label: Label
 var address_input: LineEdit
+var score_label: Label
+var timer_label: Label
+var ammo_label: Label
+var health_label: Label
+var feed_label: Label
+var minimap: Control
+var last_positions: Dictionary = {}
+var last_position_times: Dictionary = {}
+var bot_sync_timer := 0.0
 
 func _ready() -> void:
 	_configure_inputs()
@@ -23,56 +37,51 @@ func _ready() -> void:
 		host_game()
 
 func _configure_inputs() -> void:
-	_add_key_action("move_forward", KEY_W)
-	_add_key_action("move_backward", KEY_S)
-	_add_key_action("move_left", KEY_A)
-	_add_key_action("move_right", KEY_D)
-
-func _add_key_action(action: String, key: Key) -> void:
-	if not InputMap.has_action(action):
-		InputMap.add_action(action)
-	var event := InputEventKey.new()
-	event.physical_keycode = key
-	InputMap.action_add_event(action, event)
+	for pair in [["move_forward", KEY_W], ["move_backward", KEY_S], ["move_left", KEY_A], ["move_right", KEY_D], ["jump", KEY_SPACE], ["reload", KEY_R]]:
+		if not InputMap.has_action(pair[0]):
+			InputMap.add_action(pair[0])
+		var event := InputEventKey.new()
+		event.physical_keycode = pair[1]
+		InputMap.action_add_event(pair[0], event)
 
 func _process(delta: float) -> void:
 	if multiplayer.is_server() and round_active:
 		round_time = maxf(0.0, round_time - delta)
+		bot_sync_timer += delta
+		if bot_sync_timer >= 0.05:
+			bot_sync_timer = 0.0
+			_sync_bot_states.rpc(_collect_bot_states())
 		if round_time <= 0.0:
 			_finish_round()
 	_update_hud()
 
 func _build_arena() -> void:
-	var world_env := WorldEnvironment.new()
-	var environment := Environment.new()
-	environment.background_mode = Environment.BG_SKY
-	environment.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
-	environment.ambient_light_color = Color(0.34, 0.39, 0.48)
-	environment.ambient_light_energy = 0.7
-	world_env.environment = environment
-	add_child(world_env)
+	var env_node := WorldEnvironment.new()
+	var env := Environment.new()
+	env.background_mode = Environment.BG_SKY
+	env.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
+	env.ambient_light_color = Color(0.34, 0.39, 0.48)
+	env.ambient_light_energy = 0.7
+	env_node.environment = env
+	add_child(env_node)
 	var sun := DirectionalLight3D.new()
 	sun.rotation_degrees = Vector3(-52, -28, 0)
 	sun.light_energy = 1.25
+	sun.shadow_enabled = true
 	add_child(sun)
-	_add_box("ArenaFloor", Vector3(0, -0.5, 0), Vector3(48, 1, 48), Color(0.16, 0.19, 0.23))
+	_add_box("ArenaFloor", Vector3(0, -0.5, 0), Vector3(48, 1, 48), Color(0.13, 0.17, 0.21))
 	_add_box("NorthWall", Vector3(0, 3, -24), Vector3(48, 6, 1), Color(0.20, 0.25, 0.31))
 	_add_box("SouthWall", Vector3(0, 3, 24), Vector3(48, 6, 1), Color(0.20, 0.25, 0.31))
 	_add_box("EastWall", Vector3(24, 3, 0), Vector3(1, 6, 48), Color(0.20, 0.25, 0.31))
 	_add_box("WestWall", Vector3(-24, 3, 0), Vector3(1, 6, 48), Color(0.20, 0.25, 0.31))
-	var cover := [
-		[Vector3(-10, 1, -8), Vector3(6, 2, 2)], [Vector3(10, 1, 8), Vector3(6, 2, 2)],
-		[Vector3(0, 1.5, 0), Vector3(3, 3, 3)], [Vector3(-15, 1, 8), Vector3(2, 2, 7)],
-		[Vector3(15, 1, -8), Vector3(2, 2, 7)], [Vector3(0, 0.75, -14), Vector3(9, 1.5, 2)],
-		[Vector3(0, 0.75, 14), Vector3(9, 1.5, 2)]
-	]
+	var cover := [[Vector3(-10, 1, -8), Vector3(6, 2, 2)], [Vector3(10, 1, 8), Vector3(6, 2, 2)], [Vector3(0, 1.5, 0), Vector3(3, 3, 3)], [Vector3(-15, 1, 8), Vector3(2, 2, 7)], [Vector3(15, 1, -8), Vector3(2, 2, 7)], [Vector3(0, 0.75, -14), Vector3(9, 1.5, 2)], [Vector3(0, 0.75, 14), Vector3(9, 1.5, 2)]]
 	for item in cover:
 		_add_box("Cover", item[0], item[1], Color(0.27, 0.33, 0.39))
 
-func _add_box(node_name: String, position: Vector3, dimensions: Vector3, color: Color) -> void:
+func _add_box(node_name: String, pos: Vector3, dimensions: Vector3, color: Color) -> void:
 	var body := StaticBody3D.new()
 	body.name = node_name
-	body.position = position
+	body.position = pos
 	var mesh_instance := MeshInstance3D.new()
 	var mesh := BoxMesh.new()
 	mesh.size = dimensions
@@ -90,20 +99,20 @@ func _add_box(node_name: String, position: Vector3, dimensions: Vector3, color: 
 	add_child(body)
 
 func _build_menu() -> void:
-	var layer := CanvasLayer.new()
-	add_child(layer)
+	menu_layer = CanvasLayer.new()
+	add_child(menu_layer)
 	var panel := PanelContainer.new()
 	panel.position = Vector2(24, 24)
-	panel.custom_minimum_size = Vector2(330, 190)
-	layer.add_child(panel)
+	panel.custom_minimum_size = Vector2(340, 220)
+	menu_layer.add_child(panel)
 	var column := VBoxContainer.new()
 	panel.add_child(column)
 	var title := Label.new()
 	title.text = "GRIMHOLT // ARENA"
-	title.add_theme_font_size_override("font_size", 24)
+	title.add_theme_font_size_override("font_size", 26)
 	column.add_child(title)
 	address_input = LineEdit.new()
-	address_input.placeholder_text = "Server-IP (z. B. 127.0.0.1)"
+	address_input.placeholder_text = "Server-IP"
 	address_input.text = "127.0.0.1"
 	column.add_child(address_input)
 	var host_button := Button.new()
@@ -114,102 +123,228 @@ func _build_menu() -> void:
 	join_button.text = "Server beitreten"
 	join_button.pressed.connect(join_game)
 	column.add_child(join_button)
-	status = Label.new()
-	status.text = "Noch nicht verbunden"
-	column.add_child(status)
+	var status_title := Label.new()
+	status_title.text = "DEATHMATCH // 25 KILLS TO WIN"
+	column.add_child(status_title)
+	status_label = Label.new()
+	status_label.text = "Noch nicht verbunden"
+	column.add_child(status_label)
 
 func _build_hud() -> void:
-	var layer := CanvasLayer.new()
-	add_child(layer)
-	hud = Label.new()
-	hud.position = Vector2(24, 230)
-	hud.add_theme_font_size_override("font_size", 20)
-	layer.add_child(hud)
+	hud_layer = CanvasLayer.new()
+	add_child(hud_layer)
+	var top := HBoxContainer.new()
+	top.set_anchors_and_offsets_preset(Control.PRESET_TOP_WIDE)
+	top.offset_left = 24
+	top.offset_top = 18
+	top.offset_right = -24
+	top.custom_minimum_size.y = 42
+	hud_layer.add_child(top)
+	timer_label = Label.new()
+	timer_label.add_theme_font_size_override("font_size", 22)
+	top.add_child(timer_label)
+	var spacer := Control.new()
+	spacer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	top.add_child(spacer)
+	score_label = Label.new()
+	score_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	score_label.add_theme_font_size_override("font_size", 22)
+	top.add_child(score_label)
 	var crosshair := Label.new()
-	crosshair.text = "+"
+	crosshair.text = "＋"
 	crosshair.set_anchors_and_offsets_preset(Control.PRESET_CENTER)
 	crosshair.add_theme_font_size_override("font_size", 28)
-	layer.add_child(crosshair)
+	hud_layer.add_child(crosshair)
+	health_label = Label.new()
+	health_label.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_LEFT)
+	health_label.offset_left = 26
+	health_label.offset_bottom = -24
+	health_label.offset_top = -70
+	health_label.add_theme_font_size_override("font_size", 22)
+	hud_layer.add_child(health_label)
+	ammo_label = Label.new()
+	ammo_label.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_RIGHT)
+	ammo_label.offset_right = -28
+	ammo_label.offset_bottom = -24
+	ammo_label.offset_top = -82
+	ammo_label.add_theme_font_size_override("font_size", 24)
+	ammo_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	hud_layer.add_child(ammo_label)
+	feed_label = Label.new()
+	feed_label.set_anchors_and_offsets_preset(Control.PRESET_TOP_RIGHT)
+	feed_label.offset_right = -26
+	feed_label.offset_top = 74
+	feed_label.offset_left = -330
+	feed_label.add_theme_font_size_override("font_size", 16)
+	feed_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	hud_layer.add_child(feed_label)
+	minimap = Control.new()
+	minimap.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_LEFT)
+	minimap.position = Vector2(24, -210)
+	minimap.custom_minimum_size = Vector2(160, 160)
+	minimap.draw.connect(_draw_minimap)
+	hud_layer.add_child(minimap)
 
 func host_game() -> void:
+	if multiplayer.multiplayer_peer != null:
+		return
 	var peer := ENetMultiplayerPeer.new()
 	var error := peer.create_server(PORT, MAX_PLAYERS)
 	if error != OK:
-		status.text = "Host fehlgeschlagen: %s" % error
+		status_label.text = "Host fehlgeschlagen: %s" % error
 		return
 	multiplayer.multiplayer_peer = peer
 	multiplayer.peer_connected.connect(_on_peer_connected)
 	multiplayer.peer_disconnected.connect(_on_peer_disconnected)
-	status.text = "Server läuft auf Port %d" % PORT
-	_on_peer_connected(1)
+	status_label.text = "Server aktiv // UDP %d" % PORT
+	_start_match()
+	_spawn_player(1)
+	for i in range(BOT_COUNT):
+		_spawn_bot(i)
 
 func join_game() -> void:
 	var peer := ENetMultiplayerPeer.new()
 	var error := peer.create_client(address_input.text.strip_edges(), PORT)
 	if error != OK:
-		status.text = "Verbindung fehlgeschlagen: %s" % error
+		status_label.text = "Verbindung fehlgeschlagen: %s" % error
 		return
 	multiplayer.multiplayer_peer = peer
-	multiplayer.connected_to_server.connect(func(): status.text = "Verbunden")
-	multiplayer.connection_failed.connect(func(): status.text = "Verbindung fehlgeschlagen")
-	multiplayer.server_disconnected.connect(func(): status.text = "Server getrennt")
+	multiplayer.connected_to_server.connect(func(): status_label.text = "Verbunden – warte auf Match")
+	multiplayer.connection_failed.connect(func(): status_label.text = "Verbindung fehlgeschlagen")
+	multiplayer.server_disconnected.connect(func(): status_label.text = "Server getrennt")
+
+func _start_match() -> void:
+	round_active = true
+	round_time = ROUND_SECONDS
+	_match_started.rpc(round_time)
+
+@rpc("authority", "call_local", "reliable")
+func _match_started(seconds: int) -> void:
+	round_active = true
+	round_time = seconds
+	menu_layer.visible = false
 
 func _on_peer_connected(peer_id: int) -> void:
 	if not multiplayer.is_server():
 		return
-	_spawn_player.rpc(peer_id)
-	for existing_id in players.keys():
-		_spawn_player.rpc_id(peer_id, int(existing_id))
+	_spawn_player(peer_id)
+	for id in players:
+		if int(id) != peer_id:
+			_spawn_player_remote.rpc_id(peer_id, int(id), players[id].global_position)
+	for id in bots:
+		_spawn_bot_remote.rpc_id(peer_id, int(id), bots[id].global_position)
 	_sync_scores.rpc(scores)
 
 func _on_peer_disconnected(peer_id: int) -> void:
 	if players.has(peer_id):
-		players[peer_id].queue_free()
+		_remove_actor.rpc(peer_id)
 		players.erase(peer_id)
 		scores.erase(peer_id)
+		last_positions.erase(peer_id)
+		last_position_times.erase(peer_id)
 		_sync_scores.rpc(scores)
 
-@rpc("authority", "call_local", "reliable")
 func _spawn_player(peer_id: int) -> void:
 	if players.has(peer_id):
 		return
 	var player := PLAYER_SCENE.instantiate()
 	player.name = "Player_%d" % peer_id
 	player.set_multiplayer_authority(peer_id)
-	var spawn_points := [Vector3(-16, 1, -16), Vector3(16, 1, 16), Vector3(-16, 1, 16), Vector3(16, 1, -16), Vector3(0, 1, -18), Vector3(0, 1, 18)]
-	player.position = spawn_points[players.size() % spawn_points.size()]
+	player.position = SPAWNS[players.size() % SPAWNS.size()]
 	add_child(player)
 	players[peer_id] = player
-	if multiplayer.is_server():
-		scores[peer_id] = 0
-		_sync_scores.rpc(scores)
+	scores[peer_id] = 0
+	last_positions[peer_id] = player.global_position
+	last_position_times[peer_id] = Time.get_ticks_msec() / 1000.0
+	_spawn_player_remote.rpc(peer_id, player.global_position)
+	_sync_scores.rpc(scores)
+
+@rpc("authority", "call_remote", "reliable")
+func _spawn_player_remote(peer_id: int, spawn_position: Vector3) -> void:
+	if players.has(peer_id):
+		return
+	var player := PLAYER_SCENE.instantiate()
+	player.name = "Player_%d" % peer_id
+	player.set_multiplayer_authority(peer_id)
+	player.position = spawn_position
+	add_child(player)
+	players[peer_id] = player
+
+func _spawn_bot(bot_id: int) -> void:
+	if bots.has(bot_id):
+		return
+	var bot := BOT_SCENE.instantiate()
+	bot.name = "Bot_%02d" % bot_id
+	bot.position = SPAWNS[(bot_id + 3) % SPAWNS.size()]
+	bot.configure(bot_id, self)
+	add_child(bot)
+	bots[bot_id] = bot
+	_spawn_bot_remote.rpc(bot_id, bot.global_position)
+
+@rpc("authority", "call_remote", "reliable")
+func _spawn_bot_remote(bot_id: int, spawn_position: Vector3) -> void:
+	if bots.has(bot_id):
+		return
+	var bot := BOT_SCENE.instantiate()
+	bot.name = "Bot_%02d" % bot_id
+	bot.position = spawn_position
+	bot.set_multiplayer_authority(1)
+	bot.configure(bot_id, self)
+	add_child(bot)
+	bots[bot_id] = bot
+	bot.set_process(false)
+	bot.set_physics_process(false)
+
+@rpc("authority", "call_local", "reliable")
+func _remove_actor(actor_id: int) -> void:
+	var path := "Player_%d" % actor_id
+	var node := get_node_or_null(path)
+	if node:
+		node.queue_free()
+	players.erase(actor_id)
+
+func _collect_bot_states() -> Array:
+	var states: Array = []
+	for id in bots:
+		var bot: CharacterBody3D = bots[id]
+		states.append([int(id), bot.global_position, bot.rotation.y, bot.health])
+	return states
+
+@rpc("authority", "call_remote", "unreliable")
+func _sync_bot_states(states: Array) -> void:
+	for state in states:
+		var id := int(state[0])
+		if bots.has(id):
+			bots[id].global_position = bots[id].global_position.lerp(state[1], 0.7)
+			bots[id].rotation.y = state[2]
+			bots[id].health = int(state[3])
 
 @rpc("any_peer", "call_remote", "unreliable")
-func _submit_transform(position: Vector3, yaw: float, pitch: float) -> void:
+func _submit_transform(pos: Vector3, yaw: float, pitch: float) -> void:
 	if not multiplayer.is_server():
 		return
 	var sender := multiplayer.get_remote_sender_id()
 	if not players.has(sender):
 		return
-	var player: CharacterBody3D = players[sender]
-	if player.global_position.distance_to(position) > 3.0:
+	var now := Time.get_ticks_msec() / 1000.0
+	var previous: Vector3 = last_positions.get(sender, players[sender].global_position)
+	var elapsed := maxf(0.05, now - float(last_position_times.get(sender, now)))
+	var allowed := 8.0 * elapsed + 1.5
+	if previous.distance_to(pos) > allowed:
 		return
-	player.global_position = position
-	player.rotation.y = yaw
-	player.get_node("Head").rotation.x = pitch
-	_relay_transform.rpc(sender, position, yaw, pitch)
+	last_positions[sender] = pos
+	last_position_times[sender] = now
+	players[sender].global_position = pos
+	players[sender].rotation.y = yaw
+	players[sender].get_node("Head").rotation.x = pitch
+	_relay_transform.rpc(sender, pos, yaw, pitch)
 
 @rpc("authority", "call_remote", "unreliable")
-func _relay_transform(peer_id: int, position: Vector3, yaw: float, pitch: float) -> void:
-	if multiplayer.get_unique_id() == peer_id or not players.has(peer_id):
-		return
-	var player: CharacterBody3D = players[peer_id]
-	player.global_position = player.global_position.lerp(position, 0.65)
-	player.rotation.y = yaw
-	player.get_node("Head").rotation.x = pitch
-
-func _request_shot_local(shooter_id: int, origin: Vector3, direction: Vector3) -> void:
-	_process_shot(shooter_id, origin, direction)
+func _relay_transform(peer_id: int, pos: Vector3, yaw: float, pitch: float) -> void:
+	if players.has(peer_id) and multiplayer.get_unique_id() != peer_id:
+		players[peer_id].global_position = players[peer_id].global_position.lerp(pos, 0.7)
+		players[peer_id].rotation.y = yaw
+		players[peer_id].get_node("Head").rotation.x = pitch
 
 @rpc("any_peer", "call_remote", "reliable")
 func _request_shot(origin: Vector3, direction: Vector3) -> void:
@@ -217,47 +352,97 @@ func _request_shot(origin: Vector3, direction: Vector3) -> void:
 		_process_shot(multiplayer.get_remote_sender_id(), origin, direction)
 
 func _process_shot(shooter_id: int, origin: Vector3, direction: Vector3) -> void:
-	if not multiplayer.is_server() or not round_active or not players.has(shooter_id):
+	if not round_active or not players.has(shooter_id):
 		return
 	var shooter: Node3D = players[shooter_id]
-	if shooter.global_position.distance_to(origin) > 3.0:
+	if shooter.global_position.distance_to(origin) > 4.0:
 		return
 	var query := PhysicsRayQueryParameters3D.create(origin, origin + direction.normalized() * 120.0)
 	query.exclude = [shooter.get_rid()]
 	var hit := get_world_3d().direct_space_state.intersect_ray(query)
 	if hit.is_empty():
 		return
-	var target = hit.collider
-	if not target is CharacterBody3D or not target.is_in_group("players"):
-		return
-	var target_id := int(target.get_meta("peer_id", 0))
-	if target_id == shooter_id or not players.has(target_id):
-		return
-	_target_died.rpc(target_id, shooter_id)
+	var target: Object = hit.collider
+	if target is CharacterBody3D and target.is_in_group("combatants"):
+		var victim_id := int(target.get_meta("actor_id", -1))
+		if victim_id == shooter_id:
+			return
+		_apply_damage(victim_id, shooter_id, 34)
 
-@rpc("authority", "call_local", "reliable")
-func _target_died(victim_id: int, killer_id: int) -> void:
+func bot_fire(bot_id: int, origin: Vector3, direction: Vector3) -> void:
+	if multiplayer.is_server() and round_active:
+		var query := PhysicsRayQueryParameters3D.create(origin, origin + direction.normalized() * 90.0)
+		if bots.has(bot_id):
+			query.exclude = [bots[bot_id].get_rid()]
+		var hit := get_world_3d().direct_space_state.intersect_ray(query)
+		if not hit.is_empty():
+			var target: Object = hit.collider
+			if target is CharacterBody3D and target.is_in_group("combatants"):
+				var victim_id := int(target.get_meta("actor_id", -1))
+				if victim_id != bot_id:
+					_apply_damage(victim_id, bot_id, 20)
+
+func _apply_damage(victim_id: int, attacker_id: int, amount: int) -> void:
+	var target: Node = null
 	if players.has(victim_id):
-		players[victim_id].global_position = Vector3(0, -100, 0)
-	if multiplayer.is_server():
-		scores[killer_id] = int(scores.get(killer_id, 0)) + 1
+		target = players[victim_id]
+	elif bots.has(victim_id):
+		target = bots[victim_id]
+	if target == null or target.health <= 0:
+		return
+	target.health = maxi(0, target.health - amount)
+	_actor_health.rpc(victim_id, target.health)
+	if target.health == 0:
+		scores[attacker_id] = int(scores.get(attacker_id, 0)) + 1
 		_sync_scores.rpc(scores)
-		if scores[killer_id] >= SCORE_LIMIT:
-			_finish_round()
+		var attacker_name := _actor_name(attacker_id)
+		var victim_name := _actor_name(victim_id)
+		_kill_feed.rpc("%s  »  %s" % [attacker_name, victim_name])
+		if players.has(victim_id):
+			_respawn_player_later(victim_id)
 		else:
-			_respawn_later(victim_id)
+			_respawn_bot_later(victim_id)
+		if int(scores[attacker_id]) >= SCORE_LIMIT:
+			_finish_round()
 
-func _respawn_later(peer_id: int) -> void:
-	await get_tree().create_timer(2.0).timeout
-	if players.has(peer_id) and round_active:
-		var spawn_points := [Vector3(-16, 1, -16), Vector3(16, 1, 16), Vector3(-16, 1, 16), Vector3(16, 1, -16), Vector3(0, 1, -18), Vector3(0, 1, 18)]
-		_respawn_player.rpc(peer_id, spawn_points[randi() % spawn_points.size()])
+func _actor_name(actor_id: int) -> String:
+	if bots.has(actor_id):
+		return "BOT-%02d" % actor_id
+	return "PLAYER-%d" % actor_id
 
 @rpc("authority", "call_local", "reliable")
-func _respawn_player(peer_id: int, spawn_position: Vector3) -> void:
-	if players.has(peer_id):
-		players[peer_id].global_position = spawn_position
-		players[peer_id].velocity = Vector3.ZERO
+func _actor_health(actor_id: int, value: int) -> void:
+	if players.has(actor_id):
+		players[actor_id].health = value
+	if bots.has(actor_id):
+		bots[actor_id].health = value
+
+@rpc("authority", "call_local", "reliable")
+func _kill_feed(message: String) -> void:
+	if feed_label:
+		feed_label.text = message + "\n" + feed_label.text
+		var lines := feed_label.text.split("\n")
+		if lines.size() > 4:
+			lines.resize(4)
+			feed_label.text = "\n".join(lines)
+
+func _respawn_player_later(peer_id: int) -> void:
+	await get_tree().create_timer(3.0).timeout
+	if players.has(peer_id) and round_active:
+		_respawn_actor.rpc(peer_id, SPAWNS[randi() % SPAWNS.size()], 100)
+
+func _respawn_bot_later(bot_id: int) -> void:
+	await get_tree().create_timer(3.0).timeout
+	if bots.has(bot_id) and round_active:
+		_respawn_actor.rpc(bot_id, SPAWNS[randi() % SPAWNS.size()], 100)
+
+@rpc("authority", "call_local", "reliable")
+func _respawn_actor(actor_id: int, pos: Vector3, hp: int) -> void:
+	var actor: Node = players.get(actor_id, bots.get(actor_id))
+	if actor:
+		actor.global_position = pos
+		actor.health = hp
+		actor.velocity = Vector3.ZERO
 
 @rpc("authority", "call_local", "reliable")
 func _sync_scores(new_scores: Dictionary) -> void:
@@ -269,22 +454,54 @@ func _finish_round() -> void:
 	round_active = false
 	var winner := -1
 	var best := -1
-	for peer_id in scores:
-		if int(scores[peer_id]) > best:
-			best = int(scores[peer_id])
-			winner = int(peer_id)
+	for id in scores:
+		if int(scores[id]) > best:
+			best = int(scores[id])
+			winner = int(id)
 	_round_finished.rpc(winner, best)
 
 @rpc("authority", "call_local", "reliable")
 func _round_finished(winner: int, points: int) -> void:
-	status.text = "Runde beendet – Spieler %d gewinnt mit %d Punkten" % [winner, points]
+	status_label.text = "RUNDE BEENDET // %s GEWINNT (%d)" % [_actor_name(winner), points]
+	menu_layer.visible = true
 
 func _update_hud() -> void:
-	if hud == null:
+	if hud_layer == null:
 		return
-	var lines := ["DEATHMATCH  |  Ziel: %d Punkte  |  Zeit: %02d:%02d" % [SCORE_LIMIT, int(round_time) / 60, int(round_time) % 60]]
-	var ordered := scores.keys()
-	ordered.sort()
-	for peer_id in ordered:
-		lines.append("Spieler %d: %d" % [peer_id, int(scores[peer_id])])
-	hud.text = "\n".join(lines)
+	timer_label.text = "DEATHMATCH     %02d:%02d" % [int(round_time) / 60, int(round_time) % 60]
+	var ranking: Array = []
+	for id in scores:
+		ranking.append([int(id), int(scores[id])])
+	ranking.sort_custom(func(a, b): return a[1] > b[1])
+	var rows: Array[String] = []
+	for row in ranking.slice(0, 5):
+		rows.append("%s  %02d" % [_actor_name(row[0]), row[1]])
+	score_label.text = "TOP FRAGGERS\n" + "\n".join(rows)
+	var local_player: Node = players.get(multiplayer.get_unique_id())
+	if local_player:
+		health_label.text = "VITALS   %03d / 100" % local_player.health
+		ammo_label.text = "RIFLE  |  %02d / %03d\n[ R ] RELOAD" % [local_player.ammo, local_player.reserve_ammo]
+	else:
+		health_label.text = "VITALS   --"
+		ammo_label.text = "RIFLE  |  -- / --"
+
+func _draw_minimap() -> void:
+	var rect := Rect2(Vector2.ZERO, Vector2(160, 160))
+	minimap.draw_rect(rect, Color(0.025, 0.055, 0.075, 0.78), true)
+	minimap.draw_rect(rect, Color(0.45, 0.65, 0.72, 0.9), false, 2.0)
+	for x in [24.0, 80.0, 136.0]:
+		minimap.draw_line(Vector2(x, 8), Vector2(x, 152), Color(0.28, 0.39, 0.44, 0.5), 1.0)
+	for z in [24.0, 80.0, 136.0]:
+		minimap.draw_line(Vector2(8, z), Vector2(152, z), Color(0.28, 0.39, 0.44, 0.5), 1.0)
+	var local: Node = players.get(multiplayer.get_unique_id())
+	if local:
+		var p := Vector2(80 + local.global_position.x * 2.7, 80 + local.global_position.z * 2.7)
+		minimap.draw_circle(p, 5.0, Color(0.35, 0.95, 0.8))
+	for id in players:
+		if int(id) == multiplayer.get_unique_id():
+			continue
+		var p: Vector3 = players[id].global_position
+		minimap.draw_circle(Vector2(80 + p.x * 2.7, 80 + p.z * 2.7), 3.5, Color(0.9, 0.35, 0.25))
+	for id in bots:
+		var p: Vector3 = bots[id].global_position
+		minimap.draw_circle(Vector2(80 + p.x * 2.7, 80 + p.z * 2.7), 3.0, Color(0.95, 0.72, 0.28))

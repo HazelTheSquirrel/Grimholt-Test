@@ -3,7 +3,10 @@ extends CharacterBody3D
 const WALK_SPEED := 8.0
 const JUMP_VELOCITY := 6.0
 const MOUSE_SENSITIVITY := 0.0022
-const FIRE_INTERVAL := 0.22
+const MAGAZINE_SIZE := 30
+const RESERVE_START := 120
+const FIRE_INTERVAL := 0.12
+const DAMAGE_RANGE := 120.0
 
 @onready var head: Node3D = $Head
 @onready var camera: Camera3D = $Head/Camera3D
@@ -11,10 +14,14 @@ const FIRE_INTERVAL := 0.22
 var gravity: float = ProjectSettings.get_setting("physics/3d/default_gravity")
 var fire_cooldown := 0.0
 var network_timer := 0.0
+var health := 100
+var ammo := MAGAZINE_SIZE
+var reserve_ammo := RESERVE_START
+var reload_time := 0.0
 
 func _ready() -> void:
-	add_to_group("players")
-	set_meta("peer_id", get_multiplayer_authority())
+	add_to_group("combatants")
+	set_meta("actor_id", get_multiplayer_authority())
 	var capsule := CapsuleMesh.new()
 	capsule.radius = 0.36
 	capsule.height = 1.75
@@ -39,13 +46,21 @@ func _unhandled_input(event: InputEvent) -> void:
 			Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 		else:
 			_fire()
+	elif event is InputEventKey and event.pressed and event.keycode == KEY_R:
+		_reload()
 
 func _physics_process(delta: float) -> void:
-	if not is_multiplayer_authority():
+	if not is_multiplayer_authority() or health <= 0:
 		return
+	if reload_time > 0.0:
+		reload_time = maxf(0.0, reload_time - delta)
+		if reload_time == 0.0:
+			var amount := mini(MAGAZINE_SIZE - ammo, reserve_ammo)
+			ammo += amount
+			reserve_ammo -= amount
 	if not is_on_floor():
 		velocity.y -= gravity * delta
-	elif Input.is_key_pressed(KEY_SPACE):
+	elif Input.is_action_just_pressed("jump"):
 		velocity.y = JUMP_VELOCITY
 	var input_vector := Input.get_vector("move_left", "move_right", "move_forward", "move_backward")
 	var direction := (transform.basis * Vector3(input_vector.x, 0, input_vector.y)).normalized()
@@ -59,12 +74,19 @@ func _physics_process(delta: float) -> void:
 		get_parent()._submit_transform.rpc_id(1, global_position, rotation.y, head.rotation.x)
 
 func _fire() -> void:
-	if fire_cooldown > 0.0 or multiplayer.multiplayer_peer == null:
+	if fire_cooldown > 0.0 or ammo <= 0 or reload_time > 0.0 or multiplayer.multiplayer_peer == null:
+		if ammo <= 0:
+			_reload()
 		return
 	fire_cooldown = FIRE_INTERVAL
+	ammo -= 1
 	var origin := camera.global_position
 	var direction := -camera.global_transform.basis.z
 	if multiplayer.is_server():
-		get_parent()._request_shot_local(get_multiplayer_authority(), origin, direction)
+		get_parent()._process_shot(get_multiplayer_authority(), origin, direction)
 	else:
 		get_parent()._request_shot.rpc_id(1, origin, direction)
+
+func _reload() -> void:
+	if reload_time <= 0.0 and ammo < MAGAZINE_SIZE and reserve_ammo > 0:
+		reload_time = 1.65
