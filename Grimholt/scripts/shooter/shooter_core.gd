@@ -8,9 +8,7 @@ const SCORE_LIMIT := 50
 const KILL_SCORE_POINTS := 1
 const ROUND_SECONDS := 900
 const BOT_COUNT := 5
-const TRANSFORM_MIN_INTERVAL_MSEC := 40
-const MAX_REPORTED_SPEED := 12.0
-const TRANSFORM_DISTANCE_TOLERANCE := 0.5
+const INPUT_MIN_INTERVAL_MSEC := 40
 const SPAWNS := [Vector3(-17, 1, -17), Vector3(17, 1, 17), Vector3(-17, 1, 17), Vector3(17, 1, -17), Vector3(0, 1, -18), Vector3(0, 1, 18), Vector3(-18, 1, 0), Vector3(18, 1, 0)]
 
 var players: Dictionary = {}
