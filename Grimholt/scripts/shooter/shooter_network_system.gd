@@ -128,6 +128,7 @@ func _on_peer_disconnected(peer_id: int) -> void:
 		deaths.erase(peer_id)
 		last_positions.erase(peer_id)
 		last_position_times.erase(peer_id)
+		last_transform_packet_msec.erase(peer_id)
 		last_shot_times.erase(peer_id)
 		weapon_ammo.erase(peer_id)
 		weapon_reserve.erase(peer_id)
