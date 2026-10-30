@@ -150,3 +150,58 @@ func populate_resources(inventory: GrimholtInventory) -> void:
         var pz := float(entry["z"])
         node.position = Vector3(px, height_at(px, pz), pz)
         add_child(node)
+    _populate_ground_cover()
+
+func _populate_ground_cover() -> void:
+    var rng := RandomNumberGenerator.new()
+    rng.seed = terrain_seed + 8103
+
+    var grass_mesh := CylinderMesh.new()
+    grass_mesh.top_radius = 0.008
+    grass_mesh.bottom_radius = 0.055
+    grass_mesh.height = 0.48
+    grass_mesh.radial_segments = 5
+    var grass_material := StandardMaterial3D.new()
+    grass_material.albedo_color = Color(0.28, 0.43, 0.18)
+    grass_material.roughness = 1.0
+    var grass_batch := MultiMesh.new()
+    grass_batch.transform_format = MultiMesh.TRANSFORM_3D
+    grass_batch.mesh = grass_mesh
+    grass_batch.instance_count = 260
+    for index in range(grass_batch.instance_count):
+        var px := rng.randf_range(-extent * cell_size + 4.0, extent * cell_size - 4.0)
+        var pz := rng.randf_range(-extent * cell_size + 4.0, extent * cell_size - 4.0)
+        if Vector2(px, pz).length() < 9.0:
+            px += 12.0
+        var scale := rng.randf_range(0.65, 1.35)
+        var basis := Basis().rotated(Vector3.UP, rng.randf_range(0.0, TAU)).scaled(Vector3(scale, scale, scale))
+        var origin := Vector3(px, height_at(px, pz) + 0.22 * scale, pz)
+        grass_batch.set_instance_transform(index, Transform3D(basis, origin))
+    var grass_instance := MultiMeshInstance3D.new()
+    grass_instance.name = "GrassTufts"
+    grass_instance.multimesh = grass_batch
+    grass_instance.material_override = grass_material
+    add_child(grass_instance)
+
+    var stone_mesh := SphereMesh.new()
+    stone_mesh.radius = 0.24
+    stone_mesh.height = 0.32
+    var stone_material := StandardMaterial3D.new()
+    stone_material.albedo_color = Color(0.38, 0.40, 0.39)
+    stone_material.roughness = 0.96
+    var stone_batch := MultiMesh.new()
+    stone_batch.transform_format = MultiMesh.TRANSFORM_3D
+    stone_batch.mesh = stone_mesh
+    stone_batch.instance_count = 48
+    for index in range(stone_batch.instance_count):
+        var px := rng.randf_range(-extent * cell_size + 4.0, extent * cell_size - 4.0)
+        var pz := rng.randf_range(-extent * cell_size + 4.0, extent * cell_size - 4.0)
+        var scale := rng.randf_range(0.45, 1.8)
+        var basis := Basis().rotated(Vector3.UP, rng.randf_range(0.0, TAU)).scaled(Vector3(scale, scale * rng.randf_range(0.7, 1.2), scale))
+        var origin := Vector3(px, height_at(px, pz) + 0.10 * scale, pz)
+        stone_batch.set_instance_transform(index, Transform3D(basis, origin))
+    var stone_instance := MultiMeshInstance3D.new()
+    stone_instance.name = "ScatteredStones"
+    stone_instance.multimesh = stone_batch
+    stone_instance.material_override = stone_material
+    add_child(stone_instance)
