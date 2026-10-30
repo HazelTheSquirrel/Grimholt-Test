@@ -14,6 +14,8 @@ Grimholt ist ein eigenständiger, reiner Multiplayer-3D-Arena-Shooter. Es gibt k
 - Fünf servergesteuerte Arena-Bots als Gegner; Bot-Kills erhöhen nicht den FFA-Spielerpunktestand.
 - Eigenständiges Arena-Shooter-HUD: Matchzeit, Top-Fragger, Lebenspunkte, Munition, Killfeed und Minimap; die Informationshierarchie wird auf Lesbarkeit und ein freies Sichtfeld ausgelegt.
 - Vollständige K/D-Scoreboard-Ansicht per Tab, Trefferbestätigung und automatisches Gewehrfeuer bei gehaltenem Linksklick.
+- Eigenständige dunkle Graphit-/Türkis-Oberfläche mit klaren Akzentfarben; Minimap sitzt getrennt von der Vitalanzeige, damit die linke untere HUD-Zone frei bleibt.
+- Vollbild und Master-Lautstärke sind im Haupt- und Pausemenü einstellbar und werden lokal in `user://grimholt_settings.cfg` gespeichert.
 - Lokale Waffen- und Nachlade-Rückmeldung; finale Audioaufnahmen und räumlicher Mix stehen noch aus.
 - Serverseitige Bewegungsphysik: Clients senden nur validierte Eingaben (20 Hz); der Server simuliert Bewegung und verteilt Positions-Snapshots. Direkte clientseitige Positionsmeldungen werden nicht mehr akzeptiert.
 
