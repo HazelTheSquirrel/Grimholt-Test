@@ -36,8 +36,24 @@ func _run() -> void:
         _fail("Live player did not reach the terrain before interaction.")
         return
     var live_terrain := live_scene.get_node("TerrainWorld")
-    if live_terrain.get_node_or_null("GrassTufts") == null or live_terrain.get_node_or_null("ScatteredStones") == null:
-        _fail("Landscape ground cover and stone scatter were not generated.")
+    if live_terrain.active_chunks.size() != 9:
+        _fail("World streaming did not generate the expected 3x3 chunk neighborhood.")
+        return
+    if not is_equal_approx(live_terrain.WORLD_AREA_KM2, 10000.0) or not is_equal_approx(live_terrain.WORLD_SIZE_METERS, 100000.0):
+        _fail("World dimensions do not represent 10,000 km².")
+        return
+    var center_height := live_terrain.height_at(0.0, 0.0)
+    var mountain_height := live_terrain.height_at(42000.0, -31000.0)
+    if absf(mountain_height - center_height) < 20.0:
+        _fail("Procedural continental relief has insufficient elevation variation.")
+        return
+    var foliage_found := false
+    for chunk in live_terrain.generated_root.get_children():
+        if chunk.get_node_or_null("ForestCanopies") != null and chunk.get_node_or_null("GrassCover") != null:
+            foliage_found = true
+            break
+    if not foliage_found:
+        _fail("Chunk foliage and ground cover were not generated.")
         return
     var harvest_key := InputEventKey.new()
     harvest_key.keycode = KEY_E
