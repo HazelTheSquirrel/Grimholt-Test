@@ -22,6 +22,23 @@ func _run() -> void:
         return
     scene.free()
 
+    var live_scene := packed.instantiate()
+    root.add_child(live_scene)
+    for frame in range(125):
+        await physics_frame
+    var live_player := live_scene.get_node("Player") as GrimholtPlayer
+    if live_player == null or not live_player.is_on_floor():
+        _fail("Live player did not reach the terrain before interaction.")
+        return
+    if not live_player._interact():
+        _fail("E interaction ray did not reach the starter oak in front of the player.")
+        return
+    if live_player.inventory.get_item_count("wood") != 4:
+        _fail("Starter oak harvest did not add the configured four wood to the live player inventory.")
+        return
+    live_scene.queue_free()
+    await process_frame
+
     var inventory: GrimholtInventory = InventoryScript.new()
     var professions: GrimholtProfessionSystem = ProfessionScript.new()
     if inventory.add_item("not_an_item", 1) or inventory.add_item("wood", 0) or inventory.add_item("wood", -1):
