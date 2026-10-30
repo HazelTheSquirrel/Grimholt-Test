@@ -33,9 +33,11 @@ static func craft(recipe_id: String, inventory: GrimholtInventory, professions: 
         return false
     var recipe: Dictionary = RECIPES[recipe_id]
     var inputs: Dictionary = recipe["inputs"]
+    var outputs: Dictionary = recipe["output"]
+    if not inventory.has_items(inputs) or not inventory.can_add_items(outputs):
+        return false
     if not inventory.remove_items(inputs):
         return false
-    var outputs: Dictionary = recipe["output"]
     for item_id in outputs:
         inventory.add_item(String(item_id), int(outputs[item_id]))
     professions.add_experience(String(recipe["profession"]), int(recipe["experience"]))
