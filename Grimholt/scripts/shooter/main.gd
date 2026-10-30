@@ -401,7 +401,10 @@ func _leave_match() -> void:
 	last_shot_times.clear()
 	weapon_ammo.clear()
 	weapon_reserve.clear()
+	player_loadouts.clear()
+	current_weapons.clear()
 	reload_deadlines.clear()
+	reload_weapons.clear()
 	for child in get_children():
 		if child is CharacterBody3D:
 			child.queue_free()
@@ -575,6 +578,13 @@ func start_solo_game() -> void:
 	scores.clear()
 	deaths.clear()
 	last_input_packet_msec.clear()
+	last_shot_times.clear()
+	weapon_ammo.clear()
+	weapon_reserve.clear()
+	player_loadouts.clear()
+	current_weapons.clear()
+	reload_deadlines.clear()
+	reload_weapons.clear()
 	for child in get_children():
 		if child is CharacterBody3D:
 			child.queue_free()
