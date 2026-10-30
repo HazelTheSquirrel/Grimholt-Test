@@ -5,9 +5,12 @@ const WALK_SPEED := 6.5
 const SPRINT_SPEED := 10.0
 const JUMP_VELOCITY := 5.8
 const MOUSE_SENSITIVITY := 0.0022
+const INTERACTION_DISTANCE := 6.0
+const Blocks = preload("res://scripts/world/block_registry.gd")
 
 var camera_pivot: Node3D
 var camera: Camera3D
+var interaction_world: GrimholtWorld
 var gravity: float = ProjectSettings.get_setting("physics/3d/default_gravity")
 
 func _ready() -> void:
@@ -15,6 +18,9 @@ func _ready() -> void:
     _build_body()
     _build_hud()
     Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
+
+func set_world(world: GrimholtWorld) -> void:
+    interaction_world = world
 
 func _create_input_actions() -> void:
     _add_key_action("move_forward", KEY_W)
@@ -61,7 +67,7 @@ func _build_hud() -> void:
     hud.add_theme_color_override("font_shadow_color", Color(0.0, 0.0, 0.0, 0.9))
     hud.add_theme_constant_override("shadow_offset_x", 2)
     hud.add_theme_constant_override("shadow_offset_y", 2)
-    hud.text = "GRIMHOLT – VOXEL TESTWELT\nWASD: Bewegen | SHIFT: Sprint | LEERTASTE: Springen\nMaus: Umsehen | ESC: Maus freigeben | Klick: Maus fangen"
+    hud.text = "GRIMHOLT – VOXEL TESTWELT\nWASD: Bewegen | SHIFT: Sprint | LEERTASTE: Springen\nMaus: Umsehen | ESC: Maus freigeben | Klick: Maus fangen\nLinksklick: Block abbauen | Rechtsklick: Erde platzieren"
     layer.add_child(hud)
     var crosshair := Label.new()
     crosshair.text = "+"
@@ -77,8 +83,32 @@ func _unhandled_input(event: InputEvent) -> void:
         camera_pivot.rotation.x = clampf(camera_pivot.rotation.x, deg_to_rad(-88.0), deg_to_rad(88.0))
     if event is InputEventKey and event.pressed and not event.echo and event.keycode == KEY_ESCAPE:
         Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
-    if event is InputEventMouseButton and event.pressed and Input.mouse_mode == Input.MOUSE_MODE_VISIBLE:
-        Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
+    if event is InputEventMouseButton and event.pressed:
+        if Input.mouse_mode == Input.MOUSE_MODE_VISIBLE:
+            Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
+        elif event.button_index == MOUSE_BUTTON_LEFT:
+            _interact_with_world(false)
+        elif event.button_index == MOUSE_BUTTON_RIGHT:
+            _interact_with_world(true)
+
+func _interact_with_world(place_block: bool) -> void:
+    if interaction_world == null or camera == null:
+        return
+    var origin := camera.global_position
+    var endpoint := origin - camera.global_transform.basis.z * INTERACTION_DISTANCE
+    var query := PhysicsRayQueryParameters3D.create(origin, endpoint)
+    query.exclude = [get_rid()]
+    query.collision_mask = 1
+    var hit := get_world_3d().direct_space_state.intersect_ray(query)
+    if hit.is_empty():
+        return
+    var normal: Vector3 = hit.normal
+    var target_position: Vector3 = hit.position + normal * 0.01 if place_block else hit.position - normal * 0.01
+    var voxel_position := Vector3i(target_position.floor())
+    if place_block:
+        interaction_world.set_voxel(voxel_position, Blocks.DIRT)
+    else:
+        interaction_world.set_voxel(voxel_position, Blocks.AIR)
 
 func _physics_process(delta: float) -> void:
     if not is_on_floor():

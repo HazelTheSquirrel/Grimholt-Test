@@ -16,12 +16,12 @@ Ein Voxel-Sandbox-RPG mit starkem Rollenspiel-Fokus: erkundbare Fantasy-Welt, gl
 
 ## Phase 1 – Belastbare Sandbox-Basis
 
-- [ ] Blockabbau und Platzieren mit Raycast
-- [ ] Chunk-Änderungen und Nachbar-Chunk-Updates
-- [ ] Welt-Metadaten und persistente Chunk-Speicherung
+- [x] Blockabbau und Platzieren mit Raycast
+- [x] Chunk-Änderungen und Nachbar-Chunk-Updates
+- [x] Welt-Metadaten und persistente Chunk-Speicherung
 - [ ] Spawn-/Weltverwaltung und Fehlerbehandlung
 - [ ] Hintergrundjobs für Generierung und Mesh-Aufbau
-- [ ] Profiling und automatisierte Tests
+- [ ] Profiling und automatisierte Gameplay-Tests
 
 ## Phase 2 – Welt und Erkundung
 

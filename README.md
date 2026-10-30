@@ -7,15 +7,17 @@
 - Seedbasierte prozedurale Voxel-Terrain-Generierung
 - 16 × 64 × 16 Voxel pro Chunk
 - Chunk-Nachbarschaftsladen rund um den Spieler und Entfernen entfernter Chunks
-- Mesh-Erzeugung nur für sichtbare Blockflächen
-- Separate statische Kollisionskörper pro Chunk
-- Zentrale Block-IDs und Materialfarben
+- Mesh-Erzeugung nur für sichtbare Blockflächen und separate Chunk-Kollisionen
 - First-Person-Bewegung mit Laufen, Sprinten und Springen
+- Blockabbau per Linksklick und Erdplatzierung per Rechtsklick (Raycast, 6 Meter Reichweite)
+- Persistente Speicherung geänderter Blöcke pro Chunk unter `user://worlds/default/chunks/`
+- Welt-Metadaten mit Seed und Speicherformatversion unter `user://worlds/default/world.json`
+- Geänderte Chunks werden beim Laden wiederhergestellt und beim Verlassen der Welt gespeichert
 
 ## Starten
 
 1. Godot 4.7.2 öffnen.
-2. Im Projektmanager **Importieren** wählen und project.godot auswählen.
+2. Im Projektmanager **Importieren** wählen und `project.godot` auswählen.
 3. Projekt öffnen und mit F6/F5 starten.
 
 ## Steuerung
@@ -27,7 +29,12 @@
 | Leertaste | Springen |
 | Shift | Sprinten |
 | ESC | Maus freigeben |
-| Linksklick | Maus wieder einfangen |
+| Linksklick | Block abbauen |
+| Rechtsklick | Erdblock platzieren |
+
+## Speicherung
+
+Weltänderungen werden lokal im Godot-Benutzerverzeichnis gespeichert. Der aktuelle Prototyp verwendet eine feste Welt-ID (`default`) und speichert nur veränderte Voxel, nicht die vollständigen Chunk-Daten. Die Welt wird beim Beenden zusätzlich gesichert. Es gibt noch keine Oberfläche zum Erstellen, Umbenennen oder Löschen mehrerer Welten.
 
 ## Projektstruktur
 
@@ -40,17 +47,16 @@
     scripts/world/voxel_chunk.gd
     scripts/world/world_generator.gd
     docs/ROADMAP.md
+    .github/workflows/godot-check.yml
 
-## Architektur
+## Architektur und Grenzen
 
-- world_config.gd: zentrale Weltparameter und Dimensionen.
-- block_registry.gd: stabile Block-IDs und visuelle Grunddefinitionen.
-- voxel_chunk.gd: Voxel-Daten eines Chunks sowie Mesh-/Kollisionsaufbau.
-- world_generator.gd: Seed, Chunk-Verwaltung, Streaming und Weltabfragen.
-- player_controller.gd: Spielersteuerung ohne direkte Abhängigkeit von Terrain-Details.
-
-Voxel liegen in einem PackedByteArray, nicht als einzelne Nodes. Chunk-Meshes enthalten nur Flächen, deren Nachbarzelle Luft ist. Die aktuelle Generierung und Mesh-Erstellung laufen noch synchron auf dem Hauptthread. Das ist für den kleinen Prototypen bewusst einfach gehalten und muss vor großen Welten durch einen Worker-/Job-Ansatz ergänzt werden.
+Voxel-Daten sind der maßgebliche Weltzustand; Meshes und Kollisionen werden daraus neu aufgebaut. Es gibt keine Node-Instanz pro Block. Chunk-Generierung, Mesh-Aufbau und Speichern laufen derzeit synchron auf dem Hauptthread. Vor großen Welten sind Hintergrundjobs, robustere Save-Transaktionen und Profiling erforderlich.
 
 ## Noch nicht implementiert
 
-Blockabbau/-platzierung, Speichern veränderter Voxel, Biome/Vegetation/Höhlen, Inventar, Crafting, Charakterentwicklung, NPCs, Dialoge, Quests, persistente Welten, Multiplayer und Installer sind noch nicht enthalten. Diese Funktionen sind ausdrücklich nächste Entwicklungsziele und werden nicht als bereits fertig dargestellt.
+Biome, Höhlen, Vegetation, Wasser, Inventar, Crafting, Charakterentwicklung, NPCs, Dialoge, Quests, mehrere Welten, Multiplayer, Serveradministration und Windows-Installer sind noch nicht enthalten. Diese Funktionen werden nicht als bereits fertig dargestellt.
+
+## Validierung
+
+GitHub Actions prüft das Projekt mit Godot im Headless-Modus auf Import-/Parserfehler und startet anschließend einen kurzen Headless-Smoke-Test. Ein erfolgreicher CI-Lauf ersetzt keinen manuellen Spieltest mit Grafik, Eingabe und Kollisionen auf Windows.

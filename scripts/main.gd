@@ -14,6 +14,7 @@ func _ready() -> void:
     player.name = "Player"
     add_child(player)
     player.global_position = Vector3(0.0, 43.0, 0.0)
+    player.set_world(world)
     world.set_player(player)
 
 func _setup_environment() -> void:
