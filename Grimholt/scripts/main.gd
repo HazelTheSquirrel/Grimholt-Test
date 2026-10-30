@@ -10,6 +10,10 @@ const SAVE_VERSION := 1
 @onready var world_environment: WorldEnvironment = $WorldEnvironment
 @onready var sun: DirectionalLight3D = $Sun
 
+func _process(_delta: float) -> void:
+    if is_instance_valid(player) and is_instance_valid(terrain):
+        terrain.update_streaming(player.global_position)
+
 func _ready() -> void:
     _setup_environment()
     var inventory := player.get_node("Inventory") as GrimholtInventory
