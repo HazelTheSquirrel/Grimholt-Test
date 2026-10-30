@@ -4,13 +4,13 @@ Grimholt ist ein eigenständiger, reiner Multiplayer-3D-Arena-Shooter. Es gibt k
 
 ## Aktueller Prototyp
 
-- Free-for-All-Deathmatch mit 25 Abschüssen als Rundenziel und zehn Minuten Zeitlimit.
+- Free-for-All-Deathmatch mit 50 Abschüssen als Rundenziel und 15 Minuten Zeitlimit.
 - ENet-Host/Join über UDP-Port 27015.
 - Fest gespeicherte Greybox-Arena-Szene mit sichtbarer Geometrie, Kollisionen, Licht, Vorschaukamera, Deckung und acht Spawnpositionen.
 - First-Person-Steuerung, Mausblick, Springen, Halten von Strg zum Ducken und Hitscan-Gewehr mit prozeduralem Viewmodel.
 - 30-Schuss-Magazin, Reserve-Munition und Nachladen.
 - 100 Lebenspunkte, Respawn und Kill-Punkte.
-- Fünf servergesteuerte Arena-Bots als Gegner.
+- Fünf servergesteuerte Arena-Bots als Gegner; besiegte Bots verschwinden sofort und kehren nach drei Sekunden zurück.
 - Militärisch inspiriertes, eigenständiges HUD: Matchzeit, Top-Fragger, Lebenspunkte, Munition, Killfeed und taktische Minimap.
 - Vollständige K/D-Scoreboard-Ansicht per Tab, Trefferbestätigung und automatisches Gewehrfeuer bei gehaltenem Linksklick.
 - Prozedurale lokale Platzhalter-Audioeffekte für Schüsse und Nachladen (noch keine finalen Soundassets).
