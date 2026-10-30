@@ -11,6 +11,7 @@ func _run() -> void:
     var scene := packed.instantiate()
     var required_paths := [
         "TerrainWorld",
+        "PlayerSpawn",
         "PlayerBuildings",
         "WorldEnvironment",
         "Sun",
