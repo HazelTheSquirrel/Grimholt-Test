@@ -1,8 +1,10 @@
 extends CharacterBody3D
 class_name GrimholtPlayer
 
-const WALK_SPEED := 5.5
-const SPRINT_SPEED := 8.5
+const BODY_HEIGHT := 1.70
+const BODY_RADIUS := 0.30
+const WALK_SPEED := 4.8
+const SPRINT_SPEED := 7.2
 const JUMP_VELOCITY := 5.0
 const MOUSE_SENSITIVITY := 0.002
 const INTERACTION_DISTANCE := 5.0
@@ -28,9 +30,19 @@ func _ready() -> void:
     Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 
 func _configure_body_visual() -> void:
+    var fabric_noise := FastNoiseLite.new()
+    fabric_noise.noise_type = FastNoiseLite.TYPE_SIMPLEX
+    fabric_noise.frequency = 0.12
+    var fabric_texture := NoiseTexture2D.new()
+    fabric_texture.width = 128
+    fabric_texture.height = 128
+    fabric_texture.noise = fabric_noise
     var body_material := StandardMaterial3D.new()
-    body_material.albedo_color = Color(0.22, 0.25, 0.29)
-    body_material.roughness = 0.82
+    body_material.albedo_color = Color(0.25, 0.30, 0.36)
+    body_material.albedo_texture = fabric_texture
+    body_material.uv1_triplanar = true
+    body_material.uv1_scale = Vector3(2.0, 2.0, 2.0)
+    body_material.roughness = 0.92
     body_visual.material_override = body_material
 
 func _configure_hud() -> void:
