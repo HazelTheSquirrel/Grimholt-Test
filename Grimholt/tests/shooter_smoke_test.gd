@@ -21,6 +21,7 @@ func _run_smoke_test() -> void:
 	game.start_solo_game()
 	await process_frame
 	assert(game.players.has(1), "Solo player did not spawn")
+	assert(game._collect_player_states().size() == 1, "Server snapshot should include the local player")
 	assert(game.bots.size() == 5, "Expected five bots in solo mode")
 	assert(game.SCORE_LIMIT == 50, "Round kill limit should be 50")
 	assert(game.ROUND_SECONDS == 900, "Round duration should be 15 minutes")
@@ -29,10 +30,19 @@ func _run_smoke_test() -> void:
 	assert(game._format_round_time(60000) == "01:00", "Minute boundary must display correctly")
 	assert(game._format_round_time(999) == "00:01", "Timer must not show 00:00 before expiry")
 	assert(game._format_round_time(0) == "00:00", "Expired timer must display 00:00")
+	assert(game._is_player_input_valid(Vector2(0.5, 0.5), 0.0, 0.0), "Valid movement input must pass")
+	assert(not game._is_player_input_valid(Vector2(2.0, 0.0), 0.0, 0.0), "Oversized movement input must be rejected")
+	assert(not game._is_player_input_valid(Vector2.ZERO, 0.0, deg_to_rad(90.0)), "Out-of-range pitch must be rejected")
+	assert(not game._is_player_input_valid(Vector2(INF, 0.0), 0.0, 0.0), "Non-finite movement input must be rejected")
 	assert(game.round_end_time_msec > Time.get_ticks_msec(), "Round must use a future monotonic deadline")
 	assert(game.scoreboard_panel != null, "Scoreboard UI was not created")
 	assert(game.hitmarker_label != null, "Hit confirmation UI was not created")
 	var player: Node = game.players[1]
+	game.players[77] = player
+	assert(game._accept_input_packet(77, 1000), "First transform packet should pass")
+	assert(not game._accept_input_packet(77, 1020), "Packets inside the rate limit must be rejected")
+	assert(game._accept_input_packet(77, 1040), "A packet after the rate limit should pass")
+	game.players.erase(77)
 	assert(player.get_node_or_null("Head/Camera3D") != null, "Player camera is missing")
 	assert(player.get_node("BodyVisual").get_child_count() >= 10, "Original player armor details were not built")
 	assert(game.bots[1000].get_node("BodyVisual").get_child_count() >= 10, "Original bot armor details were not built")

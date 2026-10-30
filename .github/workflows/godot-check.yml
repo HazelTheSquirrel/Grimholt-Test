@@ -1,8 +1,8 @@
-name: Godot shooter checks
+name: Godot 4.7.2 validation
 
 on:
   push:
-    branches: [main, shooter-deathmatch]
+    branches: [main, hardening/godot-4.7.2-stability]
   pull_request:
     branches: [main]
   workflow_dispatch:
@@ -25,8 +25,11 @@ jobs:
           use-dotnet: false
           include-templates: false
 
-      - name: Import and parse project
+      - name: Import project
         run: godot --headless --editor --path Grimholt --quit
+
+      - name: Parse every GDScript file
+        run: godot --headless --path Grimholt --script res://tests/script_validation_test.gd
 
       - name: Headless startup smoke test
         run: godot --headless --path Grimholt --quit-after 10

@@ -8,6 +8,7 @@ const SCORE_LIMIT := 50
 const KILL_SCORE_POINTS := 1
 const ROUND_SECONDS := 900
 const BOT_COUNT := 5
+const INPUT_MIN_INTERVAL_MSEC := 40
 const SPAWNS := [Vector3(-17, 1, -17), Vector3(17, 1, 17), Vector3(-17, 1, 17), Vector3(17, 1, -17), Vector3(0, 1, -18), Vector3(0, 1, 18), Vector3(-18, 1, 0), Vector3(18, 1, 0)]
 
 var players: Dictionary = {}
@@ -36,8 +37,7 @@ var scoreboard_panel: PanelContainer
 var scoreboard_label: RichTextLabel
 var hitmarker_label: Label
 var hitmarker_timer := 0.0
-var last_positions: Dictionary = {}
-var last_position_times: Dictionary = {}
+var last_input_packet_msec: Dictionary = {}
 var last_shot_times: Dictionary = {}
 var weapon_ammo: Dictionary = {}
 var weapon_reserve: Dictionary = {}
@@ -73,6 +73,7 @@ func _process(delta: float) -> void:
 			if bot_sync_timer >= 0.05:
 				bot_sync_timer = 0.0
 				_sync_bot_states.rpc(_collect_bot_states())
+				_sync_player_states.rpc(_collect_player_states())
 			if now_msec >= next_timer_sync_msec:
 				_sync_round_timer.rpc(remaining_msec)
 				next_timer_sync_msec = now_msec + 1000

@@ -8,18 +8,19 @@ Eigenständiger Multiplayer-3D-Arena-Shooter mit klassischem Free-for-All-Deathm
 - [x] Prozedurale Greybox-Arena mit Deckung und Spawnpunkten
 - [x] First-Person-Steuerung, Mausblick und Springen
 - [x] ENet-Host/Join-Grundlage
-- [x] Free-for-All, 25 Abschüsse, zehn Minuten
+- [x] Free-for-All, 50 Abschüsse, 15 Minuten
 - [x] Lebenspunkte, Treffer, Kills und Respawn-Grundlage
 - [x] Gewehr mit Magazin, Reserve-Munition und Nachladen
 - [x] Servergesteuerte Bots als Match-Gegner
-- [ ] Vollständig serverautoritatives Movement und Combat
+- [x] Serverseitige Bewegungsphysik mit validierten Eingabe-RPCs und periodischen Positions-Snapshots
+- [ ] Vollständig serverautoritatives Combat inklusive Lag Compensation
 - [x] Offline-Solo-Start ohne ENet-Server
 - [x] Halte-Ducken mit abgesenkter Kamera und Kollisionskapsel
 - [x] Prozedurales First-Person-Gewehr-Viewmodel
 - [x] Serverseitige Plausibilitätsprüfung für Schussrichtung und Feuerrate
 - [ ] Mehrclient-Tests, Paketverlust- und Disconnect-Tests
-- [ ] Serverseitige Munitions- und Nachladeautorität
-- [ ] Serverautoritatives Movement statt clientseitig gemeldeter Positionen
+- [x] Serverseitige Munitions- und Nachladeautorität
+- [x] Rate-Limit und Wertebereichsprüfung für Eingabe-RPCs
 
 ## Phase 2 – HUD und Spielgefühl
 - [x] Eigenständiges militärisches HUD
@@ -27,9 +28,12 @@ Eigenständiger Multiplayer-3D-Arena-Shooter mit klassischem Free-for-All-Deathm
 - [x] Lebenspunkte- und Munitionsanzeige
 - [x] Killfeed
 - [x] Taktische Minimap mit Spieler-/Bot-Markern
-- [ ] Trefferindikator, Schadensrichtung und Abschussbestätigung
-- [ ] Scoreboard mit Ping, Kills, Deaths und Assist
-- [ ] Audiofeedback, Waffenanimationen und Trefferreaktionen
+- [x] Trefferindikator und Abschussbestätigung
+- [ ] Schadensrichtung
+- [x] Scoreboard-Grundlage mit Kills und Deaths
+- [ ] Ping und Assist
+- [x] Prozedurales Schuss- und Nachlade-Audiofeedback
+- [ ] Waffenanimationen und Trefferreaktionen
 - [ ] Einstellungen für HUD-Skalierung, Audio und Eingabe
 
 ## Phase 3 – Waffen und Karten
