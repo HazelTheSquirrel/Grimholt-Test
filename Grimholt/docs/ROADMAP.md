@@ -1,7 +1,7 @@
 # Grimholt: Arena – Roadmap
 
 ## Leitbild
-Eigenständiger Multiplayer-3D-Arena-Shooter mit klassischem Free-for-All-Deathmatch. Keine Einzelspieler-Kampagne. Inspirationsquellen sind Halo 3 und Battlefield: Bad Company 2, ohne deren geschützte Inhalte zu übernehmen.
+Eigenständiger Multiplayer-3D-Arena-Shooter mit klassischem Free-for-All-Deathmatch. Keine Einzelspieler-Kampagne. Qualitätsmaßstab sind lesbare Arena-Gefechte, eine fokussierte HUD-Hierarchie, eine bewusst abgestimmte Waffen-Sandbox und ein sauberer Multiplayer-Spielablauf. Halo 3 dient ausschließlich als abstrakte Referenz für diese allgemeinen Designprinzipien. Grimholt übernimmt keine geschützten Namen, Marken, Figuren, Waffen-, Karten-, UI-, Audio-, Story- oder Asset-Elemente.
 
 ## Phase 1 – Spielbarer Deathmatch-Kern
 - [x] Godot 4.7.2-Projekt auf Arena-Shooter umstellen
@@ -23,7 +23,7 @@ Eigenständiger Multiplayer-3D-Arena-Shooter mit klassischem Free-for-All-Deathm
 - [x] Rate-Limit und Wertebereichsprüfung für Eingabe-RPCs
 
 ## Phase 2 – HUD und Spielgefühl
-- [x] Eigenständiges militärisches HUD
+- [x] Eigenständiges Arena-Shooter-HUD (Prototyp; visuelle Abnahme offen)
 - [x] Match-Timer und Top-Fragger-Anzeige
 - [x] Lebenspunkte- und Munitionsanzeige
 - [x] Killfeed
@@ -34,7 +34,9 @@ Eigenständiger Multiplayer-3D-Arena-Shooter mit klassischem Free-for-All-Deathm
 - [ ] Ping und Assist
 - [x] Prozedurales Schuss- und Nachlade-Audiofeedback
 - [ ] Waffenanimationen und Trefferreaktionen
-- [ ] Einstellungen für HUD-Skalierung, Audio und Eingabe
+- [ ] Einstellungen für HUD-Skalierung und Eingabe
+- [x] Eigenständige UI-Farb- und Panelgestaltung
+- [x] Minimap aus dem unteren HUD-Bereich verschoben, damit sie nicht mit den Vitalwerten kollidiert
 
 ## Phase 3 – Waffen und Karten
 - [ ] Zweite und dritte Waffe mit eigenständigen Rollen
@@ -62,6 +64,12 @@ Eigenständiger Multiplayer-3D-Arena-Shooter mit klassischem Free-for-All-Deathm
 - [ ] Finale Charaktere, Waffen, Animationen und Umgebungen
 - [ ] Windows-Export und Installer
 - [ ] Datenschutz, Serverlogs und Betreiber-Dokumentation
+
+## Design-Leitlinien
+1. Halo 3 ist nur eine Referenz für abstrakte Qualitätsmerkmale, niemals eine Vorlage zum Nachbauen.
+2. Grimholt erhält eine eigene visuelle Sprache: dunkle Graphitflächen, zurückhaltendes Türkis als Funktionsakzent und warme Messing-/Bernsteinwerte für Munition und Warnungen.
+3. HUD-Elemente bleiben kompakt, lesbar und außerhalb der zentralen Sichtachse; keine großflächigen dekorativen Balken.
+4. Waffen, Silhouetten, Arenen, Symbole, Audio und UI-Kompositionen müssen eigenständig gestaltet sein.
 
 ## Technische Leitlinien
 1. Eigenständige Spielwelt, Waffen, Figuren, Karten und UI.
