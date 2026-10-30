@@ -78,7 +78,7 @@ func _unhandled_input(event: InputEvent) -> void:
 func _physics_process(delta: float) -> void:
 	var local_control := is_multiplayer_authority()
 	var server_control := multiplayer.is_server()
-	if (not local_control and not server_control) or health <= 0:
+	if (not local_control and not server_control) or health <= 0 or not bool(get_parent().get("round_active")):
 		return
 
 	var input_vector := Vector2.ZERO
