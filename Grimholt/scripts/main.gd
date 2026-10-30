@@ -6,6 +6,7 @@ const SAVE_VERSION := 1
 
 @onready var terrain: GrimholtTerrainWorld = $TerrainWorld
 @onready var player: GrimholtPlayer = $Player
+@onready var spawn_point: Marker3D = $PlayerSpawn
 @onready var building_system: GrimholtBuildingSystem = $PlayerBuildings
 @onready var world_environment: WorldEnvironment = $WorldEnvironment
 @onready var sun: DirectionalLight3D = $Sun
@@ -19,7 +20,7 @@ func _ready() -> void:
     var inventory := player.get_node("Inventory") as GrimholtInventory
     player.inventory = inventory
     player.building_system = building_system
-    player.global_position = terrain.get_safe_spawn_position()
+    player.global_position = terrain.get_safe_spawn_position(spawn_point.global_position)
     terrain.populate_resources(inventory)
     for child in terrain.get_children():
         if child is GrimholtResourceNode:
@@ -171,7 +172,7 @@ func _load_game(show_feedback: bool = true) -> bool:
     var ground_height := terrain.height_at(restored_position.x, restored_position.z)
     var recovered_from_underground := restored_position.y < ground_height + 0.05
     if recovered_from_underground:
-        restored_position = terrain.get_safe_spawn_position()
+        restored_position = terrain.get_safe_spawn_position(spawn_point.global_position)
     player.global_position = restored_position
     player.velocity = Vector3.ZERO
     if show_feedback:
