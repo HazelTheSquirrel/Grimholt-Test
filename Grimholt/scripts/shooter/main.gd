@@ -54,6 +54,8 @@ func _process(delta: float) -> void:
 		if round_time <= 0.0:
 			_finish_round()
 	_update_hud()
+	if minimap != null:
+		minimap.queue_redraw()
 
 func _build_arena() -> void:
 	var env_node := WorldEnvironment.new()
@@ -200,7 +202,7 @@ func host_game() -> void:
 	_start_match()
 	_spawn_player(1)
 	for i in range(BOT_COUNT):
-		_spawn_bot(i)
+		_spawn_bot(i + 1000)
 
 func join_game() -> void:
 	var peer := ENetMultiplayerPeer.new()
@@ -233,7 +235,8 @@ func _on_peer_connected(peer_id: int) -> void:
 			_spawn_player_remote.rpc_id(peer_id, int(id), players[id].global_position)
 	for id in bots:
 		_spawn_bot_remote.rpc_id(peer_id, int(id), bots[id].global_position)
-	_sync_scores.rpc(scores)
+	_sync_scores.rpc_id(peer_id, scores)
+	_match_started.rpc_id(peer_id, int(ceil(round_time)))
 
 func _on_peer_disconnected(peer_id: int) -> void:
 	if players.has(peer_id):
@@ -388,11 +391,12 @@ func _apply_damage(victim_id: int, attacker_id: int, amount: int) -> void:
 		target = players[victim_id]
 	elif bots.has(victim_id):
 		target = bots[victim_id]
-	if target == null or target.health <= 0:
+	if target == null or int(target.get("health")) <= 0:
 		return
-	target.health = maxi(0, target.health - amount)
-	_actor_health.rpc(victim_id, target.health)
-	if target.health == 0:
+	var remaining_health := maxi(0, int(target.get("health")) - amount)
+	target.set("health", remaining_health)
+	_actor_health.rpc(victim_id, remaining_health)
+	if remaining_health == 0:
 		scores[attacker_id] = int(scores.get(attacker_id, 0)) + 1
 		_sync_scores.rpc(scores)
 		var attacker_name := _actor_name(attacker_id)
@@ -407,7 +411,7 @@ func _apply_damage(victim_id: int, attacker_id: int, amount: int) -> void:
 
 func _actor_name(actor_id: int) -> String:
 	if bots.has(actor_id):
-		return "BOT-%02d" % actor_id
+		return "BOT-%02d" % (actor_id - 1000)
 	return "PLAYER-%d" % actor_id
 
 @rpc("authority", "call_local", "reliable")
@@ -441,8 +445,9 @@ func _respawn_actor(actor_id: int, pos: Vector3, hp: int) -> void:
 	var actor: Node = players.get(actor_id, bots.get(actor_id))
 	if actor:
 		actor.global_position = pos
-		actor.health = hp
-		actor.velocity = Vector3.ZERO
+		actor.set("health", hp)
+		if actor is CharacterBody3D:
+			(actor as CharacterBody3D).velocity = Vector3.ZERO
 
 @rpc("authority", "call_local", "reliable")
 func _sync_scores(new_scores: Dictionary) -> void:
