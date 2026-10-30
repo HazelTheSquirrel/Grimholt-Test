@@ -1,5 +1,7 @@
 extends "res://scripts/shooter/shooter_core.gd"
 
+const GRIMHOLT_CREST := preload("res://assets/branding/grimholt_crest.svg")
+
 func _build_arena() -> void:
 	var env_node := WorldEnvironment.new()
 	var env := Environment.new()
@@ -63,6 +65,11 @@ func _build_menu() -> void:
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	title.add_theme_font_size_override("font_size", 30)
 	column.add_child(title)
+	var crest := TextureRect.new()
+	crest.texture = GRIMHOLT_CREST
+	crest.custom_minimum_size = Vector2(104, 104)
+	crest.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	column.add_child(crest)
 
 	var intro := Label.new()
 	intro.text = "FREE-FOR-ALL  |  50 KILLS  |  15 MIN"
