@@ -69,3 +69,12 @@ Der aktuelle Meilenstein erzeugt die Großlandschaft und streamt Terrain-Chunks.
 ### Technische Grenze
 
 Das gestaffelte Einreihen ist noch keine echte Worker-Thread-Berechnung: Noise-Abtastung, Mesh-Erzeugung und Node-Aufbau laufen weiterhin auf dem Hauptthread. Für echte asynchrone Erzeugung müssen reine Mesh-Daten in Worker-Threads berechnet und Nodes anschließend sicher auf dem Hauptthread erstellt werden. LOD-Übergangsmorphing, Wasserphysik, Höhlen-Navigation/Beleuchtung und Performanceprofiling bleiben weitere Qualitätsarbeit.
+
+
+## Startpunkt und eigenes Seamless-Texturpaket
+
+Der Weltstart erzeugt den zentralen 1-km-Chunk inklusive Terrain-Trimesh-Kollision synchron, bevor der Spieler auf seine Startposition gesetzt wird. Der Spawn liegt bei X/Z = 0 und 1,25 m über dem Höhenfeld; die Physik setzt den Charakter anschließend kontrolliert auf dem Boden ab. Ein 28-m-Radius um den Startpunkt wird von zufälligen Bauminstanzen freigehalten, damit der Spawn nicht in einem Baumcluster liegt.
+
+Unter `assets/textures` liegen acht eigens erstellte, kachelbare 256×256-SVG-Texturen: Wiese, Waldboden, Schieferfels, Erde, Kies/Sand, Schnee/Eis, Baumrinde und Blätter. Die Wiederholmuster sind periodisch angelegt und haben keine externen Bildabhängigkeiten. Unter `assets/materials` liegen wiederverwendbare Godot-Standardmaterialien. Das Terrain verwendet triplanares Mapping und Vertexfarben zur Biomeinfärbung; Baumstämme und Kronen verwenden die Rinden- und Blättertexturen.
+
+Der erweiterte Gameplay-Test prüft, dass die Startkollision vorliegt, die Spawnhöhe korrekt gesetzt wurde und alle Texturen/Materialien geladen werden können. Ein Headless-Test ersetzt keine visuelle Abnahme im Editor oder auf der Ziel-GPU.
