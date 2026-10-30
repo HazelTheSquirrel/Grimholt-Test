@@ -238,6 +238,9 @@ func _populate_chunk_foliage(chunk: Node3D, chunk_x: int, chunk_z: int) -> void:
     var trunk_mat := StandardMaterial3D.new()
     var forest_biome := biome_at(chunk.position.x + 500.0, chunk.position.z + 500.0)
     trunk_mat.albedo_color = Color(0.68, 0.66, 0.55) if forest_biome == 1 else (Color(0.22, 0.14, 0.09) if forest_biome == 2 else Color(0.34, 0.22, 0.13))
+    trunk_mat.albedo_texture = load("res://assets/textures/bark_wood.svg") as Texture2D
+    trunk_mat.uv1_triplanar = true
+    trunk_mat.uv1_scale = Vector3(0.18, 0.18, 0.18)
     var trunk_batch := MultiMesh.new()
     trunk_batch.transform_format = MultiMesh.TRANSFORM_3D
     trunk_batch.mesh = trunk_mesh
@@ -261,6 +264,9 @@ func _populate_chunk_foliage(chunk: Node3D, chunk_x: int, chunk_z: int) -> void:
     grass_mesh.height = 0.38
     var grass_mat := StandardMaterial3D.new()
     grass_mat.albedo_color = [Color(0.34, 0.48, 0.20), Color(0.22, 0.39, 0.16), Color(0.25, 0.34, 0.22), Color(0.37, 0.37, 0.32), Color(0.49, 0.43, 0.25)][forest_biome]
+    grass_mat.albedo_texture = load("res://assets/textures/grass_meadow.svg") as Texture2D
+    grass_mat.uv1_triplanar = true
+    grass_mat.uv1_scale = Vector3(0.22, 0.22, 0.22)
     var grass_batch := MultiMesh.new()
     grass_batch.transform_format = MultiMesh.TRANSFORM_3D
     grass_batch.mesh = grass_mesh
