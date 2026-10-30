@@ -113,8 +113,9 @@ func _apply_damage(victim_id: int, attacker_id: int, amount: int) -> void:
 	target.set("health", remaining_health)
 	_actor_health.rpc(victim_id, remaining_health)
 	if remaining_health == 0:
-		scores[attacker_id] = int(scores.get(attacker_id, 0)) + KILL_SCORE_POINTS
-		_sync_scores.rpc(scores, deaths)
+		if players.has(attacker_id):
+			scores[attacker_id] = int(scores.get(attacker_id, 0)) + KILL_SCORE_POINTS
+			_sync_scores.rpc(scores, deaths)
 		var attacker_name := _actor_name(attacker_id)
 		var victim_name := _actor_name(victim_id)
 		_kill_feed.rpc("%s  »  %s" % [attacker_name, victim_name])
@@ -124,8 +125,8 @@ func _apply_damage(victim_id: int, attacker_id: int, amount: int) -> void:
 			_respawn_player_later(victim_id)
 		else:
 			_respawn_bot_later(victim_id)
-		if int(scores[attacker_id]) >= SCORE_LIMIT:
-			_finish_round()
+		if players.has(attacker_id) and int(scores.get(attacker_id, 0)) >= SCORE_LIMIT:
+			_finish_round("score")
 
 func _actor_name(actor_id: int) -> String:
 	if bots.has(actor_id):
