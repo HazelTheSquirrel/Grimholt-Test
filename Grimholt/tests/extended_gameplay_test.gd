@@ -124,7 +124,7 @@ func _run() -> void:
     if not live_player.building_system.place_piece("foundation", Vector3(3.0, 0.0, 3.0), live_player.inventory):
         _fail("Could not place a foundation before saving.")
         return
-    var saved_position := Vector3(8.0, 4.0, 9.0)
+    var saved_position := Vector3(8.0, live_terrain.height_at(8.0, 9.0) + 0.20, 9.0)
     live_player.global_position = saved_position
     if not bool(live_scene.call("_save_game", false)):
         _fail("Save manager failed to write a valid game snapshot.")
@@ -147,6 +147,19 @@ func _run() -> void:
         return
     if live_player.building_system.get_child_count() != 1:
         _fail("Save/load did not restore the placed foundation.")
+        return
+    # A legacy save can contain a position buried below the current terrain. Loading it
+    # must recover to the guaranteed spawn instead of restoring the invalid coordinates.
+    var underground_save_position := Vector3(0.0, live_terrain.height_at(0.0, 0.0) - 25.0, 0.0)
+    live_player.global_position = underground_save_position
+    if not bool(live_scene.call("_save_game", false)):
+        _fail("Could not create the underground-save regression fixture.")
+        return
+    if not bool(live_scene.call("_load_game", false)):
+        _fail("Save manager rejected the underground-save recovery fixture.")
+        return
+    if not live_player.global_position.is_equal_approx(live_terrain.get_safe_spawn_position()):
+        _fail("Loading an underground save did not recover the player to the terrain spawn.")
         return
     if not live_terrain.has_resource_id("tree_00"):
         _fail("Starter resource does not have a stable world identity.")
