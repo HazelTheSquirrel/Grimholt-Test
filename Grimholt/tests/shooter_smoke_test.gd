@@ -34,6 +34,8 @@ func _run_smoke_test() -> void:
 	assert(game.hitmarker_label != null, "Hit confirmation UI was not created")
 	var player: Node = game.players[1]
 	assert(player.get_node_or_null("Head/Camera3D") != null, "Player camera is missing")
+	assert(player.get_node("BodyVisual").get_child_count() >= 10, "Original player armor details were not built")
+	assert(game.bots[1000].get_node("BodyVisual").get_child_count() >= 10, "Original bot armor details were not built")
 	assert(player.get_node("Head/Camera3D").current, "Local player camera is not current")
 	var score_before_kill := int(game.scores.get(1, 0))
 	game._apply_damage(1000, 1, 100)
