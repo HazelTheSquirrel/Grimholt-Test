@@ -112,3 +112,13 @@ Grimholt ist ein polygonbasiertes Fantasy-Sandbox-RPG mit natürlichem Terrain, 
 4. Weltzustand und persistente Daten sind von der visuellen Darstellung getrennt.
 5. Große Gebiete benötigen Streaming, LOD, Instancing und regelmäßiges Profiling.
 6. Singleplayer und Multiplayer verwenden dieselben Gameplay-Regeln.
+
+
+## Startpunkt und Asset-Pack – Oktober 2026
+
+- [x] Spawn-Chunk inklusive Terrain-Kollision wird synchron vor dem Spielerstart erzeugt.
+- [x] Definierte sichere Startposition direkt über dem tatsächlichen Höhenfeld; Startbereich wird von zufälligen Bauminstanzen freigehalten.
+- [x] Eigenes nahtlos kachelbares SVG-Texturpaket mit acht Texturen.
+- [x] Godot-Materialien für Terrain, Fels, Baumrinde und Blätter.
+- [x] Textur-/Material-Ladeprüfungen und Spawn-/Kollisionsprüfungen im erweiterten Gameplay-Test.
+- [ ] Visuelle Abnahme in Godot-Editor und auf der Ziel-GPU; Materialübergänge und Skalierung feinjustieren.
