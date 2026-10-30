@@ -22,6 +22,12 @@ const DAMAGE_RANGE := 120.0
 var gravity: float = ProjectSettings.get_setting("physics/3d/default_gravity")
 var fire_cooldown := 0.0
 var network_timer := 0.0
+var remote_move_input := Vector2.ZERO
+var remote_jump_requested := false
+var remote_crouch_requested := false
+var remote_yaw := 0.0
+var remote_pitch := 0.0
+var remote_input_received_msec := 0
 var health := 100
 var ammo := MAGAZINE_SIZE
 var reserve_ammo := RESERVE_START
@@ -70,26 +76,46 @@ func _unhandled_input(event: InputEvent) -> void:
 		_reload()
 
 func _physics_process(delta: float) -> void:
-	if not is_multiplayer_authority() or health <= 0:
+	var local_control := is_multiplayer_authority()
+	var server_control := multiplayer.is_server()
+	if (not local_control and not server_control) or health <= 0:
 		return
+
+	var input_vector := Vector2.ZERO
+	var jump_requested := false
+	var wants_crouch := false
+	if local_control:
+		input_vector = Input.get_vector("move_left", "move_right", "move_forward", "move_backward")
+		jump_requested = Input.is_action_just_pressed("jump")
+		wants_crouch = Input.is_action_pressed("crouch")
+		if not server_control:
+			network_timer += delta
+			if network_timer >= 0.05 and multiplayer.multiplayer_peer != null:
+				network_timer = 0.0
+				get_parent()._submit_input.rpc_id(1, input_vector, jump_requested, wants_crouch, rotation.y, head.rotation.x)
+	else:
+		var input_is_fresh := Time.get_ticks_msec() - remote_input_received_msec <= 250
+		if input_is_fresh:
+			input_vector = remote_move_input
+			jump_requested = remote_jump_requested
+			wants_crouch = remote_crouch_requested
+		rotation.y = remote_yaw
+		head.rotation.x = remote_pitch
+		remote_jump_requested = false
+
 	if not is_on_floor():
 		velocity.y -= gravity * delta
-	elif Input.is_action_just_pressed("jump"):
+	elif jump_requested:
 		velocity.y = JUMP_VELOCITY
-	_update_crouch()
-	var input_vector := Input.get_vector("move_left", "move_right", "move_forward", "move_backward")
+	_update_crouch(wants_crouch)
 	var direction := (transform.basis * Vector3(input_vector.x, 0, input_vector.y)).normalized()
 	var move_speed := CROUCH_SPEED if is_crouched else WALK_SPEED
 	velocity.x = direction.x * move_speed
 	velocity.z = direction.z * move_speed
 	move_and_slide()
 	fire_cooldown = maxf(0.0, fire_cooldown - delta)
-	if fire_held and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
+	if local_control and fire_held and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
 		_fire()
-	network_timer += delta
-	if network_timer >= 0.05 and multiplayer.multiplayer_peer != null and not multiplayer.is_server():
-		network_timer = 0.0
-		get_parent()._submit_transform.rpc_id(1, global_position, rotation.y, head.rotation.x)
 
 func _build_audio_feedback() -> void:
 	fire_audio = AudioStreamPlayer.new()
@@ -154,8 +180,7 @@ func _add_weapon_box(parent: Node3D, part_name: String, part_position: Vector3, 
 	part.position = part_position
 	parent.add_child(part)
 
-func _update_crouch() -> void:
-	var wants_crouch := Input.is_action_pressed("crouch")
+func _update_crouch(wants_crouch: bool) -> void:
 	if wants_crouch == is_crouched:
 		return
 	if not wants_crouch:
