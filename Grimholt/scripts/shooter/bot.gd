@@ -2,8 +2,8 @@ extends CharacterBody3D
 
 const SPEED := 5.2
 const DETECT_RANGE := 42.0
-const FIRE_RANGE := 34.0
-const FIRE_INTERVAL := 1.05
+const FIRE_RANGE := 28.0
+const FIRE_INTERVAL := 1.65
 const GRAVITY := 20.0
 
 @onready var head: Node3D = $Head
@@ -81,4 +81,7 @@ func _shoot_at_target() -> void:
 	fire_timer = FIRE_INTERVAL
 	var origin := global_position + Vector3.UP * 1.45
 	var aim := (target.global_position + Vector3.UP * 1.0 - origin).normalized()
+	# Bots deliberately have imperfect aim; the first prototype should allow
+	# players time to react, use cover, and learn the combat loop.
+	aim = (aim + Vector3(randf_range(-0.075, 0.075), randf_range(-0.045, 0.045), randf_range(-0.075, 0.075))).normalized()
 	game.bot_fire(bot_id, origin, aim)
