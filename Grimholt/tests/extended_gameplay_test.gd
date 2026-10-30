@@ -16,6 +16,11 @@ func _run() -> void:
         return
     var scene := packed.instantiate()
     var capsule := scene.get_node("Player/CollisionShape3D").shape as CapsuleShape3D
+    var world_environment := scene.get_node("WorldEnvironment") as WorldEnvironment
+    if world_environment == null or world_environment.environment == null:
+        _fail("Main scene has no editor-assigned world environment.")
+        scene.free()
+        return
     if capsule == null or not is_equal_approx(capsule.height, 1.70) or not is_equal_approx(capsule.radius, 0.30):
         _fail("Player capsule is not at the documented 1.70 m human scale.")
         scene.free()
@@ -29,6 +34,10 @@ func _run() -> void:
     var live_player := live_scene.get_node("Player") as GrimholtPlayer
     if live_player == null or not live_player.is_on_floor():
         _fail("Live player did not reach the terrain before interaction.")
+        return
+    var live_terrain := live_scene.get_node("TerrainWorld")
+    if live_terrain.get_node_or_null("GrassTufts") == null or live_terrain.get_node_or_null("ScatteredStones") == null:
+        _fail("Landscape ground cover and stone scatter were not generated.")
         return
     if not live_player._interact():
         _fail("E interaction ray did not reach the starter oak in front of the player.")
@@ -84,6 +93,13 @@ func _run() -> void:
     if not tree.harvest(inventory) or tree.harvest(inventory):
         _fail("Resource harvesting is not one-time / correctly guarded.")
         return
+    var spruce: GrimholtResourceNode = ResourceNodeScript.new()
+    spruce.configure("tree", "Fichte", "wood", 5)
+    root.add_child(spruce)
+    if spruce.get_node_or_null("SpruceTier0") == null:
+        _fail("Spruce placeholder does not have its own conifer silhouette.")
+        return
+    spruce.free()
 
     var building: GrimholtBuildingSystem = BuildingScript.new()
     root.add_child(building)
