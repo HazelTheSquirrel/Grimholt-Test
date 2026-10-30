@@ -12,7 +12,7 @@ func start_solo_game() -> void:
 	bots.clear()
 	scores.clear()
 	deaths.clear()
-	last_transform_packet_msec.clear()
+	last_input_packet_msec.clear()
 	for child in get_children():
 		if child is CharacterBody3D:
 			child.queue_free()
@@ -230,7 +230,7 @@ func _accept_input_packet(sender: int, now_msec: int) -> bool:
 
 @rpc("any_peer", "call_remote", "unreliable")
 func _submit_input(input_vector: Vector2, jump_requested: bool, wants_crouch: bool, yaw: float, pitch: float) -> void:
-	if not multiplayer.is_server():
+	if not multiplayer.is_server() or not round_active:
 		return
 	var sender := multiplayer.get_remote_sender_id()
 	if not _is_player_input_valid(input_vector, yaw, pitch):
