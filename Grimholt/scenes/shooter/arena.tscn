@@ -1,4 +1,6 @@
-[gd_scene load_steps=19 format=3]
+[gd_scene load_steps=20 format=3]
+
+[ext_resource type="Texture2D" path="res://assets/materials/arena_floor.svg" id="1_floor"]
 
 [sub_resource type="ProceduralSkyMaterial" id="SkyMaterial"]
 sky_top_color = Color(0.055, 0.11, 0.19, 1)
@@ -25,6 +27,8 @@ size = Vector3(64, 1, 64)
 size = Vector3(64, 1, 64)
 [sub_resource type="StandardMaterial3D" id="FloorMat"]
 albedo_color = Color(0.105, 0.14, 0.18, 1)
+albedo_texture = ExtResource("1_floor")
+uv1_scale = Vector3(8, 8, 1)
 metallic = 0.28
 roughness = 0.78
 

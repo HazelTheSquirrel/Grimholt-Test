@@ -11,10 +11,10 @@ Grimholt ist ein eigenständiger, reiner Multiplayer-3D-Arena-Shooter. Es gibt k
 - 30-Schuss-Magazin, Reserve-Munition und Nachladen.
 - 100 Lebenspunkte, Respawn und exakt **1 Punkt pro bestätigtem Kill**; ein bereits besiegtes Ziel kann keine weiteren Punkte geben.
 - Der Countdown basiert auf einer monotonen Echtzeituhr und wird regelmäßig an Clients synchronisiert; Teilsekunden werden aufgerundet, damit 00:00 erst beim tatsächlichen Ablauf erscheint.
-- Fünf servergesteuerte Arena-Bots als Gegner; besiegte Bots verschwinden sofort und kehren nach drei Sekunden zurück.
+- Fünf servergesteuerte Arena-Bots als Gegner; Bot-Kills erhöhen nicht den FFA-Spielerpunktestand.
 - Militärisch inspiriertes, eigenständiges HUD: Matchzeit, Top-Fragger, Lebenspunkte, Munition, Killfeed und taktische Minimap.
 - Vollständige K/D-Scoreboard-Ansicht per Tab, Trefferbestätigung und automatisches Gewehrfeuer bei gehaltenem Linksklick.
-- Prozedurale lokale Platzhalter-Audioeffekte für Schüsse und Nachladen (noch keine finalen Soundassets).
+- Lokale Waffen- und Nachlade-Rückmeldung; finale Audioaufnahmen und räumlicher Mix stehen noch aus.
 - Server prüft eingehende Bewegungsupdates anhand der maximal plausiblen Laufgeschwindigkeit.
 
 ## Starten
@@ -39,9 +39,16 @@ Training startet einen lokalen Host mit fünf Bots. Auch beim Multiplayer-Hostin
 | R | Nachladen |
 | ESC | Maus freigeben/einfangen |
 
+
+## Architektur und eigene Assets
+
+Die frühere zentrale `main.gd` ist jetzt ein schlanker Composition Root. Die Gameplay-Logik liegt in getrennten GDScript-Schichten: `shooter_core.gd`, `shooter_ui_system.gd`, `shooter_network_system.gd`, `shooter_weapon_system.gd`, `shooter_combat_system.gd`, `shooter_match_system.gd` und `shooter_hud_system.gd`. Das ist eine erste wartbare Trennung; die nächste Ausbaustufe sollte daraus unabhängig instanzierte Manager mit klaren Datenverträgen machen.
+
+Unter `Grimholt/assets/` liegen eigens für Grimholt gezeichnete SVG-Dateien: Gildenwappen, Waffeninsignie und gekacheltes Arenaboden-Material. Wappen und Bodenmaterial sind bereits im Menü bzw. in der Arena eingebunden. `actor_visual.gd` ergänzt Spieler und Bots außerdem um eigens zusammengesetzte Rüstungsdetails statt ausschließlich unveränderter Kapsel-Silhouetten. Es werden keine fremden Marken- oder Spielassets eingebunden.
+
 ## Entwicklungsstand und bekannte Grenzen
 
-Dies ist weiterhin ein früher Gameplay-Prototyp, kein fertiges oder öffentlich serverfestes Spiel. Die Arena, HUD-Elemente und Bots sind Platzhalter. Die Bot-KI nutzt einfache direkte Verfolgung und Hitscan-Angriffe; sie navigiert noch nicht intelligent um Deckung. Die Minimap zeigt Positionsmarker, keine Sichtlinien- oder Aufklärungsdaten.
+Dies ist weiterhin ein früher Gameplay-Prototyp, kein fertiges oder öffentlich serverfestes Spiel. Die Arena-Geometrie, HUD-Elemente und Bot-KI sind weiterhin frühe Prototyp-Inhalte; die neuen SVG-Dateien ersetzen nicht die noch fehlenden finalen 3D-Modelle, Animationen und Audioaufnahmen. Die Bot-KI nutzt einfache direkte Verfolgung und Hitscan-Angriffe; sie navigiert noch nicht intelligent um Deckung. Die Minimap zeigt Positionsmarker, keine Sichtlinien- oder Aufklärungsdaten.
 
 Noch offen sind unter anderem vollständig serverautoritativ simulierte Bewegung, zuverlässige Replikation unter Paketverlust, Lag Compensation, Anti-Cheat-Härtung, Lobby/Matchmaking, Serverbrowser, dedizierte Serverkonfiguration, Tests mit mehreren echten Clients sowie finale Grafik, Levelgestaltung und finale Audioassets. Das aktuelle Headless-Smoke-Testskript prüft Szenenstart, Eingabeaktionen, Solo-Spawn, Bots und HUD; es ersetzt keine echten Mehrspieler- und Eingabetests. Die aktuelle Schussprüfung validiert Feuerrate und Blickrichtung serverseitig, ersetzt aber noch keine vollständige serverautoritativ simulierte Combat-Pipeline.
 
