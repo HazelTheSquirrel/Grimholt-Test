@@ -215,6 +215,26 @@ func _sync_bot_states(states: Array) -> void:
 			bots[id].rotation.y = state[2]
 			bots[id].health = int(state[3])
 
+func _is_transform_update_valid(pos: Vector3, yaw: float, pitch: float, previous: Vector3, elapsed: float) -> bool:
+	if not pos.is_finite() or not is_finite(yaw) or not is_finite(pitch) or not previous.is_finite():
+		return false
+	if absf(pitch) > deg_to_rad(85.5) or absf(yaw) > TAU * 1000.0:
+		return false
+	if absf(pos.x) > 30.0 or absf(pos.z) > 30.0 or pos.y < -2.0 or pos.y > 20.0:
+		return false
+	# Plausibility guard only; the movement simulation is not yet server-authoritative.
+	var maximum_distance := MAX_REPORTED_SPEED * maxf(0.0, elapsed) + TRANSFORM_DISTANCE_TOLERANCE
+	return previous.distance_to(pos) <= maximum_distance
+
+func _accept_transform_packet(sender: int, now_msec: int) -> bool:
+	if not players.has(sender):
+		return false
+	var previous_packet_msec := int(last_transform_packet_msec.get(sender, 0))
+	if previous_packet_msec > 0 and now_msec - previous_packet_msec < TRANSFORM_MIN_INTERVAL_MSEC:
+		return false
+	last_transform_packet_msec[sender] = now_msec
+	return true
+
 @rpc("any_peer", "call_remote", "unreliable")
 func _submit_transform(pos: Vector3, yaw: float, pitch: float) -> void:
 	if not multiplayer.is_server():
@@ -222,18 +242,16 @@ func _submit_transform(pos: Vector3, yaw: float, pitch: float) -> void:
 	var sender := multiplayer.get_remote_sender_id()
 	if not players.has(sender):
 		return
-	var now := Time.get_ticks_msec() / 1000.0
-	if not pos.is_finite() or not is_finite(yaw) or not is_finite(pitch):
-		return
-	if absf(pitch) > deg_to_rad(85.5) or absf(yaw) > TAU * 1000.0:
-		return
+	var now_msec := Time.get_ticks_msec()
 	var previous: Vector3 = last_positions.get(sender, players[sender].global_position)
-	var elapsed := maxf(0.05, now - float(last_position_times.get(sender, now)))
-	var allowed := 8.0 * elapsed + 1.5
-	if previous.distance_to(pos) > allowed or absf(pos.x) > 30.0 or absf(pos.z) > 30.0 or pos.y < -2.0 or pos.y > 20.0:
+	var last_accepted_msec := int(last_position_times.get(sender, now_msec))
+	var elapsed := maxf(0.001, float(now_msec - last_accepted_msec) / 1000.0)
+	if not _is_transform_update_valid(pos, yaw, pitch, previous, elapsed):
+		return
+	if not _accept_transform_packet(sender, now_msec):
 		return
 	last_positions[sender] = pos
-	last_position_times[sender] = now
+	last_position_times[sender] = now_msec
 	players[sender].global_position = pos
 	players[sender].rotation.y = yaw
 	players[sender].get_node("Head").rotation.x = pitch
