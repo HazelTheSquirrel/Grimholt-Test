@@ -85,7 +85,7 @@ func _run() -> void:
         _fail("Starter resource does not have a stable world identity.")
         return
     for world_child in live_terrain.get_children():
-        if world_child is GrimholtResourceNode and world_child.persistent_id == "tree_00":
+        if world_child is GrimholtResourceNode and world_child.persistent_id == "tree_00" and not world_child.is_queued_for_deletion():
             _fail("Save/load respawned a resource already harvested in this world.")
             return
     DirAccess.remove_absolute(ProjectSettings.globalize_path("user://grimholt_save.json"))
