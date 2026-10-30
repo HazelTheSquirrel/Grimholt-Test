@@ -19,6 +19,8 @@ var professions := GrimholtProfessionSystem.new()
 var building_system: GrimholtBuildingSystem
 var selected_piece := "foundation"
 var build_mode := false
+var interaction_feedback := ""
+var feedback_timer := 0.0
 var gravity: float = ProjectSettings.get_setting("physics/3d/default_gravity")
 
 func _ready() -> void:
@@ -27,6 +29,7 @@ func _ready() -> void:
     _configure_hud()
     floor_snap_length = 0.35
     floor_max_angle = deg_to_rad(50.0)
+    camera_pivot.rotation.x = deg_to_rad(-8.0)
     Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 
 func _configure_body_visual() -> void:
@@ -75,8 +78,11 @@ func _unhandled_input(event: InputEvent) -> void:
     elif event is InputEventKey and event.pressed and not event.echo:
         if event.keycode == KEY_ESCAPE:
             Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+        elif event.keycode == KEY_E:
+            _interact()
         elif event.keycode == KEY_B:
             build_mode = not build_mode
+            _set_feedback("Baumodus aktiviert" if build_mode else "Baumodus beendet")
         elif event.keycode == KEY_1:
             selected_piece = "foundation"
         elif event.keycode == KEY_2:
@@ -109,41 +115,69 @@ func _physics_process(delta: float) -> void:
         velocity.x = move_toward(velocity.x, 0.0, WALK_SPEED * 5.0 * delta)
         velocity.z = move_toward(velocity.z, 0.0, WALK_SPEED * 5.0 * delta)
     move_and_slide()
+    if feedback_timer > 0.0:
+        feedback_timer = maxf(0.0, feedback_timer - delta)
+        if feedback_timer == 0.0:
+            interaction_feedback = ""
     _update_hud()
 
-func _unhandled_key_input(event: InputEvent) -> void:
-    if event.pressed and not event.echo and event.keycode == KEY_E:
-        _interact()
-
-func _interact() -> void:
+func _interact() -> bool:
     var hit := _raycast()
     if hit.is_empty():
-        return
-    var target: Object = hit.get("collider")
-    if target != null and target.has_method("harvest"):
-        target.harvest(inventory)
+        _set_feedback("Kein Sammelobjekt im Fadenkreuz – näher herangehen und direkt ansehen.")
+        return false
+    var target := hit.get("collider") as Object
+    if target == null or not target.has_method("harvest"):
+        _set_feedback("Das ist keine sammelbare Ressource.")
+        return false
+    var resource_name := String(target.get("display_name"))
+    if bool(target.call("harvest", inventory)):
+        _set_feedback("%s geerntet. %s" % [resource_name, inventory.get_summary()])
+        return true
+    _set_feedback("Ernte nicht möglich – möglicherweise ist dein Inventar voll.")
+    return false
+
+func _set_feedback(message: String) -> void:
+    interaction_feedback = message
+    feedback_timer = 4.0
 
 func _place_building_piece() -> void:
     if building_system == null:
+        _set_feedback("Bausystem ist nicht verfügbar.")
         return
     var hit := _raycast()
     if hit.is_empty():
+        _set_feedback("Kein gültiger Baupunkt im Fadenkreuz.")
         return
-    building_system.place_piece(selected_piece, hit.position, inventory)
+    if building_system.place_piece(selected_piece, hit.position, inventory):
+        _set_feedback("%s platziert." % String(GrimholtBuildingSystem.PIECES[selected_piece]["name"]))
+    else:
+        _set_feedback("Bauen nicht möglich – fehlen Materialien oder ist das Bauteil ungültig?")
 
 func _raycast() -> Dictionary:
     var origin := camera.global_position
-    var endpoint := origin - camera.global_transform.basis.z * INTERACTION_DISTANCE
+    var camera_to_player := origin.distance_to(global_position)
+    var ray_length := camera_to_player + INTERACTION_DISTANCE + 0.5
+    var endpoint := origin - camera.global_transform.basis.z * ray_length
     var query := PhysicsRayQueryParameters3D.create(origin, endpoint)
     query.exclude = [get_rid()]
     query.collision_mask = 1
-    return get_world_3d().direct_space_state.intersect_ray(query)
+    var hit := get_world_3d().direct_space_state.intersect_ray(query)
+    if hit.is_empty():
+        return {}
+    if Vector3(hit.position).distance_to(global_position) > INTERACTION_DISTANCE + 0.5:
+        return {}
+    return hit
 
 func _craft(recipe_id: String) -> void:
-    GrimholtCraftingSystem.craft(recipe_id, inventory, professions)
+    if GrimholtCraftingSystem.craft(recipe_id, inventory, professions):
+        _set_feedback("Herstellung abgeschlossen.")
+    else:
+        _set_feedback("Herstellung nicht möglich – prüfe Zutaten und freien Inventarplatz.")
 
 func _update_hud() -> void:
     if inventory == null:
         return
     var mode_text := "BAUMODUS: %s (1 Fundament / 2 Wand / 3 Dach)" % selected_piece if build_mode else "E: Ressource ernten | B: Baumodus | C: Holzplanken herstellen"
-    status_label.text = "GRIMHOLT – FANTASY SANDBOX\nWASD: Bewegen | SHIFT: Sprint | LEERTASTE: Springen | Maus: Kamera | ESC: Maus lösen\n%s\n%s" % [mode_text, inventory.get_summary()]
+    var feedback_text := interaction_feedback if not interaction_feedback.is_empty() else "Tipp: Starte direkt vor der Eiche – sie ist in Reichweite."
+    status_label.text = "GRIMHOLT – FANTASY SANDBOX\nWASD: Bewegen | SHIFT: Sprint | LEERTASTE: Springen | Maus: Kamera | ESC: Maus lösen\n%s\n%s\n%s" % [mode_text, feedback_text, inventory.get_summary()]
