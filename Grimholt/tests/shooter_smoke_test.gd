@@ -33,6 +33,11 @@ func _run_smoke_test() -> void:
 	assert(game.scoreboard_panel != null, "Scoreboard UI was not created")
 	assert(game.hitmarker_label != null, "Hit confirmation UI was not created")
 	var player: Node = game.players[1]
+	game.players[77] = player
+	assert(game._accept_transform_packet(77, 1000), "First transform packet should pass")
+	assert(not game._accept_transform_packet(77, 1020), "Packets inside the rate limit must be rejected")
+	assert(game._accept_transform_packet(77, 1040), "A packet after the rate limit should pass")
+	game.players.erase(77)
 	assert(player.get_node_or_null("Head/Camera3D") != null, "Player camera is missing")
 	assert(player.get_node("BodyVisual").get_child_count() >= 10, "Original player armor details were not built")
 	assert(game.bots[1000].get_node("BodyVisual").get_child_count() >= 10, "Original bot armor details were not built")
