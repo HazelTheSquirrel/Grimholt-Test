@@ -7,7 +7,7 @@ Grimholt ist ein eigenständiger, reiner Multiplayer-3D-Arena-Shooter. Es gibt k
 - Free-for-All-Deathmatch mit 25 Abschüssen als Rundenziel und zehn Minuten Zeitlimit.
 - ENet-Host/Join über UDP-Port 27015.
 - Fest gespeicherte Greybox-Arena-Szene mit sichtbarer Geometrie, Kollisionen, Licht, Vorschaukamera, Deckung und acht Spawnpositionen.
-- First-Person-Steuerung, Mausblick, Springen und Hitscan-Gewehr.
+- First-Person-Steuerung, Mausblick, Springen, Halten von Strg zum Ducken und Hitscan-Gewehr mit prozeduralem Viewmodel.
 - 30-Schuss-Magazin, Reserve-Munition und Nachladen.
 - 100 Lebenspunkte, Respawn und Kill-Punkte.
 - Fünf servergesteuerte Arena-Bots als Gegner.
@@ -19,8 +19,8 @@ Grimholt ist ein eigenständiger, reiner Multiplayer-3D-Arena-Shooter. Es gibt k
 1. Godot 4.7.2 installieren.
 2. `Grimholt/project.godot` importieren.
 3. Projekt starten.
-4. Im Startbildschirm **Training starten** wählen, um sofort auf der Karte gegen fünf Bots zu spielen.
-5. Für Multiplayer stattdessen **Server hosten** wählen. Andere Spieler geben die Server-IP ein und wählen **Server beitreten**.
+4. Im Hauptmenü **Start Solo Game** wählen, um offline auf der Karte gegen fünf Bots zu spielen.
+5. Für Multiplayer **Custom Games → Spiel hosten** wählen. Andere Spieler geben die öffentliche Server-IP ein und wählen **Spiel beitreten**. UDP-Port 27015 muss am Host erreichbar sein.
 
 Training startet einen lokalen Host mit fünf Bots. Auch beim Multiplayer-Hosting startet der Host das Match und spawnt fünf Bots. Der Standardport ist UDP 27015.
 
@@ -32,6 +32,7 @@ Training startet einen lokalen Host mit fünf Bots. Auch beim Multiplayer-Hostin
 | Maus | Zielen |
 | Linksklick | Schießen |
 | Leertaste | Springen |
+| Strg (halten) | Ducken (Kamera und Kollisionskapsel werden abgesenkt) |
 | R | Nachladen |
 | ESC | Maus freigeben/einfangen |
 
@@ -39,7 +40,7 @@ Training startet einen lokalen Host mit fünf Bots. Auch beim Multiplayer-Hostin
 
 Dies ist weiterhin ein früher Gameplay-Prototyp, kein fertiges oder öffentlich serverfestes Spiel. Die Arena, HUD-Elemente und Bots sind Platzhalter. Die Bot-KI nutzt einfache direkte Verfolgung und Hitscan-Angriffe; sie navigiert noch nicht intelligent um Deckung. Die Minimap zeigt Positionsmarker, keine Sichtlinien- oder Aufklärungsdaten.
 
-Noch offen sind unter anderem echte Waffenwechsel und Pickups, Animationen, Audio, Trefferfeedback, Team-Deathmatch, Lobby/Matchmaking, Kartenrotation, dedizierte Serverkonfiguration, vollständige serverautoritativ simulierte Bewegung und Schussvalidierung, Lag Compensation, Anti-Cheat-Härtung, Tests mit mehreren echten Clients sowie finale Grafik und Levelgestaltung.
+Noch offen sind unter anderem serverautoritatives Munitions-/Nachladesystem, vollständige serverautoritativ simulierte Bewegung, zuverlässige Replikation unter Paketverlust, Lag Compensation, Anti-Cheat-Härtung, Lobby/Matchmaking, Serverbrowser, dedizierte Serverkonfiguration, Tests mit mehreren echten Clients sowie finale Grafik und Levelgestaltung. Die aktuelle Schussprüfung validiert Feuerrate und Blickrichtung serverseitig, ersetzt aber noch keine vollständige serverautoritativ simulierte Combat-Pipeline.
 
 ## Projektstruktur
 
