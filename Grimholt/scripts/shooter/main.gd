@@ -104,7 +104,7 @@ func _build_menu() -> void:
 	add_child(menu_layer)
 	var panel := PanelContainer.new()
 	panel.position = Vector2(24, 24)
-	panel.custom_minimum_size = Vector2(340, 220)
+	panel.custom_minimum_size = Vector2(440, 340)
 	menu_layer.add_child(panel)
 	var column := VBoxContainer.new()
 	panel.add_child(column)
