@@ -61,12 +61,6 @@ func _unhandled_input(event: InputEvent) -> void:
 func _physics_process(delta: float) -> void:
 	if not is_multiplayer_authority() or health <= 0:
 		return
-	if reload_time > 0.0:
-		reload_time = maxf(0.0, reload_time - delta)
-		if reload_time == 0.0:
-			var amount := mini(MAGAZINE_SIZE - ammo, reserve_ammo)
-			ammo += amount
-			reserve_ammo -= amount
 	if not is_on_floor():
 		velocity.y -= gravity * delta
 	elif Input.is_action_just_pressed("jump"):
@@ -138,19 +132,11 @@ func _update_crouch() -> void:
 	body_visual.position.y = capsule.height * 0.5
 
 func _fire() -> void:
-	if fire_cooldown > 0.0 or ammo <= 0 or reload_time > 0.0:
-		if ammo <= 0:
-			_reload()
+	if fire_cooldown > 0.0 or reload_time > 0.0:
 		return
 	fire_cooldown = FIRE_INTERVAL
-	ammo -= 1
-	var origin := camera.global_position
-	var direction := -camera.global_transform.basis.z
-	if multiplayer.is_server():
-		get_parent()._process_shot(get_multiplayer_authority(), origin, direction)
-	else:
-		get_parent()._request_shot.rpc_id(1, origin, direction)
+	get_parent().request_fire(get_multiplayer_authority())
 
 func _reload() -> void:
 	if reload_time <= 0.0 and ammo < MAGAZINE_SIZE and reserve_ammo > 0:
-		reload_time = 1.65
+		get_parent().request_reload(get_multiplayer_authority())
