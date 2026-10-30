@@ -4,8 +4,8 @@ const PLAYER_SCENE := preload("res://scenes/shooter/player.tscn")
 const BOT_SCENE := preload("res://scenes/shooter/bot.tscn")
 const PORT := 27015
 const MAX_PLAYERS := 12
-const SCORE_LIMIT := 25
-const ROUND_SECONDS := 600
+const SCORE_LIMIT := 50
+const ROUND_SECONDS := 900
 const BOT_COUNT := 5
 const SPAWNS := [Vector3(-17, 1, -17), Vector3(17, 1, 17), Vector3(-17, 1, 17), Vector3(17, 1, -17), Vector3(0, 1, -18), Vector3(0, 1, 18), Vector3(-18, 1, 0), Vector3(18, 1, 0)]
 
@@ -140,7 +140,7 @@ func _build_menu() -> void:
 	column.add_child(title)
 
 	var intro := Label.new()
-	intro.text = "FREE-FOR-ALL  |  25 KILLS  |  10 MIN"
+	intro.text = "FREE-FOR-ALL  |  50 KILLS  |  15 MIN"
 	intro.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	column.add_child(intro)
 
@@ -709,9 +709,21 @@ func _respawn_player_later(peer_id: int) -> void:
 		_respawn_actor.rpc(peer_id, SPAWNS[randi() % SPAWNS.size()], 100)
 
 func _respawn_bot_later(bot_id: int) -> void:
+	# Dead bots must leave the arena immediately: no corpse should keep
+	# blocking movement or remain as a visible, targetable combatant.
+	_remove_bot.rpc(bot_id)
 	await get_tree().create_timer(3.0).timeout
-	if bots.has(bot_id) and round_active:
-		_respawn_actor.rpc(bot_id, SPAWNS[randi() % SPAWNS.size()], 100)
+	if round_active and not bots.has(bot_id):
+		_spawn_bot(bot_id)
+
+@rpc("authority", "call_local", "reliable")
+func _remove_bot(bot_id: int) -> void:
+	if not bots.has(bot_id):
+		return
+	var bot: Node = bots[bot_id]
+	bots.erase(bot_id)
+	if is_instance_valid(bot):
+		bot.queue_free()
 
 @rpc("authority", "call_local", "reliable")
 func _respawn_actor(actor_id: int, pos: Vector3, hp: int) -> void:
