@@ -1,7 +1,6 @@
 extends "res://scripts/shooter/shooter_weapon_system.gd"
 
 @rpc("any_peer", "call_remote", "reliable")
-@rpc("any_peer", "call_remote", "reliable")
 @rpc("authority", "call_local", "reliable")
 func _apply_damage(victim_id: int, attacker_id: int, amount: int) -> void:
 	var target: Node = null
@@ -36,14 +35,12 @@ func _actor_name(actor_id: int) -> String:
 	return "PLAYER-%d" % actor_id
 
 @rpc("authority", "call_local", "reliable")
-@rpc("authority", "call_local", "reliable")
 func _actor_health(actor_id: int, value: int) -> void:
 	if players.has(actor_id):
 		players[actor_id].health = value
 	if bots.has(actor_id):
 		bots[actor_id].health = value
 
-@rpc("authority", "call_local", "reliable")
 @rpc("authority", "call_local", "reliable")
 func _kill_feed(message: String) -> void:
 	if feed_label:
@@ -67,7 +64,6 @@ func _respawn_bot_later(bot_id: int) -> void:
 		_spawn_bot(bot_id)
 
 @rpc("authority", "call_local", "reliable")
-@rpc("authority", "call_local", "reliable")
 func _remove_bot(bot_id: int) -> void:
 	if not bots.has(bot_id):
 		return
@@ -76,7 +72,6 @@ func _remove_bot(bot_id: int) -> void:
 	if is_instance_valid(bot):
 		bot.queue_free()
 
-@rpc("authority", "call_local", "reliable")
 @rpc("authority", "call_local", "reliable")
 func _respawn_actor(actor_id: int, pos: Vector3, hp: int) -> void:
 	var actor: Node3D = players.get(actor_id, bots.get(actor_id)) as Node3D
@@ -87,13 +82,11 @@ func _respawn_actor(actor_id: int, pos: Vector3, hp: int) -> void:
 			(actor as CharacterBody3D).velocity = Vector3.ZERO
 
 @rpc("authority", "call_local", "reliable")
-@rpc("authority", "call_local", "reliable")
 func _sync_scores(new_scores: Dictionary, new_deaths: Dictionary) -> void:
 	scores = new_scores.duplicate(true)
 	deaths = new_deaths.duplicate(true)
 	_update_scoreboard()
 
-@rpc("authority", "call_local", "reliable")
 @rpc("authority", "call_local", "reliable")
 func _hit_confirm(shooter_id: int) -> void:
 	if shooter_id == multiplayer.get_unique_id() and hitmarker_label != null:
