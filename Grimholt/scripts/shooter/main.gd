@@ -18,6 +18,10 @@ var hud_layer: CanvasLayer
 var menu_layer: CanvasLayer
 var status_label: Label
 var address_input: LineEdit
+var main_menu_container: VBoxContainer
+var matchmaking_container: VBoxContainer
+var custom_games_container: VBoxContainer
+var options_container: VBoxContainer
 var score_label: Label
 var timer_label: Label
 var ammo_label: Label
@@ -104,40 +108,117 @@ func _build_menu() -> void:
 	menu_layer = CanvasLayer.new()
 	add_child(menu_layer)
 	var panel := PanelContainer.new()
-	panel.position = Vector2(24, 24)
-	panel.custom_minimum_size = Vector2(440, 340)
+	panel.set_anchors_and_offsets_preset(Control.PRESET_CENTER)
+	panel.offset_left = -230
+	panel.offset_top = -260
+	panel.offset_right = 230
+	panel.offset_bottom = 260
 	menu_layer.add_child(panel)
+
 	var column := VBoxContainer.new()
+	column.add_theme_constant_override("separation", 12)
 	panel.add_child(column)
+
 	var title := Label.new()
 	title.text = "GRIMHOLT // ARENA"
-	title.add_theme_font_size_override("font_size", 26)
+	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	title.add_theme_font_size_override("font_size", 30)
 	column.add_child(title)
+
 	var intro := Label.new()
 	intro.text = "FREE-FOR-ALL  |  25 KILLS  |  10 MIN"
+	intro.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	column.add_child(intro)
-	var training_button := Button.new()
-	training_button.text = "TRAINING STARTEN  //  SOFORT SPIELEN"
-	training_button.pressed.connect(_on_training_pressed)
-	column.add_child(training_button)
+
+	main_menu_container = VBoxContainer.new()
+	main_menu_container.add_theme_constant_override("separation", 8)
+	column.add_child(main_menu_container)
+	_add_menu_button(main_menu_container, "START SOLO GAME", _on_training_pressed)
+	_add_menu_button(main_menu_container, "MATCHMAKING", func(): _show_menu_section("matchmaking"))
+	_add_menu_button(main_menu_container, "CUSTOM GAMES", func(): _show_menu_section("custom"))
+	_add_menu_button(main_menu_container, "OPTIONS", func(): _show_menu_section("options"))
+
+	matchmaking_container = VBoxContainer.new()
+	matchmaking_container.add_theme_constant_override("separation", 8)
+	matchmaking_container.visible = false
+	column.add_child(matchmaking_container)
+	var matchmaking_title := Label.new()
+	matchmaking_title.text = "MATCHMAKING"
+	matchmaking_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	matchmaking_container.add_child(matchmaking_title)
+	var matchmaking_info := Label.new()
+	matchmaking_info.text = "Die automatische Spielersuche ist noch nicht verfügbar."
+	matchmaking_info.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	matchmaking_container.add_child(matchmaking_info)
+	_add_menu_button(matchmaking_container, "ZURÜCK", func(): _show_menu_section("main"))
+
+	custom_games_container = VBoxContainer.new()
+	custom_games_container.add_theme_constant_override("separation", 8)
+	custom_games_container.visible = false
+	column.add_child(custom_games_container)
+	var custom_title := Label.new()
+	custom_title.text = "CUSTOM GAMES"
+	custom_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	custom_games_container.add_child(custom_title)
 	address_input = LineEdit.new()
-	address_input.placeholder_text = "Server-IP"
+	address_input.placeholder_text = "Server-IP oder Hostname"
 	address_input.text = "127.0.0.1"
-	column.add_child(address_input)
-	var host_button := Button.new()
-	host_button.text = "MULTIPLAYER // SERVER HOSTEN"
-	host_button.pressed.connect(_on_host_pressed)
-	column.add_child(host_button)
-	var join_button := Button.new()
-	join_button.text = "MULTIPLAYER // SERVER BEITRETEN"
-	join_button.pressed.connect(_on_join_pressed)
-	column.add_child(join_button)
-	var status_title := Label.new()
-	status_title.text = "WASD bewegen  |  Maus zielen  |  Linksklick feuern"
-	column.add_child(status_title)
+	custom_games_container.add_child(address_input)
+	_add_menu_button(custom_games_container, "SPIEL HOSTEN", _on_host_pressed)
+	_add_menu_button(custom_games_container, "SPIEL BEITRETEN", _on_join_pressed)
+	_add_menu_button(custom_games_container, "ZURÜCK", func(): _show_menu_section("main"))
+
+	options_container = VBoxContainer.new()
+	options_container.add_theme_constant_override("separation", 8)
+	options_container.visible = false
+	column.add_child(options_container)
+	var options_title := Label.new()
+	options_title.text = "OPTIONS"
+	options_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	options_container.add_child(options_title)
+
+	var fullscreen_toggle := CheckButton.new()
+	fullscreen_toggle.text = "Vollbild"
+	fullscreen_toggle.button_pressed = DisplayServer.window_get_mode() == DisplayServer.WINDOW_MODE_FULLSCREEN
+	fullscreen_toggle.toggled.connect(_on_fullscreen_toggled)
+	options_container.add_child(fullscreen_toggle)
+
+	var volume_label := Label.new()
+	volume_label.text = "Master-Lautstärke"
+	options_container.add_child(volume_label)
+	var volume_slider := HSlider.new()
+	volume_slider.min_value = 0.0
+	volume_slider.max_value = 1.0
+	volume_slider.step = 0.05
+	volume_slider.value = db_to_linear(AudioServer.get_bus_volume_db(0))
+	volume_slider.value_changed.connect(_on_master_volume_changed)
+	options_container.add_child(volume_slider)
+	_add_menu_button(options_container, "ZURÜCK", func(): _show_menu_section("main"))
+
 	status_label = Label.new()
-	status_label.text = "Noch nicht verbunden"
+	status_label.text = "WASD bewegen  |  Maus zielen  |  Linksklick feuern"
+	status_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	column.add_child(status_label)
+
+func _add_menu_button(parent: VBoxContainer, button_text: String, callback: Callable) -> void:
+	var button := Button.new()
+	button.text = button_text
+	button.custom_minimum_size = Vector2(0, 42)
+	button.pressed.connect(callback)
+	parent.add_child(button)
+
+func _show_menu_section(section: String) -> void:
+	main_menu_container.visible = section == "main"
+	matchmaking_container.visible = section == "matchmaking"
+	custom_games_container.visible = section == "custom"
+	options_container.visible = section == "options"
+
+func _on_fullscreen_toggled(enabled: bool) -> void:
+	var mode := DisplayServer.WINDOW_MODE_FULLSCREEN if enabled else DisplayServer.WINDOW_MODE_WINDOWED
+	DisplayServer.window_set_mode(mode)
+
+func _on_master_volume_changed(value: float) -> void:
+	AudioServer.set_bus_volume_linear(0, value)
 
 func _build_hud() -> void:
 	hud_layer = CanvasLayer.new()
