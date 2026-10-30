@@ -17,7 +17,7 @@ func _update_scoreboard() -> void:
 	output += "[/center]"
 	scoreboard_label.text = output
 
-func _finish_round() -> void:
+func _finish_round(reason: String = "time") -> void:
 	if not multiplayer.is_server() or not round_active:
 		return
 	round_active = false
@@ -34,15 +34,15 @@ func _finish_round() -> void:
 			tied = true
 	if tied:
 		winner = -1
-	_round_finished.rpc(winner, maxi(0, best))
+	_round_finished.rpc(winner, maxi(0, best), reason)
 
 @rpc("authority", "call_local", "reliable")
-func _round_finished(winner: int, points: int) -> void:
+func _round_finished(winner: int, points: int, reason: String) -> void:
 	if winner < 0:
 		status_label.text = "RUNDE BEENDET // UNENTSCHIEDEN (%d PUNKTE)" % points
 	else:
 		status_label.text = "RUNDE BEENDET // %s GEWINNT (%d)" % [_actor_name(winner), points]
-	timer_label.text = "DEATHMATCH     00:00"
+	timer_label.text = "DEATHMATCH     SCORE LIMIT" if reason == "score" else "DEATHMATCH     00:00"
 	menu_layer.visible = true
 
 func _format_round_time(remaining_msec: int) -> String:
