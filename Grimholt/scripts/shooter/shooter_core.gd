@@ -47,6 +47,7 @@ var weapon_ammo: Dictionary = {}
 var weapon_reserve: Dictionary = {}
 var reload_deadlines: Dictionary = {}
 var bot_sync_timer := 0.0
+var player_sync_timer := 0.0
 
 
 func _ready() -> void:
@@ -77,6 +78,7 @@ func _process(delta: float) -> void:
 			if bot_sync_timer >= 0.05:
 				bot_sync_timer = 0.0
 				_sync_bot_states.rpc(_collect_bot_states())
+				_sync_player_states.rpc(_collect_player_states())
 			if now_msec >= next_timer_sync_msec:
 				_sync_round_timer.rpc(remaining_msec)
 				next_timer_sync_msec = now_msec + 1000
