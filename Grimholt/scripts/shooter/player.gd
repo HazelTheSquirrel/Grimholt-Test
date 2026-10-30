@@ -59,14 +59,14 @@ func _ready() -> void:
 func _unhandled_input(event: InputEvent) -> void:
 	if not is_multiplayer_authority():
 		return
+	if bool(get_parent().get("is_local_paused")):
+		fire_held = false
+		return
 	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT:
 		fire_held = event.pressed and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED
 	if event is InputEventMouseMotion and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
 		rotate_y(-event.relative.x * MOUSE_SENSITIVITY)
 		head.rotation.x = clampf(head.rotation.x - event.relative.y * MOUSE_SENSITIVITY, deg_to_rad(-85), deg_to_rad(85))
-	elif event is InputEventKey and event.pressed and event.keycode == KEY_ESCAPE:
-		fire_held = false
-		Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 	elif event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
 		if Input.mouse_mode == Input.MOUSE_MODE_VISIBLE:
 			Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
@@ -85,7 +85,7 @@ func _physics_process(delta: float) -> void:
 	var input_vector := Vector2.ZERO
 	var jump_requested := false
 	var wants_crouch := false
-	if local_control:
+	if local_control and not bool(get_parent().get("is_local_paused")):
 		input_vector = Input.get_vector("move_left", "move_right", "move_forward", "move_backward")
 		jump_requested = Input.is_action_just_pressed("jump")
 		if jump_requested:
