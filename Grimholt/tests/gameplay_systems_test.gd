@@ -28,6 +28,7 @@ func _run() -> void:
         return
     var resource: GrimholtResourceNode = ResourceNodeScript.new()
     resource.configure("tree", "Eiche", "wood", 4)
+    root.add_child(resource)
     if not resource.harvest(inventory):
         _fail("Resource node could not be harvested.")
         return
@@ -52,6 +53,8 @@ func _run() -> void:
     if resource.harvest(inventory):
         _fail("Depleted resource node was harvested twice.")
         return
+    await process_frame
+    inventory.free()
     print("PASS: inventory limits, atomic crafting, profession XP and one-time resource harvesting.")
     quit(0)
 
