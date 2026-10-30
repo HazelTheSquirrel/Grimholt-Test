@@ -58,8 +58,8 @@ func _run_smoke_test() -> void:
 	assert(game.hitmarker_label != null, "Hit confirmation UI was not created")
 	assert(game.minimap.position == Vector2(24, 72), "Minimap must stay below the match clock, clear of bottom-left vitals")
 	assert(game.pause_panel.theme != null, "Pause menu must use the original Grimholt UI theme")
-	assert(game.pause_options.get_child(0) is CheckButton, "Pause menu must expose a working fullscreen control")
-	assert(game.pause_options.get_child(2) is HSlider, "Pause menu must expose a working master-volume control")
+	assert(game.pause_options.get_child(1) is CheckButton, "Pause menu must expose a working fullscreen control")
+	assert(game.pause_options.get_child(3) is HSlider, "Pause menu must expose a working master-volume control")
 	assert(game.has_method("_load_settings") and game.has_method("_save_settings"), "Local settings persistence is missing")
 	var player: Node = game.players[1]
 	game.players[77] = player
