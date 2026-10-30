@@ -9,6 +9,7 @@ const INTERACTION_DISTANCE := 5.0
 
 var camera_pivot: Node3D
 var camera: Camera3D
+var body_visual: MeshInstance3D
 var inventory: GrimholtInventory
 var professions := GrimholtProfessionSystem.new()
 var building_system: GrimholtBuildingSystem
@@ -21,6 +22,8 @@ func _ready() -> void:
     _configure_input_actions()
     _create_body()
     _create_hud()
+    floor_snap_length = 0.35
+    floor_max_angle = deg_to_rad(50.0)
     Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 
 func _configure_input_actions() -> void:
@@ -47,22 +50,22 @@ func _create_body() -> void:
     collider.shape = capsule
     collider.position.y = 0.9
     add_child(collider)
-    var visual := MeshInstance3D.new()
+    body_visual = MeshInstance3D.new()
     var body_mesh := CapsuleMesh.new()
     body_mesh.radius = 0.36
     body_mesh.height = 1.75
-    visual.mesh = body_mesh
-    visual.position.y = 0.9
+    body_visual.mesh = body_mesh
+    body_visual.position.y = 0.9
     var body_material := StandardMaterial3D.new()
     body_material.albedo_color = Color(0.22, 0.25, 0.29)
-    visual.material_override = body_material
-    add_child(visual)
+    body_visual.material_override = body_material
+    add_child(body_visual)
     camera_pivot = Node3D.new()
     camera_pivot.position.y = 1.55
+    camera_pivot.rotation.x = deg_to_rad(-12.0)
     add_child(camera_pivot)
     camera = Camera3D.new()
     camera.position = Vector3(0.0, 0.45, 5.2)
-    camera.rotation.x = deg_to_rad(12.0)
     camera.fov = 72.0
     camera.current = true
     camera_pivot.add_child(camera)
@@ -115,15 +118,13 @@ func _physics_process(delta: float) -> void:
         velocity.y = JUMP_VELOCITY
     var input_vector := Input.get_vector("move_left", "move_right", "move_forward", "move_backward")
     var local_direction := Vector3(input_vector.x, 0.0, input_vector.y)
-    var direction := camera_pivot.global_transform.basis * local_direction
-    direction.y = 0.0
-    direction = direction.normalized()
+    var direction := local_direction.rotated(Vector3.UP, camera_pivot.global_rotation.y).normalized()
     var speed := SPRINT_SPEED if Input.is_key_pressed(KEY_SHIFT) else WALK_SPEED
     if direction.length() > 0.01:
         velocity.x = direction.x * speed
         velocity.z = direction.z * speed
         var target_yaw := atan2(-direction.x, -direction.z)
-        rotation.y = lerp_angle(rotation.y, target_yaw, delta * 9.0)
+        body_visual.rotation.y = lerp_angle(body_visual.rotation.y, target_yaw, delta * 9.0)
     else:
         velocity.x = move_toward(velocity.x, 0.0, WALK_SPEED * 5.0 * delta)
         velocity.z = move_toward(velocity.z, 0.0, WALK_SPEED * 5.0 * delta)
