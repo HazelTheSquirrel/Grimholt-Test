@@ -12,8 +12,7 @@ func start_solo_game() -> void:
 	bots.clear()
 	scores.clear()
 	deaths.clear()
-	last_positions.clear()
-	last_position_times.clear()
+	last_transform_packet_msec.clear()
 	for child in get_children():
 		if child is CharacterBody3D:
 			child.queue_free()
@@ -268,9 +267,3 @@ func _sync_player_states(states: Array) -> void:
 		if head != null:
 			head.rotation.x = state[3]
 
-@rpc("authority", "call_remote", "unreliable")
-func _relay_transform(peer_id: int, pos: Vector3, yaw: float, pitch: float) -> void:
-	if players.has(peer_id) and multiplayer.get_unique_id() != peer_id:
-		players[peer_id].global_position = players[peer_id].global_position.lerp(pos, 0.7)
-		players[peer_id].rotation.y = yaw
-		players[peer_id].get_node("Head").rotation.x = pitch
