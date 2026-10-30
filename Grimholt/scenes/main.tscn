@@ -29,6 +29,9 @@ shadow_enabled = true
 [node name="TerrainWorld" type="Node3D" parent="."]
 script = ExtResource("2_terrain")
 
+[node name="PlayerSpawn" type="Marker3D" parent="."]
+position = Vector3(0, 0, 0)
+
 [node name="PlayerBuildings" type="Node3D" parent="."]
 script = ExtResource("4_building")
 
