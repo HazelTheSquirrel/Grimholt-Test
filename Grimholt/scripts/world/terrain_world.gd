@@ -3,51 +3,100 @@ extends Node3D
 class_name GrimholtTerrainWorld
 
 const ResourceNodeScript = preload("res://scripts/world/resource_node.gd")
+const WORLD_SIZE_METERS := 100000.0
+const WORLD_AREA_KM2 := 10000.0
+const CHUNK_SIZE := 1000.0
+const CHUNK_RESOLUTION := 32
+const STREAM_RADIUS := 1
 
-@export_range(24, 96, 8) var extent: int = 64:
-    set(value):
-        extent = value
-        if is_inside_tree():
-            generate()
-@export_range(1.0, 4.0, 0.5) var cell_size: float = 2.0:
-    set(value):
-        cell_size = value
-        if is_inside_tree():
-            generate()
+@export_range(24, 96, 8) var extent: int = 64
+@export_range(1.0, 4.0, 0.5) var cell_size: float = 2.0
 @export var terrain_seed: int = 472901:
     set(value):
         terrain_seed = value
         if is_inside_tree():
+            _rebuild_noise()
             generate()
 
 var terrain_noise := FastNoiseLite.new()
 var detail_noise := FastNoiseLite.new()
+var ridge_noise := FastNoiseLite.new()
+var river_noise := FastNoiseLite.new()
 var terrain_mesh: ArrayMesh
 var generated_root: Node3D
 var known_resource_ids: Array[String] = []
+var active_chunks: Dictionary = {}
+var _last_center := Vector2i(2147483647, 2147483647)
+var _terrain_material: StandardMaterial3D
 
 func _ready() -> void:
+    _rebuild_noise()
     generate()
 
+func _rebuild_noise() -> void:
+    terrain_noise.seed = terrain_seed
+    terrain_noise.noise_type = FastNoiseLite.TYPE_SIMPLEX_SMOOTH
+    terrain_noise.frequency = 0.000075
+    terrain_noise.fractal_type = FastNoiseLite.FRACTAL_FBM
+    terrain_noise.fractal_octaves = 5
+    terrain_noise.fractal_gain = 0.48
+    detail_noise.seed = terrain_seed + 97
+    detail_noise.noise_type = FastNoiseLite.TYPE_SIMPLEX
+    detail_noise.frequency = 0.0018
+    detail_noise.fractal_octaves = 3
+    ridge_noise.seed = terrain_seed + 211
+    ridge_noise.noise_type = FastNoiseLite.TYPE_SIMPLEX
+    ridge_noise.frequency = 0.00012
+    ridge_noise.fractal_octaves = 4
+    river_noise.seed = terrain_seed + 419
+    river_noise.noise_type = FastNoiseLite.TYPE_SIMPLEX
+    river_noise.frequency = 0.000035
+    _terrain_material = _make_terrain_material()
+
 func height_at(x: float, z: float) -> float:
-    var broad := terrain_noise.get_noise_2d(x, z) * 4.8
-    var detail := detail_noise.get_noise_2d(x, z) * 0.8
-    var ridge := pow(1.0 - absf(terrain_noise.get_noise_2d(x * 0.45 + 180.0, z * 0.45 - 90.0)), 2.0) * 1.8
-    return 1.6 + broad + detail + ridge
+    # Broad continental forms, mountain ridges and a carved, meandering river basin.
+    var continental := terrain_noise.get_noise_2d(x, z)
+    var ridge := 1.0 - absf(ridge_noise.get_noise_2d(x, z))
+    var mountain_mask := smoothstep(0.18, 0.62, continental + ridge * 0.28)
+    var mountains := pow(ridge, 2.2) * 720.0 * mountain_mask
+    var hills := continental * 115.0
+    var detail := detail_noise.get_noise_2d(x, z) * 9.0
+    var river_center := 12500.0 + river_noise.get_noise_2d(0.0, z * 0.42) * 10500.0
+    var river_distance := absf(x - river_center)
+    var river_valley := exp(-river_distance / 2600.0) * 52.0
+    var channel := exp(-river_distance / 145.0) * 13.0
+    return 95.0 + hills + mountains + detail - river_valley - channel
+
+func biome_at(x: float, z: float) -> int:
+    var climate := detail_noise.get_noise_2d(x * 0.28 + 900.0, z * 0.28 - 400.0)
+    var elevation := height_at(x, z)
+    if elevation > 540.0:
+        return 3 # alpine rock
+    if elevation > 340.0:
+        return 2 # highland / conifer belt
+    if climate < -0.28:
+        return 4 # heath / dry grassland
+    if climate > 0.30:
+        return 1 # dense temperate forest
+    return 0 # meadow and mixed woodland
 
 func _terrain_color(position: Vector3, normal: Vector3) -> Color:
-    var height_factor := clampf((position.y - 1.0) / 8.0, 0.0, 1.0)
+    var biome := biome_at(position.x, position.z)
     var slope := 1.0 - normal.dot(Vector3.UP)
-    var variation := detail_noise.get_noise_2d(position.x * 1.7, position.z * 1.7) * 0.045
-    var grass := Color(0.22, 0.36, 0.16)
-    var moss := Color(0.34, 0.37, 0.18)
-    var stone := Color(0.43, 0.43, 0.42)
-    var scree := Color(0.30, 0.32, 0.32)
-    var color := grass.lerp(moss, clampf((0.25 - height_factor) * 2.2, 0.0, 1.0))
-    color = color.lerp(stone, clampf(maxf(slope * 1.5, height_factor * 0.9), 0.0, 0.92))
-    if slope > 0.48:
-        color = color.lerp(scree, clampf((slope - 0.48) * 1.8, 0.0, 0.7))
-    return color.lightened(variation)
+    var variation := detail_noise.get_noise_2d(position.x * 0.11, position.z * 0.11) * 0.055
+    var palette := [
+        Color(0.25, 0.39, 0.18),
+        Color(0.13, 0.29, 0.13),
+        Color(0.31, 0.34, 0.24),
+        Color(0.42, 0.43, 0.41),
+        Color(0.47, 0.42, 0.25)
+    ]
+    var base: Color = palette[biome]
+    if slope > 0.42:
+        base = base.lerp(Color(0.39, 0.40, 0.39), clampf((slope - 0.42) * 1.7, 0.0, 0.92))
+    if position.y > 700.0:
+        base = base.lerp(Color(0.82, 0.85, 0.86), clampf((position.y - 700.0) / 300.0, 0.0, 0.8))
+    return base.lightened(variation)
 
 func _make_terrain_material() -> StandardMaterial3D:
     var texture_noise := FastNoiseLite.new()
@@ -55,81 +104,184 @@ func _make_terrain_material() -> StandardMaterial3D:
     texture_noise.noise_type = FastNoiseLite.TYPE_SIMPLEX
     texture_noise.frequency = 0.035
     texture_noise.fractal_type = FastNoiseLite.FRACTAL_FBM
-    texture_noise.fractal_octaves = 4
+    texture_noise.fractal_octaves = 5
     var albedo_texture := NoiseTexture2D.new()
     albedo_texture.width = 512
     albedo_texture.height = 512
     albedo_texture.seamless = true
     albedo_texture.noise = texture_noise
-    var texture_ramp := Gradient.new()
-    texture_ramp.set_color(0, Color(0.76, 0.79, 0.70, 1.0))
-    texture_ramp.add_point(0.5, Color(0.90, 0.92, 0.84, 1.0))
-    texture_ramp.set_color(1, Color(1.0, 1.0, 1.0, 1.0))
-    albedo_texture.color_ramp = texture_ramp
+    var ramp := Gradient.new()
+    ramp.set_color(0, Color(0.72, 0.75, 0.65))
+    ramp.add_point(0.5, Color(0.91, 0.91, 0.83))
+    ramp.set_color(1, Color(1.0, 1.0, 1.0))
+    albedo_texture.color_ramp = ramp
     var material := StandardMaterial3D.new()
     material.albedo_texture = albedo_texture
     material.vertex_color_use_as_albedo = true
     material.uv1_triplanar = true
-    material.uv1_scale = Vector3(0.16, 0.16, 0.16)
+    material.uv1_scale = Vector3(0.10, 0.10, 0.10)
     material.roughness = 1.0
     return material
 
 func generate() -> void:
     if not is_inside_tree():
         return
-    terrain_noise.seed = terrain_seed
-    terrain_noise.noise_type = FastNoiseLite.TYPE_SIMPLEX_SMOOTH
-    terrain_noise.frequency = 0.012
-    terrain_noise.fractal_octaves = 4
-    detail_noise.seed = terrain_seed + 97
-    detail_noise.noise_type = FastNoiseLite.TYPE_SIMPLEX
-    detail_noise.frequency = 0.055
-    detail_noise.fractal_octaves = 3
     if generated_root != null and is_instance_valid(generated_root):
         generated_root.free()
     generated_root = Node3D.new()
-    generated_root.name = "GeneratedTerrain"
+    generated_root.name = "StreamedWorld"
     add_child(generated_root)
+    active_chunks.clear()
+    _last_center = Vector2i(2147483647, 2147483647)
+    update_streaming(Vector3.ZERO)
 
+func update_streaming(world_position: Vector3) -> void:
+    if generated_root == null or not is_instance_valid(generated_root):
+        return
+    var center := Vector2i(floori(world_position.x / CHUNK_SIZE), floori(world_position.z / CHUNK_SIZE))
+    if center == _last_center:
+        return
+    _last_center = center
+    var wanted: Dictionary = {}
+    for cz in range(center.y - STREAM_RADIUS, center.y + STREAM_RADIUS + 1):
+        for cx in range(center.x - STREAM_RADIUS, center.x + STREAM_RADIUS + 1):
+            if absf(float(cx) * CHUNK_SIZE) > WORLD_SIZE_METERS * 0.5 or absf(float(cz) * CHUNK_SIZE) > WORLD_SIZE_METERS * 0.5:
+                continue
+            var key := Vector2i(cx, cz)
+            wanted[key] = true
+            if not active_chunks.has(key):
+                active_chunks[key] = _create_chunk(cx, cz)
+    var remove_keys: Array = []
+    for key in active_chunks.keys():
+        if not wanted.has(key):
+            var old_chunk: Node3D = active_chunks[key]
+            old_chunk.queue_free()
+            remove_keys.append(key)
+    for key in remove_keys:
+        active_chunks.erase(key)
+
+func _create_chunk(chunk_x: int, chunk_z: int) -> Node3D:
+    var chunk := Node3D.new()
+    chunk.name = "Chunk_%d_%d" % [chunk_x, chunk_z]
+    chunk.position = Vector3(float(chunk_x) * CHUNK_SIZE, 0.0, float(chunk_z) * CHUNK_SIZE)
+    generated_root.add_child(chunk)
     var surface := SurfaceTool.new()
     surface.begin(Mesh.PRIMITIVE_TRIANGLES)
-    for z in range(-extent, extent):
-        for x in range(-extent, extent):
-            var x0 := float(x) * cell_size
-            var x1 := float(x + 1) * cell_size
-            var z0 := float(z) * cell_size
-            var z1 := float(z + 1) * cell_size
-            var a := Vector3(x0, height_at(x0, z0), z0)
-            var b := Vector3(x1, height_at(x1, z0), z0)
-            var c := Vector3(x0, height_at(x0, z1), z1)
-            var d := Vector3(x1, height_at(x1, z1), z1)
-            _add_colored_triangle(surface, a, c, b)
-            _add_colored_triangle(surface, b, c, d)
+    var step := CHUNK_SIZE / float(CHUNK_RESOLUTION)
+    for z in range(CHUNK_RESOLUTION):
+        for x in range(CHUNK_RESOLUTION):
+            var x0 := float(x) * step
+            var x1 := float(x + 1) * step
+            var z0 := float(z) * step
+            var z1 := float(z + 1) * step
+            var a := Vector3(x0, height_at(chunk.position.x + x0, chunk.position.z + z0), z0)
+            var b := Vector3(x1, height_at(chunk.position.x + x1, chunk.position.z + z0), z0)
+            var c := Vector3(x0, height_at(chunk.position.x + x0, chunk.position.z + z1), z1)
+            var d := Vector3(x1, height_at(chunk.position.x + x1, chunk.position.z + z1), z1)
+            _add_colored_triangle(surface, a, c, b, chunk.position)
+            _add_colored_triangle(surface, b, c, d, chunk.position)
     surface.generate_normals()
-    terrain_mesh = surface.commit()
-    var terrain_visual := MeshInstance3D.new()
-    terrain_visual.name = "TerrainSurface"
-    terrain_visual.mesh = terrain_mesh
-    terrain_visual.material_override = _make_terrain_material()
-    generated_root.add_child(terrain_visual)
+    var mesh := surface.commit()
+    var visual := MeshInstance3D.new()
+    visual.name = "TerrainSurface"
+    visual.mesh = mesh
+    visual.material_override = _terrain_material
+    chunk.add_child(visual)
+    var body := StaticBody3D.new()
+    body.name = "TerrainCollision"
+    var collision := CollisionShape3D.new()
+    var shape := mesh.create_trimesh_shape()
+    shape.backface_collision = true
+    collision.shape = shape
+    body.add_child(collision)
+    chunk.add_child(body)
+    _populate_chunk_foliage(chunk, chunk_x, chunk_z)
+    if chunk_x == 0 and chunk_z == 0:
+        terrain_mesh = mesh
+    return chunk
 
-    var terrain_body := StaticBody3D.new()
-    terrain_body.name = "TerrainCollision"
-    var terrain_collision := CollisionShape3D.new()
-    var terrain_shape := terrain_mesh.create_trimesh_shape()
-    terrain_shape.backface_collision = true
-    terrain_collision.shape = terrain_shape
-    terrain_body.add_child(terrain_collision)
-    generated_root.add_child(terrain_body)
-
-func _add_colored_triangle(surface: SurfaceTool, a: Vector3, b: Vector3, c: Vector3) -> void:
+func _add_colored_triangle(surface: SurfaceTool, a: Vector3, b: Vector3, c: Vector3, chunk_origin: Vector3) -> void:
     var face_normal := Plane(a, b, c).normal
-    surface.set_color(_terrain_color(a, face_normal))
+    surface.set_color(_terrain_color(a + chunk_origin, face_normal))
     surface.add_vertex(a)
-    surface.set_color(_terrain_color(b, face_normal))
+    surface.set_color(_terrain_color(b + chunk_origin, face_normal))
     surface.add_vertex(b)
-    surface.set_color(_terrain_color(c, face_normal))
+    surface.set_color(_terrain_color(c + chunk_origin, face_normal))
     surface.add_vertex(c)
+
+func _populate_chunk_foliage(chunk: Node3D, chunk_x: int, chunk_z: int) -> void:
+    var rng := RandomNumberGenerator.new()
+    rng.seed = abs(terrain_seed + chunk_x * 73856093 + chunk_z * 19349663)
+    var trunk_mesh := CylinderMesh.new()
+    trunk_mesh.top_radius = 0.16
+    trunk_mesh.bottom_radius = 0.30
+    trunk_mesh.height = 5.0
+    var trunk_mat := StandardMaterial3D.new()
+    trunk_mat.albedo_color = Color(0.25, 0.16, 0.09)
+    var trunk_batch := MultiMesh.new()
+    trunk_batch.transform_format = MultiMesh.TRANSFORM_3D
+    trunk_batch.mesh = trunk_mesh
+    trunk_batch.instance_count = 90
+    var crown_mesh := SphereMesh.new()
+    crown_mesh.radius = 2.6
+    crown_mesh.height = 5.8
+    var crown_mat := StandardMaterial3D.new()
+    crown_mat.albedo_color = Color(0.12, 0.27, 0.11)
+    crown_mat.roughness = 1.0
+    var crown_batch := MultiMesh.new()
+    crown_batch.transform_format = MultiMesh.TRANSFORM_3D
+    crown_batch.mesh = crown_mesh
+    crown_batch.instance_count = 90
+    var grass_mesh := CylinderMesh.new()
+    grass_mesh.top_radius = 0.008
+    grass_mesh.bottom_radius = 0.045
+    grass_mesh.height = 0.38
+    var grass_mat := StandardMaterial3D.new()
+    grass_mat.albedo_color = Color(0.29, 0.43, 0.19)
+    var grass_batch := MultiMesh.new()
+    grass_batch.transform_format = MultiMesh.TRANSFORM_3D
+    grass_batch.mesh = grass_mesh
+    grass_batch.instance_count = 240
+    var actual_trees := 0
+    for index in range(90):
+        var px := rng.randf_range(18.0, CHUNK_SIZE - 18.0)
+        var pz := rng.randf_range(18.0, CHUNK_SIZE - 18.0)
+        var wx := chunk.position.x + px
+        var wz := chunk.position.z + pz
+        var biome := biome_at(wx, wz)
+        var river_x := 12500.0 + river_noise.get_noise_2d(0.0, wz * 0.42) * 10500.0
+        if biome == 3 or absf(wx - river_x) < 360.0 or rng.randf() > (0.78 if biome == 1 else 0.43):
+            continue
+        var ground := height_at(wx, wz)
+        var scale := rng.randf_range(0.72, 1.45)
+        var transform := Transform3D(Basis().scaled(Vector3(scale, scale, scale)), Vector3(px, ground + 2.5 * scale, pz))
+        trunk_batch.set_instance_transform(actual_trees, transform)
+        var crown_transform := Transform3D(Basis().scaled(Vector3(scale, scale, scale)), Vector3(px, ground + 6.0 * scale, pz))
+        crown_batch.set_instance_transform(actual_trees, crown_transform)
+        actual_trees += 1
+    trunk_batch.instance_count = actual_trees
+    crown_batch.instance_count = actual_trees
+    var trunks := MultiMeshInstance3D.new()
+    trunks.name = "ForestTrunks"
+    trunks.multimesh = trunk_batch
+    trunks.material_override = trunk_mat
+    chunk.add_child(trunks)
+    var crowns := MultiMeshInstance3D.new()
+    crowns.name = "ForestCanopies"
+    crowns.multimesh = crown_batch
+    crowns.material_override = crown_mat
+    chunk.add_child(crowns)
+    for index in range(grass_batch.instance_count):
+        var gx := rng.randf_range(0.0, CHUNK_SIZE)
+        var gz := rng.randf_range(0.0, CHUNK_SIZE)
+        var gy := height_at(chunk.position.x + gx, chunk.position.z + gz)
+        var scale := rng.randf_range(0.7, 1.4)
+        grass_batch.set_instance_transform(index, Transform3D(Basis().rotated(Vector3.UP, rng.randf_range(0.0, TAU)).scaled(Vector3(scale, scale, scale)), Vector3(gx, gy + 0.18, gz)))
+    var grass := MultiMeshInstance3D.new()
+    grass.name = "GrassCover"
+    grass.multimesh = grass_batch
+    grass.material_override = grass_mat
+    chunk.add_child(grass)
 
 func populate_resources(inventory: GrimholtInventory) -> void:
     known_resource_ids.clear()
@@ -155,61 +307,6 @@ func populate_resources(inventory: GrimholtInventory) -> void:
         var pz := float(entry["z"])
         node.position = Vector3(px, height_at(px, pz), pz)
         add_child(node)
-    _populate_ground_cover()
-
-func _populate_ground_cover() -> void:
-    var rng := RandomNumberGenerator.new()
-    rng.seed = terrain_seed + 8103
-
-    var grass_mesh := CylinderMesh.new()
-    grass_mesh.top_radius = 0.008
-    grass_mesh.bottom_radius = 0.055
-    grass_mesh.height = 0.48
-    grass_mesh.radial_segments = 5
-    var grass_material := StandardMaterial3D.new()
-    grass_material.albedo_color = Color(0.28, 0.43, 0.18)
-    grass_material.roughness = 1.0
-    var grass_batch := MultiMesh.new()
-    grass_batch.transform_format = MultiMesh.TRANSFORM_3D
-    grass_batch.mesh = grass_mesh
-    grass_batch.instance_count = 2800
-    for index in range(grass_batch.instance_count):
-        var px := rng.randf_range(-extent * cell_size + 4.0, extent * cell_size - 4.0)
-        var pz := rng.randf_range(-extent * cell_size + 4.0, extent * cell_size - 4.0)
-        if Vector2(px, pz).length() < 9.0:
-            px += 12.0
-        var scale := rng.randf_range(0.65, 1.35)
-        var basis := Basis().rotated(Vector3.UP, rng.randf_range(0.0, TAU)).scaled(Vector3(scale, scale, scale))
-        var origin := Vector3(px, height_at(px, pz) + 0.22 * scale, pz)
-        grass_batch.set_instance_transform(index, Transform3D(basis, origin))
-    var grass_instance := MultiMeshInstance3D.new()
-    grass_instance.name = "GrassTufts"
-    grass_instance.multimesh = grass_batch
-    grass_instance.material_override = grass_material
-    add_child(grass_instance)
-
-    var stone_mesh := SphereMesh.new()
-    stone_mesh.radius = 0.24
-    stone_mesh.height = 0.32
-    var stone_material := StandardMaterial3D.new()
-    stone_material.albedo_color = Color(0.38, 0.40, 0.39)
-    stone_material.roughness = 0.96
-    var stone_batch := MultiMesh.new()
-    stone_batch.transform_format = MultiMesh.TRANSFORM_3D
-    stone_batch.mesh = stone_mesh
-    stone_batch.instance_count = 96
-    for index in range(stone_batch.instance_count):
-        var px := rng.randf_range(-extent * cell_size + 4.0, extent * cell_size - 4.0)
-        var pz := rng.randf_range(-extent * cell_size + 4.0, extent * cell_size - 4.0)
-        var scale := rng.randf_range(0.45, 1.8)
-        var basis := Basis().rotated(Vector3.UP, rng.randf_range(0.0, TAU)).scaled(Vector3(scale, scale * rng.randf_range(0.7, 1.2), scale))
-        var origin := Vector3(px, height_at(px, pz) + 0.10 * scale, pz)
-        stone_batch.set_instance_transform(index, Transform3D(basis, origin))
-    var stone_instance := MultiMeshInstance3D.new()
-    stone_instance.name = "ScatteredStones"
-    stone_instance.multimesh = stone_batch
-    stone_instance.material_override = stone_material
-    add_child(stone_instance)
 
 func has_resource_id(resource_key: String) -> bool:
     return known_resource_ids.has(resource_key)
