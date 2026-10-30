@@ -1,6 +1,9 @@
 extends StaticBody3D
 class_name GrimholtResourceNode
 
+signal harvested(resource_key: String)
+
+var persistent_id: String = ""
 var resource_id: String = ""
 var yield_item: String = ""
 var yield_amount: int = 1
@@ -149,5 +152,6 @@ func harvest(target_inventory: GrimholtInventory) -> bool:
     if not target_inventory.add_item(yield_item, yield_amount):
         return false
     depleted = true
+    harvested.emit(persistent_id)
     queue_free()
     return true
