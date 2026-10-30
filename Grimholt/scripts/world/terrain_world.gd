@@ -110,16 +110,17 @@ func _terrain_color(position: Vector3, normal: Vector3) -> Color:
         base = base.lerp(Color(0.82, 0.85, 0.86), clampf((position.y - 700.0) / 300.0, 0.0, 0.8))
     return base.lightened(variation)
 
-func _make_terrain_material() -> StandardMaterial3D:
+func _make_terrain_material() -> Material:
     var material := load("res://assets/materials/terrain_grass.tres") as Material
     if material == null:
         push_error("Grimholt asset pack: terrain_grass.tres could not be loaded.")
-        material = StandardMaterial3D.new()
-        material.albedo_color = Color(0.28, 0.38, 0.20)
-        material.roughness = 1.0
-        material.uv1_triplanar = true
-        material.uv1_scale = Vector3(0.055, 0.055, 0.055)
-        material.vertex_color_use_as_albedo = true
+        var fallback := StandardMaterial3D.new()
+        fallback.albedo_color = Color(0.28, 0.38, 0.20)
+        fallback.roughness = 1.0
+        fallback.uv1_triplanar = true
+        fallback.uv1_scale = Vector3(0.055, 0.055, 0.055)
+        fallback.vertex_color_use_as_albedo = true
+        return fallback
     return material
 
 func generate() -> void:
