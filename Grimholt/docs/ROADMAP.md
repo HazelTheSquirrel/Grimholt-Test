@@ -23,6 +23,7 @@ Grimholt ist ein polygonbasiertes Fantasy-Sandbox-RPG mit natürlichem Terrain, 
 - [x] Erste Gebäudeabmessungen auf 3-m-Raster und menschliche Referenzmaße abgestimmt
 - [ ] Terrain-Streaming, LOD und Profiling
 - [ ] Windows-Grafiktest auf Zielhardware
+- [x] Editor-Umgebung bleibt zur Laufzeit erhalten; Licht-/Nebeleinstellungen ergänzen sie nur
 
 ## Phase 1 – Sammeln, Inventar und Berufe
 
@@ -32,6 +33,10 @@ Grimholt ist ein polygonbasiertes Fantasy-Sandbox-RPG mit natürlichem Terrain, 
 - [x] Ernteinteraktion im echten Spieler-/Kamera-/Kollisionsablauf durch Headless-Regressionsprüfung abgesichert
 - [x] Ressourcenernte mit konfigurierbaren Erträgen
 - [x] Grundsystem für Berufserfahrung und Level
+- [x] Lokale Spielstand-Sicherung für Spielerposition, Inventar und Berufs-XP
+- [x] Wiederherstellung platzierter Bauteile beim Laden
+- [x] Validierung gespeicherter Daten vor Übernahme in die laufende Session
+- [ ] Persistenz von Ressourcen-Zuständen und Weltveränderungen
 - [ ] Werkzeuge, Werkzeughaltbarkeit und Abbauzeiten
 - [ ] Ressourcen-Respawn, Spawnregeln und Persistenz
 - [ ] Weitere Ressourcen: Stein, Lehm, Fasern, Fisch, Jagdbeute
