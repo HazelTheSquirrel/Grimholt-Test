@@ -54,13 +54,26 @@ func _run() -> void:
         "res://assets/textures/gravel_sand.svg",
         "res://assets/textures/snow_ice.svg",
         "res://assets/textures/bark_wood.svg",
-        "res://assets/textures/leaves_canopy.svg"
+        "res://assets/textures/leaves_canopy.svg",
+        "res://assets/textures/sky_dawn_panorama.svg"
     ]
     for texture_path in texture_paths:
         if not ResourceLoader.exists(texture_path) or ResourceLoader.load(texture_path) == null:
             _fail("Seamless texture asset failed to load: " + texture_path)
             return
-    for material_path in ["res://assets/materials/terrain_grass.tres", "res://assets/materials/terrain_rock.tres", "res://assets/materials/wood_bark.tres", "res://assets/materials/foliage_leaves.tres"]:
+    var terrain_material := ResourceLoader.load("res://assets/materials/terrain_grass.tres") as ShaderMaterial
+    if terrain_material == null or terrain_material.shader == null:
+        _fail("Terrain biome shader material failed to load.")
+        return
+    for shader_texture in ["grass_texture", "moss_texture", "rock_texture", "dirt_texture", "snow_texture"]:
+        if terrain_material.get_shader_parameter(shader_texture) == null:
+            _fail("Terrain shader is missing texture parameter: " + shader_texture)
+            return
+    var sky_resource := ResourceLoader.load("res://environment/world_environment.tres") as Environment
+    if sky_resource == null or sky_resource.sky == null or not sky_resource.sky.sky_material is PanoramaSkyMaterial:
+        _fail("Custom panoramic sky material failed to load.")
+        return
+    for material_path in ["res://assets/materials/terrain_rock.tres", "res://assets/materials/wood_bark.tres", "res://assets/materials/foliage_leaves.tres"]:
         if not ResourceLoader.exists(material_path) or not ResourceLoader.load(material_path) is StandardMaterial3D:
             _fail("World material failed to load: " + material_path)
             return
