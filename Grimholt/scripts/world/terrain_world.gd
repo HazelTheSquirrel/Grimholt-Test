@@ -27,7 +27,7 @@ var generated_root: Node3D
 var known_resource_ids: Array[String] = []
 var active_chunks: Dictionary = {}
 var _last_center := Vector2i(2147483647, 2147483647)
-var _terrain_material: StandardMaterial3D
+var _terrain_material: Material
 var _pending_chunks: Array[Vector2i] = []
 
 func _ready() -> void:
@@ -111,7 +111,7 @@ func _terrain_color(position: Vector3, normal: Vector3) -> Color:
     return base.lightened(variation)
 
 func _make_terrain_material() -> StandardMaterial3D:
-    var material := load("res://assets/materials/terrain_grass.tres") as StandardMaterial3D
+    var material := load("res://assets/materials/terrain_grass.tres") as Material
     if material == null:
         push_error("Grimholt asset pack: terrain_grass.tres could not be loaded.")
         material = StandardMaterial3D.new()
