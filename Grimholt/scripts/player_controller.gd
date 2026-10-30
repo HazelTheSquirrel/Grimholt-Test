@@ -91,6 +91,10 @@ func _unhandled_input(event: InputEvent) -> void:
             selected_piece = "roof"
         elif event.keycode == KEY_C:
             _craft("wooden_plank")
+        elif event.keycode == KEY_F5:
+            get_parent().call("_save_game")
+        elif event.keycode == KEY_F9:
+            get_parent().call("_load_game")
     elif event is InputEventMouseButton and event.pressed:
         if Input.mouse_mode == Input.MOUSE_MODE_VISIBLE:
             Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
@@ -178,7 +182,7 @@ func _craft(recipe_id: String) -> void:
 func _update_hud() -> void:
     if inventory == null:
         return
-    var mode_text := "BAUMODUS: %s (1 Fundament / 2 Wand / 3 Dach)" % selected_piece if build_mode else "E: Ressource ernten | B: Baumodus | C: Holzplanken herstellen"
+    var mode_text := "BAUMODUS: %s (1 Fundament / 2 Wand / 3 Dach)" % selected_piece if build_mode else "E: Ernten | B: Bauen | C: Planken | F5: Speichern | F9: Laden"
     var feedback_text := interaction_feedback
     if feedback_text.is_empty():
         var target_hit := _raycast()
