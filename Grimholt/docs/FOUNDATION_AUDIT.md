@@ -23,6 +23,7 @@ The goal is to translate broad design lessons into a distinct Grimholt identity:
 - Godot 4.7.2 project and procedural greybox arena.
 - First-person player controller, basic rifle, ammo/reload, health, hit marker.
 - Free-for-all score and round timer.
+- Two original weapon roles: server-authoritative Pulse Carbine and short-range Arc Scatter, with independent ammo reserves, switching, reload timing and pellet spread.
 - ENet host/join skeleton and server-side combat validation.
 - Server-driven bots with target acquisition, engagement-distance control, strafing, short-range obstacle steering and line-of-sight-gated fire.
 - Minimap, kill feed, top-fragger label, scoreboard.
@@ -38,7 +39,8 @@ The goal is to translate broad design lessons into a distinct Grimholt identity:
 6. **Multiplayer is prototype-grade.** The server owns damage, score and ammo, but there is no lag compensation, robust reconnect/session flow, packet-loss test, prediction/reconciliation or complete client disconnect handling.
 7. **Bot navigation is still prototype-grade.** Bots now manage engagement distance, strafe, probe nearby obstacles and require a clear line of sight before firing. They still do not use navigation meshes, multi-step pathfinding, tactical cover selection or difficulty profiles.
 8. **Gameplay content is very thin.** One greybox arena, one rifle, one FFA ruleset and placeholder actors are not yet a complete shooter foundation.
-9. **Current CI is not visual QA.** Headless import, parse and smoke tests do not prove that a windowed menu is laid out correctly or that mouse interaction works.
+9. **Weapon sandbox is still early.** The Pulse Carbine and Arc Scatter now have separate server-owned ammo pools, fire cadence, reload times and damage patterns. There are still no pickups, recoil model, weapon animations or third weapon.
+10. **Current CI is not visual QA.** Headless import, parse and smoke tests do not prove that a windowed menu is laid out correctly or that mouse interaction works.
 
 ## Required foundation order
 
