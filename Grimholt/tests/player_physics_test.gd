@@ -76,7 +76,11 @@ func _run() -> void:
         _fail("Forward input did not move the player. distance=%f" % distance)
         return
 
-    if player.velocity.length() > 0.1:\n        _fail("Player should decelerate after releasing movement input.")\n        return\n\n    print("PASS: 1.75 m player remains grounded, camera zoom works, and accelerated movement responds to input.")
+    if Vector2(player.velocity.x, player.velocity.z).length() > 0.1:
+        _fail("Player should decelerate after releasing movement input.")
+        return
+
+    print("PASS: 1.75 m player remains grounded, camera zoom works, and accelerated movement responds to input.")
     quit(0)
 
 func _fail(message: String) -> void:
