@@ -165,8 +165,15 @@ func _load_game(show_feedback: bool = true) -> bool:
         depleted_resource_ids.append(String(resource_key))
     player.inventory.set_items_from_save(inventory_data)
     player.professions.set_experience_from_save(profession_data)
-    player.global_position = Vector3(float(coordinates[0]), float(coordinates[1]), float(coordinates[2]))
+    var restored_position := Vector3(float(coordinates[0]), float(coordinates[1]), float(coordinates[2]))
+    # Older saves may contain a position from before terrain/spawn fixes. Never restore a
+    # character whose capsule origin is below the current procedural ground surface.
+    var ground_height := terrain.height_at(restored_position.x, restored_position.z)
+    var recovered_from_underground := restored_position.y < ground_height + 0.05
+    if recovered_from_underground:
+        restored_position = terrain.get_safe_spawn_position()
+    player.global_position = restored_position
     player.velocity = Vector3.ZERO
     if show_feedback:
-        player._set_feedback("Spielstand geladen.")
+        player._set_feedback("Alter Spielstand: Position unter dem Gelände – zum Startpunkt versetzt." if recovered_from_underground else "Spielstand geladen.")
     return true
