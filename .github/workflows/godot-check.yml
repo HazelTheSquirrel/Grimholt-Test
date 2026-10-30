@@ -30,3 +30,6 @@ jobs:
 
       - name: Headless startup smoke test
         run: godot --headless --path Grimholt --quit-after 10
+
+      - name: Shooter gameplay smoke test
+        run: godot --headless --path Grimholt --script res://tests/shooter_smoke_test.gd
