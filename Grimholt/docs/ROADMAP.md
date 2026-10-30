@@ -39,10 +39,12 @@ Eigenständiger Multiplayer-3D-Arena-Shooter mit klassischem Free-for-All-Deathm
 - [x] Minimap aus dem unteren HUD-Bereich verschoben, damit sie nicht mit den Vitalwerten kollidiert
 
 ## Phase 3 – Waffen und Karten
-- [ ] Zweite und dritte Waffe mit eigenständigen Rollen
-- [ ] Waffenwechsel und Waffen-Pickups
+- [x] Zweite Waffe mit eigenständiger Nahbereichsrolle (Arc Scatter)
+- [x] Serverseitiger Waffenwechsel mit getrennten Magazinen und Reservemunition
+- [ ] Dritte Waffe und Waffen-Pickups
 - [ ] Munitions- und Gesundheits-Pickups
-- [ ] Nachlade- und Feuermodi, Rückstoß und Streuung
+- [x] Waffenabhängige Feuerraten, Magazingrößen, Nachladezeiten und Streuung
+- [ ] Rückstoß, alternative Feuermodi und Waffen-Pickups
 - [ ] Mehrere handgebaute Karten mit klarer Lesbarkeit
 - [ ] Kartenrotation und Spawn-Schutz
 - [ ] Vertikale Routen, Flankenwege und ausgewogene Deckung
