@@ -221,6 +221,6 @@ func restore_depleted_resources(saved_ids: Variant) -> bool:
         if not resource_key is String or not has_resource_id(resource_key):
             return false
     for child in get_children():
-        if child is GrimholtResourceNode and saved_ids.has(child.persistent_id):
+        if child is GrimholtResourceNode and saved_ids.has(child.persistent_id) and not child.is_queued_for_deletion():
             child.free()
     return true
