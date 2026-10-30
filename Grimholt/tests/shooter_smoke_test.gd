@@ -46,6 +46,8 @@ func _run_smoke_test() -> void:
 	assert(game.round_end_time_msec > Time.get_ticks_msec(), "Round must use a future monotonic deadline")
 	assert(game.scoreboard_panel != null, "Scoreboard UI was not created")
 	assert(game.hitmarker_label != null, "Hit confirmation UI was not created")
+	assert(game.minimap.position == Vector2(24, 72), "Minimap must stay below the match clock, clear of bottom-left vitals")
+	assert(game.pause_panel.theme != null, "Pause menu must use the original Grimholt UI theme")
 	var player: Node = game.players[1]
 	game.players[77] = player
 	assert(game._accept_input_packet(77, 1000), "First transform packet should pass")
