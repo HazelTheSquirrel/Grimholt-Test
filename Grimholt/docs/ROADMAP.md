@@ -25,8 +25,14 @@ Grimholt ist ein polygonbasiertes Fantasy-Sandbox-RPG mit natürlichem Terrain, 
 - [x] 1-km-Weltabschnitte mit 3×3-Nachbarschafts-Streaming und Mesh-Kollision
 - [x] Kontinentale Höhenformen, prozedurale Gebirgsrücken, Flusssenke und Biom-Farbzonen
 - [x] Prozedurale, nahtlose Noise-Albedo-Textur und instanzierte Wald-/Grasvegetation
-- [ ] Höhleninnenräume, echte Fluss-Wasserkörper, Biome-spezifische Flora/Fauna und POIs
-- [ ] Terrain-LOD, asynchrones Streaming, Profiling und Weltgrenzen-Polish
+- [x] Sichtbare, global zusammenhängende Fluss-Wasserbänder mit variabler Breite
+- [x] Signatur-Wasserfall und separates Wasserbecken als Landmarke
+- [x] Höhlen-Landmarke mit begehbarem Tunnelboden, Kollisionsflächen und Endkammer
+- [x] Biomeabhängige Wald-, Stamm- und Gras-Farbpaletten
+- [x] Seed-stabile Ruinen, verlassenes Dorf, Steinkreis und Dungeon-Eingang
+- [x] Distanzabhängige Terrain-Meshauflösung (nah 32 × 32, fern 12 × 12)
+- [x] Gestaffeltes Chunk-Streaming: höchstens ein neuer Chunk pro Prozess-Frame
+- [ ] Asynchrone Mesh-/Noise-Berechnung auf Worker-Threads, LOD-Übergänge und Profiling
 - [ ] Windows-Grafiktest auf Zielhardware
 - [x] Editor-Umgebung bleibt zur Laufzeit erhalten; Licht-/Nebeleinstellungen ergänzen sie nur
 
