@@ -1,5 +1,7 @@
 extends CharacterBody3D
 
+const ACTOR_VISUAL := preload("res://scripts/shooter/actor_visual.gd")
+
 const WALK_SPEED := 8.0
 const CROUCH_SPEED := 4.0
 const STAND_HEIGHT := 1.8
@@ -40,6 +42,7 @@ func _ready() -> void:
 	var material := StandardMaterial3D.new()
 	material.albedo_color = Color.from_hsv(float(get_multiplayer_authority() % 8) / 8.0, 0.72, 0.95)
 	body_visual.material_override = material
+	ACTOR_VISUAL.build(body_visual, material.albedo_color, Color(0.88, 0.72, 0.38))
 	camera.current = is_multiplayer_authority()
 	if is_multiplayer_authority():
 		Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
