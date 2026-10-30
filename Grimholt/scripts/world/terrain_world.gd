@@ -50,7 +50,9 @@ func generate() -> void:
     var terrain_body := StaticBody3D.new()
     terrain_body.name = "TerrainCollision"
     var terrain_collision := CollisionShape3D.new()
-    terrain_collision.shape = terrain_mesh.create_trimesh_shape()
+    var terrain_shape := terrain_mesh.create_trimesh_shape()
+    terrain_shape.backface_collision = true
+    terrain_collision.shape = terrain_shape
     terrain_body.add_child(terrain_collision)
     add_child(terrain_body)
 
