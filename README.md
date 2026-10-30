@@ -15,7 +15,7 @@ Grimholt ist ein eigenständiger, reiner Multiplayer-3D-Arena-Shooter. Es gibt k
 - Militärisch inspiriertes, eigenständiges HUD: Matchzeit, Top-Fragger, Lebenspunkte, Munition, Killfeed und taktische Minimap.
 - Vollständige K/D-Scoreboard-Ansicht per Tab, Trefferbestätigung und automatisches Gewehrfeuer bei gehaltenem Linksklick.
 - Lokale Waffen- und Nachlade-Rückmeldung; finale Audioaufnahmen und räumlicher Mix stehen noch aus.
-- Server prüft eingehende Bewegungsupdates anhand der maximal plausiblen Laufgeschwindigkeit.
+- Server prüft eingehende Bewegungsupdates mit fester Paket-Ratenbegrenzung, Plausibilitätsgrenzen und Geschwindigkeits-Toleranz. Das ist Härtung, aber noch keine vollständig serverautoritativ simulierte Bewegung.
 
 ## Starten
 
@@ -50,7 +50,7 @@ Unter `Grimholt/assets/` liegen eigens für Grimholt gezeichnete SVG-Dateien: Gi
 
 Dies ist weiterhin ein früher Gameplay-Prototyp, kein fertiges oder öffentlich serverfestes Spiel. Die Arena-Geometrie, HUD-Elemente und Bot-KI sind weiterhin frühe Prototyp-Inhalte; die neuen SVG-Dateien ersetzen nicht die noch fehlenden finalen 3D-Modelle, Animationen und Audioaufnahmen. Die Bot-KI nutzt einfache direkte Verfolgung und Hitscan-Angriffe; sie navigiert noch nicht intelligent um Deckung. Die Minimap zeigt Positionsmarker, keine Sichtlinien- oder Aufklärungsdaten.
 
-Noch offen sind unter anderem vollständig serverautoritativ simulierte Bewegung, zuverlässige Replikation unter Paketverlust, Lag Compensation, Anti-Cheat-Härtung, Lobby/Matchmaking, Serverbrowser, dedizierte Serverkonfiguration, Tests mit mehreren echten Clients sowie finale Grafik, Levelgestaltung und finale Audioassets. Das aktuelle Headless-Smoke-Testskript prüft Szenenstart, Eingabeaktionen, Solo-Spawn, Bots und HUD; es ersetzt keine echten Mehrspieler- und Eingabetests. Die aktuelle Schussprüfung validiert Feuerrate und Blickrichtung serverseitig, ersetzt aber noch keine vollständige serverautoritativ simulierte Combat-Pipeline.
+Noch offen sind unter anderem vollständig serverautoritativ simulierte Bewegung, zuverlässige Replikation unter Paketverlust, Lag Compensation, Anti-Cheat-Härtung, Lobby/Matchmaking, Serverbrowser, dedizierte Serverkonfiguration, Tests mit mehreren echten Clients sowie finale Grafik, Levelgestaltung und finale Audioassets. Die alten RPG-Skripte und RPG-Tests liegen weiterhin in den historischen Pfaden, werden aber nicht vom aktiven Shooter-Startpfad verwendet; siehe Grimholt/docs/LEGACY_RPG.md. Die physische Verschiebung bleibt aus, bis interne res://-Abhängigkeiten inventarisiert sind. Das aktuelle Headless-Smoke-Testskript prüft Szenenstart, Eingabeaktionen, Solo-Spawn, Bots und HUD; es ersetzt keine echten Mehrspieler- und Eingabetests. Die aktuelle Schussprüfung validiert Feuerrate und Blickrichtung serverseitig, ersetzt aber noch keine vollständige serverautoritativ simulierte Combat-Pipeline.
 
 ## Projektstruktur
 
