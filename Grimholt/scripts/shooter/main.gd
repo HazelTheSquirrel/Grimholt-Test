@@ -162,6 +162,7 @@ func _build_menu() -> void:
 
 	var panel := PanelContainer.new()
 	panel.custom_minimum_size = Vector2(460, 520)
+	panel.theme = _make_grimholt_theme()
 	center.add_child(panel)
 
 	var column := VBoxContainer.new()
@@ -254,6 +255,43 @@ func _build_menu() -> void:
 	status_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	column.add_child(status_label)
 
+func _make_grimholt_theme() -> Theme:
+	var ui_theme := Theme.new()
+	var panel_style := StyleBoxFlat.new()
+	panel_style.bg_color = Color(0.025, 0.045, 0.065, 0.97)
+	panel_style.border_color = Color(0.16, 0.68, 0.72, 0.9)
+	panel_style.set_border_width_all(2)
+	panel_style.set_corner_radius_all(5)
+	panel_style.content_margin_left = 24.0
+	panel_style.content_margin_right = 24.0
+	panel_style.content_margin_top = 22.0
+	panel_style.content_margin_bottom = 22.0
+	ui_theme.set_stylebox("panel", "PanelContainer", panel_style)
+
+	var button_normal := StyleBoxFlat.new()
+	button_normal.bg_color = Color(0.055, 0.09, 0.12, 0.96)
+	button_normal.border_color = Color(0.16, 0.36, 0.41, 0.9)
+	button_normal.set_border_width_all(1)
+	button_normal.set_corner_radius_all(3)
+	button_normal.content_margin_left = 14.0
+	button_normal.content_margin_right = 14.0
+	button_normal.content_margin_top = 8.0
+	button_normal.content_margin_bottom = 8.0
+	var button_hover := button_normal.duplicate() as StyleBoxFlat
+	button_hover.bg_color = Color(0.08, 0.19, 0.22, 1.0)
+	button_hover.border_color = Color(0.28, 0.86, 0.84, 1.0)
+	var button_pressed := button_normal.duplicate() as StyleBoxFlat
+	button_pressed.bg_color = Color(0.12, 0.28, 0.30, 1.0)
+	ui_theme.set_stylebox("normal", "Button", button_normal)
+	ui_theme.set_stylebox("hover", "Button", button_hover)
+	ui_theme.set_stylebox("pressed", "Button", button_pressed)
+	ui_theme.set_stylebox("focus", "Button", button_hover)
+	ui_theme.set_color("font_color", "Label", Color(0.82, 0.91, 0.94))
+	ui_theme.set_color("font_color", "Button", Color(0.84, 0.94, 0.95))
+	ui_theme.set_color("font_hover_color", "Button", Color(0.35, 0.96, 0.91))
+	ui_theme.set_color("font_pressed_color", "Button", Color(0.55, 1.0, 0.94))
+	return ui_theme
+
 func _build_pause_menu() -> void:
 	pause_layer = CanvasLayer.new()
 	pause_layer.layer = 20
@@ -268,6 +306,7 @@ func _build_pause_menu() -> void:
 	pause_layer.add_child(center)
 	pause_panel = PanelContainer.new()
 	pause_panel.custom_minimum_size = Vector2(520, 480)
+	pause_panel.theme = _make_grimholt_theme()
 	center.add_child(pause_panel)
 	var column := VBoxContainer.new()
 	column.add_theme_constant_override("separation", 12)
@@ -387,13 +426,19 @@ func _build_hud() -> void:
 	hud_layer.add_child(top)
 	timer_label = Label.new()
 	timer_label.add_theme_font_size_override("font_size", 22)
+	timer_label.add_theme_color_override("font_color", Color(0.48, 0.94, 0.91))
+	timer_label.add_theme_color_override("font_shadow_color", Color(0.01, 0.025, 0.035, 0.95))
+	timer_label.add_theme_constant_override("shadow_offset_x", 1)
+	timer_label.add_theme_constant_override("shadow_offset_y", 1)
 	top.add_child(timer_label)
 	var spacer := Control.new()
 	spacer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	top.add_child(spacer)
 	score_label = Label.new()
 	score_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
-	score_label.add_theme_font_size_override("font_size", 22)
+	score_label.add_theme_font_size_override("font_size", 18)
+	score_label.add_theme_color_override("font_color", Color(0.78, 0.88, 0.93))
+	score_label.add_theme_color_override("font_shadow_color", Color(0.01, 0.025, 0.035, 0.95))
 	top.add_child(score_label)
 	var crosshair := Label.new()
 	crosshair.text = "＋"
@@ -405,14 +450,18 @@ func _build_hud() -> void:
 	health_label.offset_left = 26
 	health_label.offset_bottom = -24
 	health_label.offset_top = -70
-	health_label.add_theme_font_size_override("font_size", 22)
+	health_label.add_theme_font_size_override("font_size", 20)
+	health_label.add_theme_color_override("font_color", Color(0.48, 0.94, 0.82))
+	health_label.add_theme_color_override("font_shadow_color", Color(0.01, 0.025, 0.035, 0.95))
 	hud_layer.add_child(health_label)
 	ammo_label = Label.new()
 	ammo_label.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_RIGHT)
 	ammo_label.offset_right = -28
 	ammo_label.offset_bottom = -24
 	ammo_label.offset_top = -82
-	ammo_label.add_theme_font_size_override("font_size", 24)
+	ammo_label.add_theme_font_size_override("font_size", 22)
+	ammo_label.add_theme_color_override("font_color", Color(0.92, 0.82, 0.52))
+	ammo_label.add_theme_color_override("font_shadow_color", Color(0.01, 0.025, 0.035, 0.95))
 	ammo_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	hud_layer.add_child(ammo_label)
 	feed_label = Label.new()
@@ -420,12 +469,16 @@ func _build_hud() -> void:
 	feed_label.offset_right = -26
 	feed_label.offset_top = 74
 	feed_label.offset_left = -330
-	feed_label.add_theme_font_size_override("font_size", 16)
+	feed_label.add_theme_font_size_override("font_size", 15)
+	feed_label.add_theme_color_override("font_color", Color(0.84, 0.91, 0.94))
+	feed_label.add_theme_color_override("font_shadow_color", Color(0.01, 0.025, 0.035, 0.95))
 	feed_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	hud_layer.add_child(feed_label)
 	minimap = Control.new()
-	minimap.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_LEFT)
-	minimap.position = Vector2(24, -210)
+	# Keep the tactical grid below the match clock. The previous bottom-left
+	# placement overlapped the vitals readout and crowded the player's sightline.
+	minimap.set_anchors_and_offsets_preset(Control.PRESET_TOP_LEFT)
+	minimap.position = Vector2(24, 72)
 	minimap.custom_minimum_size = Vector2(160, 160)
 	minimap.draw.connect(_draw_minimap)
 	hud_layer.add_child(minimap)
