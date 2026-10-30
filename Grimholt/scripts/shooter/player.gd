@@ -25,6 +25,7 @@ var ammo := MAGAZINE_SIZE
 var reserve_ammo := RESERVE_START
 var reload_time := 0.0
 var is_crouched := false
+var fire_held := false
 
 func _ready() -> void:
 	collision_shape.shape = collision_shape.shape.duplicate()
@@ -45,15 +46,19 @@ func _ready() -> void:
 func _unhandled_input(event: InputEvent) -> void:
 	if not is_multiplayer_authority():
 		return
+	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT:
+		fire_held = event.pressed and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED
 	if event is InputEventMouseMotion and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
 		rotate_y(-event.relative.x * MOUSE_SENSITIVITY)
 		head.rotation.x = clampf(head.rotation.x - event.relative.y * MOUSE_SENSITIVITY, deg_to_rad(-85), deg_to_rad(85))
 	elif event is InputEventKey and event.pressed and event.keycode == KEY_ESCAPE:
+		fire_held = false
 		Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 	elif event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
 		if Input.mouse_mode == Input.MOUSE_MODE_VISIBLE:
 			Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 		else:
+			fire_held = true
 			_fire()
 	elif event is InputEventKey and event.pressed and event.keycode == KEY_R:
 		_reload()
@@ -73,6 +78,8 @@ func _physics_process(delta: float) -> void:
 	velocity.z = direction.z * move_speed
 	move_and_slide()
 	fire_cooldown = maxf(0.0, fire_cooldown - delta)
+	if fire_held and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
+		_fire()
 	network_timer += delta
 	if network_timer >= 0.05 and multiplayer.multiplayer_peer != null and not multiplayer.is_server():
 		network_timer = 0.0
