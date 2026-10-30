@@ -13,16 +13,29 @@ func _run() -> void:
     for i in range(3):
         await physics_frame
     var player := instance.get_node_or_null("Player") as CharacterBody3D
-    var terrain := instance.get_node_or_null("TerrainWorld")
-    if player == null or terrain == null:
-        _fail("Player or terrain missing from main scene.")
+    if player == null:
+        _fail("Player missing from main scene.")
         return
     for i in range(120):
         await physics_frame
-    var floor_y: float = terrain.height_at(player.global_position.x, player.global_position.z)
-    if player.global_position.y < floor_y - 0.15 or player.global_position.y > floor_y + 0.65:
-        _fail("Player did not settle on terrain. player_y=%f terrain_y=%f" % [player.global_position.y, floor_y])
+
+    if not player.is_on_floor():
+        _fail("Player is not grounded after falling. position=%s velocity=%s" % [player.global_position, player.velocity])
         return
+
+    var ray_start := player.global_position + Vector3.UP * 5.0
+    var ray_end := player.global_position - Vector3.UP * 5.0
+    var query := PhysicsRayQueryParameters3D.create(ray_start, ray_end)
+    query.exclude = [player.get_rid()]
+    var hit := player.get_world_3d().direct_space_state.intersect_ray(query)
+    if hit.is_empty():
+        _fail("No terrain collision found directly beneath the player.")
+        return
+    var ground_gap: float = player.global_position.y - hit.position.y
+    if ground_gap < -0.15 or ground_gap > 0.2:
+        _fail("Player capsule is not resting on the collision surface. gap=%f player=%s ground=%s" % [ground_gap, player.global_position, hit.position])
+        return
+
     var start := player.global_position
     Input.action_press("move_forward")
     for i in range(30):
@@ -32,7 +45,8 @@ func _run() -> void:
     if distance < 0.5:
         _fail("Forward input did not move the player. distance=%f" % distance)
         return
-    print("PASS: player lands on terrain and forward input moves the character.")
+
+    print("PASS: player stands on terrain collision and forward input moves the character.")
     quit(0)
 
 func _fail(message: String) -> void:
