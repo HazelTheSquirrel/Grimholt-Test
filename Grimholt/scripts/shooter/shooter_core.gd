@@ -43,7 +43,6 @@ var weapon_ammo: Dictionary = {}
 var weapon_reserve: Dictionary = {}
 var reload_deadlines: Dictionary = {}
 var bot_sync_timer := 0.0
-var player_sync_timer := 0.0
 
 
 func _ready() -> void:
