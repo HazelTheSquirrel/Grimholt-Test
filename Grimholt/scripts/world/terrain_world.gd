@@ -167,7 +167,7 @@ func _populate_ground_cover() -> void:
     var grass_batch := MultiMesh.new()
     grass_batch.transform_format = MultiMesh.TRANSFORM_3D
     grass_batch.mesh = grass_mesh
-    grass_batch.instance_count = 260
+    grass_batch.instance_count = 2800
     for index in range(grass_batch.instance_count):
         var px := rng.randf_range(-extent * cell_size + 4.0, extent * cell_size - 4.0)
         var pz := rng.randf_range(-extent * cell_size + 4.0, extent * cell_size - 4.0)
@@ -192,7 +192,7 @@ func _populate_ground_cover() -> void:
     var stone_batch := MultiMesh.new()
     stone_batch.transform_format = MultiMesh.TRANSFORM_3D
     stone_batch.mesh = stone_mesh
-    stone_batch.instance_count = 48
+    stone_batch.instance_count = 96
     for index in range(stone_batch.instance_count):
         var px := rng.randf_range(-extent * cell_size + 4.0, extent * cell_size - 4.0)
         var pz := rng.randf_range(-extent * cell_size + 4.0, extent * cell_size - 4.0)
