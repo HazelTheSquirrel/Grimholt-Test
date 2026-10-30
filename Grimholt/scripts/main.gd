@@ -21,7 +21,7 @@ func _ready() -> void:
     player.add_child(inventory)
     player.inventory = inventory
     player.building_system = building_system
-    player.global_position = Vector3(0.0, terrain.height_at(0.0, 0.0) + 2.0, 0.0)
+    player.global_position = Vector3(0.0, terrain.height_at(0.0, 0.0) + 5.0, 0.0)
     terrain.populate_resources(inventory)
 
 func _setup_environment() -> void:
