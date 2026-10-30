@@ -47,6 +47,24 @@ func remove_items(requirements: Dictionary) -> bool:
     inventory_changed.emit()
     return true
 
+func set_items_from_save(saved_items: Variant) -> bool:
+    if not saved_items is Dictionary:
+        return false
+    var validated: Dictionary = {}
+    for item_id in saved_items:
+        if not GrimholtItemCatalog.exists(String(item_id)):
+            return false
+        var amount_variant: Variant = saved_items[item_id]
+        if not amount_variant is int or int(amount_variant) <= 0:
+            return false
+        var stack_limit := int(GrimholtItemCatalog.get_item(String(item_id)).get("stack", 0))
+        if int(amount_variant) > stack_limit:
+            return false
+        validated[String(item_id)] = int(amount_variant)
+    items = validated
+    inventory_changed.emit()
+    return true
+
 func get_summary() -> String:
     if items.is_empty():
         return "Inventar: leer"
