@@ -36,6 +36,31 @@ func _run() -> void:
         _fail("Player capsule is not resting on the collision surface. gap=%f player=%s ground=%s" % [ground_gap, player.global_position, hit.position])
         return
 
+
+    var player_controller := player as GrimholtPlayer
+    for i in range(8):
+        var zoom_in := InputEventMouseButton.new()
+        zoom_in.button_index = MOUSE_BUTTON_WHEEL_UP
+        zoom_in.pressed = true
+        player_controller._unhandled_input(zoom_in)
+    if player_controller.camera_distance > GrimholtPlayer.FIRST_PERSON_THRESHOLD or player_controller.body_visual.visible:
+        _fail("Mouse wheel did not switch cleanly into first-person camera mode.")
+        return
+    var look_up := InputEventMouseMotion.new()
+    look_up.relative = Vector2(0.0, -10000.0)
+    player_controller._unhandled_input(look_up)
+    if player_controller.camera_pivot.rotation.x < deg_to_rad(-80.1):
+        _fail("Camera pitch escaped its safe upward look limit.")
+        return
+    for i in range(8):
+        var zoom_out := InputEventMouseButton.new()
+        zoom_out.button_index = MOUSE_BUTTON_WHEEL_DOWN
+        zoom_out.pressed = true
+        player_controller._unhandled_input(zoom_out)
+    if player_controller.camera_distance <= GrimholtPlayer.FIRST_PERSON_THRESHOLD or not player_controller.body_visual.visible:
+        _fail("Mouse wheel did not return cleanly to third-person camera mode.")
+        return
+
     var start := player.global_position
     Input.action_press("move_forward")
     for i in range(30):
@@ -46,7 +71,7 @@ func _run() -> void:
         _fail("Forward input did not move the player. distance=%f" % distance)
         return
 
-    print("PASS: player stands on terrain collision and forward input moves the character.")
+    print("PASS: player stays grounded, camera zoom toggles first/third person safely, and forward input moves the character.")
     quit(0)
 
 func _fail(message: String) -> void:
