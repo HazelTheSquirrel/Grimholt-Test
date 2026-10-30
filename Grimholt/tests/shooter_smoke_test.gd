@@ -14,6 +14,8 @@ func _run_smoke_test() -> void:
 	assert(load("res://assets/branding/grimholt_crest.svg") != null, "Original Grimholt crest asset is missing")
 	assert(load("res://assets/branding/rifle_insignia.svg") != null, "Original rifle insignia asset is missing")
 	assert(load("res://assets/materials/arena_floor.svg") != null, "Original arena floor material is missing")
+	assert(load("res://scripts/shooter/shooter_weapon_system.gd") != null, "Weapon system script is missing")
+	assert(load("res://scripts/shooter/shooter_match_system.gd") != null, "Match system script is missing")
 	assert(InputMap.has_action("crouch"), "Crouch action was not registered")
 	assert(InputMap.has_action("jump"), "Jump action was not registered")
 	game.start_solo_game()
