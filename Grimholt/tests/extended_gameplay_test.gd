@@ -39,9 +39,10 @@ func _run() -> void:
     if live_terrain.get_node_or_null("GrassTufts") == null or live_terrain.get_node_or_null("ScatteredStones") == null:
         _fail("Landscape ground cover and stone scatter were not generated.")
         return
-    if not live_player._interact():
-        _fail("E interaction ray did not reach the starter oak in front of the player.")
-        return
+    var harvest_key := InputEventKey.new()
+    harvest_key.keycode = KEY_E
+    harvest_key.pressed = true
+    live_player._unhandled_input(harvest_key)
     if live_player.inventory.get_item_count("wood") != 4:
         _fail("Starter oak harvest did not add the configured four wood to the live player inventory.")
         return
