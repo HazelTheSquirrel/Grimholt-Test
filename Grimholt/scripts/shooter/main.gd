@@ -276,8 +276,26 @@ func _build_hud() -> void:
 	hud_layer.add_child(minimap)
 
 func _on_training_pressed() -> void:
-	status_label.text = "TRAINING WIRD GESTARTET ..."
-	host_game()
+	start_solo_game()
+
+func start_solo_game() -> void:
+	if _has_active_network_peer():
+		status_label.text = "Bitte zuerst die bestehende Verbindung trennen."
+		return
+	multiplayer.multiplayer_peer = OfflineMultiplayerPeer.new()
+	players.clear()
+	bots.clear()
+	scores.clear()
+	last_positions.clear()
+	last_position_times.clear()
+	for child in get_children():
+		if child is CharacterBody3D:
+			child.queue_free()
+	_start_match()
+	_spawn_player(1)
+	for i in range(BOT_COUNT):
+		_spawn_bot(i + 1000)
+	status_label.text = "SOLO MATCH // OFFLINE MIT %d BOTS" % BOT_COUNT
 
 func _on_host_pressed() -> void:
 	status_label.text = "SERVER WIRD GESTARTET ..."
