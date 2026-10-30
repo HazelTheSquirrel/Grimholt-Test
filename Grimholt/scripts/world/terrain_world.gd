@@ -313,6 +313,15 @@ func _river_center(z: float) -> float:
     return 12500.0 + river_noise.get_noise_2d(0.0, z * 0.42) * 10500.0
 
 func _create_river_water(chunk: Node3D) -> void:
+    var river_intersects := false
+    for sample in range(9):
+        var sample_z := chunk.position.z + float(sample) / 8.0 * CHUNK_SIZE
+        var sample_x := _river_center(sample_z)
+        if sample_x >= chunk.position.x - 100.0 and sample_x <= chunk.position.x + CHUNK_SIZE + 100.0:
+            river_intersects = true
+            break
+    if not river_intersects:
+        return
     var surface := SurfaceTool.new()
     surface.begin(Mesh.PRIMITIVE_TRIANGLES)
     for i in range(48):
