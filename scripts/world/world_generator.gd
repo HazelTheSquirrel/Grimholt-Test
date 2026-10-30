@@ -65,6 +65,7 @@ func _unload_distant_chunks(center: Vector2i) -> void:
             var chunk: Node = chunks[coord]
             chunks.erase(coord)
             chunk.queue_free()
+            _rebuild_loaded_neighbors(coord)
 
 func _rebuild_loaded_neighbors(coord: Vector2i) -> void:
     var neighbors: Array[Vector2i] = [coord + Vector2i(1,0), coord + Vector2i(-1,0), coord + Vector2i(0,1), coord + Vector2i(0,-1)]
