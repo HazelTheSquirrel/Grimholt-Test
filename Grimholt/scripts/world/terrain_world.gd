@@ -143,8 +143,10 @@ func populate_resources(inventory: GrimholtInventory) -> void:
         {"id": "shrub", "name": "Waldstrauch", "item": "", "amount": 0, "x": 15.0, "z": 1.0},
         {"id": "shrub", "name": "Waldstrauch", "item": "", "amount": 0, "x": 2.0, "z": 15.0}
     ]
-    for entry in placements:
+    for index in range(placements.size()):
+        var entry: Dictionary = placements[index]
         var node: GrimholtResourceNode = ResourceNodeScript.new()
+        node.persistent_id = "%s_%02d" % [String(entry["id"]), index]
         node.configure(String(entry["id"]), String(entry["name"]), String(entry["item"]), int(entry["amount"]))
         var px := float(entry["x"])
         var pz := float(entry["z"])
@@ -205,3 +207,18 @@ func _populate_ground_cover() -> void:
     stone_instance.multimesh = stone_batch
     stone_instance.material_override = stone_material
     add_child(stone_instance)
+
+func restore_depleted_resources(saved_ids: Variant) -> bool:
+    if not saved_ids is Array:
+        return false
+    var allowed_ids: Dictionary = {}
+    for child in get_children():
+        if child is GrimholtResourceNode:
+            allowed_ids[child.persistent_id] = child
+    for resource_key in saved_ids:
+        if not resource_key is String or not allowed_ids.has(resource_key):
+            return false
+    for resource_key in saved_ids:
+        var resource: GrimholtResourceNode = allowed_ids[resource_key]
+        resource.free()
+    return true
