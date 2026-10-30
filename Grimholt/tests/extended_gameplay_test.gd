@@ -29,6 +29,15 @@ func _run() -> void:
 
     var live_scene := packed.instantiate()
     root.add_child(live_scene)
+    var terrain_at_spawn := live_scene.get_node("TerrainWorld") as GrimholtTerrainWorld
+    var player_at_spawn := live_scene.get_node("Player") as GrimholtPlayer
+    if absf(player_at_spawn.global_position.y - terrain_at_spawn.height_at(0.0, 0.0) - 1.25) > 0.01:
+        _fail("Player did not start at the configured safe terrain spawn height.")
+        return
+    var initial_spawn_chunk: Node3D = terrain_at_spawn.active_chunks.get(Vector2i.ZERO)
+    if initial_spawn_chunk == null or initial_spawn_chunk.get_node_or_null("TerrainCollision") == null:
+        _fail("Spawn chunk collision was not built synchronously before player spawn.")
+        return
     for frame in range(125):
         await physics_frame
     var live_player := live_scene.get_node("Player") as GrimholtPlayer
@@ -36,9 +45,6 @@ func _run() -> void:
     var spawn_chunk: Node3D = terrain_for_spawn.active_chunks.get(Vector2i.ZERO)
     if spawn_chunk == null or spawn_chunk.get_node_or_null("TerrainCollision") == null:
         _fail("Spawn chunk collision was not built synchronously before player spawn.")
-        return
-    if absf(live_player.global_position.y - terrain_for_spawn.height_at(0.0, 0.0) - 1.25) > 0.01:
-        _fail("Player did not start at the configured safe terrain spawn height.")
         return
     var texture_paths := [
         "res://assets/textures/grass_meadow.svg",
