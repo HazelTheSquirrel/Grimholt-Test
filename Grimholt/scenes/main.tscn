@@ -7,12 +7,12 @@
 [ext_resource type="Script" path="res://scripts/systems/inventory.gd" id="5_inventory"]
 
 [sub_resource type="CapsuleShape3D" id="Capsule_player"]
-radius = 0.38
-height = 1.8
+radius = 0.30
+height = 1.70
 
 [sub_resource type="CapsuleMesh" id="CapsuleMesh_player"]
-radius = 0.36
-height = 1.75
+radius = 0.29
+height = 1.68
 
 [node name="Grimholt" type="Node3D"]
 script = ExtResource("1_main")
@@ -36,11 +36,11 @@ floor_snap_length = 0.35
 floor_max_angle = 0.872665
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="Player"]
-position = Vector3(0, 0.9, 0)
+position = Vector3(0, 0.85, 0)
 shape = SubResource("Capsule_player")
 
 [node name="BodyVisual" type="MeshInstance3D" parent="Player"]
-position = Vector3(0, 0.9, 0)
+position = Vector3(0, 0.84, 0)
 mesh = SubResource("CapsuleMesh_player")
 
 [node name="CameraPivot" type="Node3D" parent="Player"]
@@ -48,7 +48,7 @@ position = Vector3(0, 1.55, 0)
 rotation = Vector3(-0.20944, 0, 0)
 
 [node name="Camera3D" type="Camera3D" parent="Player/CameraPivot"]
-position = Vector3(0, 0.45, 5.2)
+position = Vector3(0, 0.35, 5.2)
 fov = 72.0
 current = true
 
