@@ -143,12 +143,8 @@ func _load_game(show_feedback: bool = true) -> bool:
                 if show_feedback:
                     player._set_feedback("Spielstand enthält ungültige Gebäudepositionen.")
                 return false
-    var valid_resource_ids: Dictionary = {}
-    for child in terrain.get_children():
-        if child is GrimholtResourceNode:
-            valid_resource_ids[child.persistent_id] = true
     for resource_key in depleted_data:
-        if not resource_key is String or not valid_resource_ids.has(resource_key):
+        if not resource_key is String or not terrain.has_resource_id(resource_key):
             if show_feedback:
                 player._set_feedback("Spielstand enthält ungültige Ressourcendaten.")
             return false
