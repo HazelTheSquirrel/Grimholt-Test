@@ -1,6 +1,11 @@
 extends CharacterBody3D
 
 const WALK_SPEED := 8.0
+const CROUCH_SPEED := 4.0
+const STAND_HEIGHT := 1.8
+const CROUCH_HEIGHT := 1.1
+const STAND_EYE_HEIGHT := 1.55
+const CROUCH_EYE_HEIGHT := 0.98
 const JUMP_VELOCITY := 6.0
 const MOUSE_SENSITIVITY := 0.0022
 const MAGAZINE_SIZE := 30
@@ -11,6 +16,7 @@ const DAMAGE_RANGE := 120.0
 @onready var head: Node3D = $Head
 @onready var camera: Camera3D = $Head/Camera3D
 @onready var body_visual: MeshInstance3D = $BodyVisual
+@onready var collision_shape: CollisionShape3D = $CollisionShape3D
 var gravity: float = ProjectSettings.get_setting("physics/3d/default_gravity")
 var fire_cooldown := 0.0
 var network_timer := 0.0
@@ -18,8 +24,10 @@ var health := 100
 var ammo := MAGAZINE_SIZE
 var reserve_ammo := RESERVE_START
 var reload_time := 0.0
+var is_crouched := false
 
 func _ready() -> void:
+	collision_shape.shape = collision_shape.shape.duplicate()
 	add_to_group("combatants")
 	set_meta("actor_id", get_multiplayer_authority())
 	var capsule := CapsuleMesh.new()
@@ -62,10 +70,12 @@ func _physics_process(delta: float) -> void:
 		velocity.y -= gravity * delta
 	elif Input.is_action_just_pressed("jump"):
 		velocity.y = JUMP_VELOCITY
+	_update_crouch()
 	var input_vector := Input.get_vector("move_left", "move_right", "move_forward", "move_backward")
 	var direction := (transform.basis * Vector3(input_vector.x, 0, input_vector.y)).normalized()
-	velocity.x = direction.x * WALK_SPEED
-	velocity.z = direction.z * WALK_SPEED
+	var move_speed := CROUCH_SPEED if is_crouched else WALK_SPEED
+	velocity.x = direction.x * move_speed
+	velocity.z = direction.z * move_speed
 	move_and_slide()
 	fire_cooldown = maxf(0.0, fire_cooldown - delta)
 	network_timer += delta
@@ -73,8 +83,31 @@ func _physics_process(delta: float) -> void:
 		network_timer = 0.0
 		get_parent()._submit_transform.rpc_id(1, global_position, rotation.y, head.rotation.x)
 
+func _update_crouch() -> void:
+	var wants_crouch := Input.is_action_pressed("crouch")
+	if wants_crouch == is_crouched:
+		return
+	if not wants_crouch:
+		var query := PhysicsShapeQueryParameters3D.new()
+		var standing_shape := CapsuleShape3D.new()
+		standing_shape.radius = 0.38
+		standing_shape.height = STAND_HEIGHT
+		query.shape = standing_shape
+		query.transform = global_transform.translated(Vector3.UP * (STAND_HEIGHT * 0.5))
+		query.exclude = [get_rid()]
+		if not get_world_3d().direct_space_state.intersect_shape(query, 1).is_empty():
+			return
+	is_crouched = wants_crouch
+	var capsule := collision_shape.shape as CapsuleShape3D
+	capsule.height = CROUCH_HEIGHT if is_crouched else STAND_HEIGHT
+	collision_shape.position.y = capsule.height * 0.5
+	head.position.y = CROUCH_EYE_HEIGHT if is_crouched else STAND_EYE_HEIGHT
+	var body_capsule := body_visual.mesh as CapsuleMesh
+	body_capsule.height = capsule.height
+	body_visual.position.y = capsule.height * 0.5
+
 func _fire() -> void:
-	if fire_cooldown > 0.0 or ammo <= 0 or reload_time > 0.0 or multiplayer.multiplayer_peer == null:
+	if fire_cooldown > 0.0 or ammo <= 0 or reload_time > 0.0:
 		if ammo <= 0:
 			_reload()
 		return
