@@ -19,6 +19,7 @@ Grimholt
 │   └── GeneratedTerrain (vom Terrain-Tool erzeugt)
 │       ├── TerrainSurface
 │       └── TerrainCollision
+├── PlayerSpawn (Marker3D – editierbarer Startpunkt)
 ├── PlayerBuildings
 └── Player
     ├── CollisionShape3D
@@ -34,7 +35,8 @@ Grimholt
 ## Was ist direkt bearbeitbar?
 
 - **TerrainWorld:** Terrain-Generator. Im Inspector lassen sich Ausdehnung, Zellgröße und Seed einstellen. Das generierte Terrain wird im Editor angezeigt.
-- **Player:** Spieler-Node, Kollisionsform, sichtbarer Platzhalterkörper und Kamera sind einzelne Szenen-Nodes.
+- **PlayerSpawn:** Marker3D für die horizontale Startposition. Die Höhe wird beim Start anhand der tatsächlich generierten Terrain-Funktion berechnet.
+- **Player:** Spieler-Node, Kollisionsform, sichtbarer Platzhalterkörper und Kamera sind einzelne Szenen-Nodes. Alte Spielstände mit einer Position unter dem Gelände werden beim Laden auf den Startpunkt zurückgesetzt.
 - **PlayerBuildings:** Container für platzierte Gebäudeteile.
 - **WorldEnvironment / Sun:** Himmel, Umgebungslicht und Sonnenlicht.
 - **HUD:** Statusanzeige und Fadenkreuz.
