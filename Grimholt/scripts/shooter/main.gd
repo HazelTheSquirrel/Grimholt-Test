@@ -442,7 +442,7 @@ func _respawn_bot_later(bot_id: int) -> void:
 
 @rpc("authority", "call_local", "reliable")
 func _respawn_actor(actor_id: int, pos: Vector3, hp: int) -> void:
-	var actor: Node = players.get(actor_id, bots.get(actor_id))
+	var actor: Node3D = players.get(actor_id, bots.get(actor_id)) as Node3D
 	if actor:
 		actor.global_position = pos
 		actor.set("health", hp)
@@ -482,10 +482,10 @@ func _update_hud() -> void:
 	for row in ranking.slice(0, 5):
 		rows.append("%s  %02d" % [_actor_name(row[0]), row[1]])
 	score_label.text = "TOP FRAGGERS\n" + "\n".join(rows)
-	var local_player: Node = players.get(multiplayer.get_unique_id())
+	var local_player: Node3D = players.get(multiplayer.get_unique_id()) as Node3D
 	if local_player:
-		health_label.text = "VITALS   %03d / 100" % local_player.health
-		ammo_label.text = "RIFLE  |  %02d / %03d\n[ R ] RELOAD" % [local_player.ammo, local_player.reserve_ammo]
+		health_label.text = "VITALS   %03d / 100" % int(local_player.get("health"))
+		ammo_label.text = "RIFLE  |  %02d / %03d\n[ R ] RELOAD" % [int(local_player.get("ammo")), int(local_player.get("reserve_ammo"))]
 	else:
 		health_label.text = "VITALS   --"
 		ammo_label.text = "RIFLE  |  -- / --"
@@ -498,7 +498,7 @@ func _draw_minimap() -> void:
 		minimap.draw_line(Vector2(x, 8), Vector2(x, 152), Color(0.28, 0.39, 0.44, 0.5), 1.0)
 	for z in [24.0, 80.0, 136.0]:
 		minimap.draw_line(Vector2(8, z), Vector2(152, z), Color(0.28, 0.39, 0.44, 0.5), 1.0)
-	var local: Node = players.get(multiplayer.get_unique_id())
+	var local: Node3D = players.get(multiplayer.get_unique_id()) as Node3D
 	if local:
 		var p := Vector2(80 + local.global_position.x * 2.7, 80 + local.global_position.z * 2.7)
 		minimap.draw_circle(p, 5.0, Color(0.35, 0.95, 0.8))
