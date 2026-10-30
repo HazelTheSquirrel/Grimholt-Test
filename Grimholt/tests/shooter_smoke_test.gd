@@ -16,10 +16,17 @@ func _run_smoke_test() -> void:
 	await process_frame
 	assert(game.players.has(1), "Solo player did not spawn")
 	assert(game.bots.size() == 5, "Expected five bots in solo mode")
+	assert(game.SCORE_LIMIT == 50, "Round kill limit should be 50")
+	assert(game.ROUND_SECONDS == 900, "Round duration should be 15 minutes")
 	assert(game.scoreboard_panel != null, "Scoreboard UI was not created")
 	assert(game.hitmarker_label != null, "Hit confirmation UI was not created")
 	var player: Node = game.players[1]
 	assert(player.get_node_or_null("Head/Camera3D") != null, "Player camera is missing")
 	assert(player.get_node("Head/Camera3D").current, "Local player camera is not current")
-	print("SHOOTER_SMOKE_TEST_OK: scene, input, player, bots, HUD")
+	game._apply_damage(1000, 1, 100)
+	assert(not game.bots.has(1000), "Dead bot should be removed immediately")
+	await create_timer(3.2).timeout
+	assert(game.bots.has(1000), "Bot should respawn after its delay")
+	assert(game.bots[1000].health == 100, "Respawned bot should have full health")
+	print("SHOOTER_SMOKE_TEST_OK: scene, input, player, bots, HUD, bot death/respawn")
 	quit(0)
