@@ -46,6 +46,28 @@ func _run_smoke_test() -> void:
 	game._server_switch_weapon(1, "unknown")
 	assert(game.current_weapons[1] == "scatter", "Server must reject unknown weapon IDs")
 	game._server_switch_weapon(1, "carbine")
+	game._server_fire(1)
+	assert(int(game.player_loadouts[1]["carbine"]["ammo"]) == 29, "Server firing must consume carbine ammunition")
+	game._server_switch_weapon(1, "scatter")
+	game.last_shot_times[1] = -1000.0
+	game._server_fire(1)
+	assert(int(game.player_loadouts[1]["scatter"]["ammo"]) == 7, "Server firing must consume one scatter charge")
+	assert(int(game.player_loadouts[1]["carbine"]["ammo"]) == 29, "Switching weapons must preserve the other weapon's magazine")
+	game.player_loadouts[1]["scatter"]["ammo"] = 3
+	game.player_loadouts[1]["scatter"]["reserve"] = 20
+	game._server_reload(1)
+	assert(game.reload_deadlines.has(1), "Scatter reload must start on the server")
+	game._server_switch_weapon(1, "carbine")
+	assert(game.current_weapons[1] == "scatter", "Weapon switching must be blocked during reload")
+	game.reload_deadlines[1] = 0.0
+	game._process_reload_timers()
+	assert(int(game.player_loadouts[1]["scatter"]["ammo"]) == 8, "Scatter reload must fill its magazine")
+	assert(int(game.player_loadouts[1]["scatter"]["reserve"]) == 15, "Scatter reload must consume only the required reserve ammunition")
+	game._server_switch_weapon(1, "carbine")
+	assert(game.players[1].ammo == 29, "Carbine ammunition must remain independent after scatter reload")
+	game._server_switch_weapon(1, "scatter")
+	assert(game.players[1].ammo == 8 and game.players[1].reserve_ammo == 15, "Reloaded scatter ammunition must be restored when switching back")
+	game._server_switch_weapon(1, "carbine")
 	var bot_logic: Node = game.bots[1000]
 	assert(bot_logic.has_method("_combat_movement_direction"), "Bots need engagement-distance movement")
 	assert(bot_logic.has_method("_steer_around_obstacles"), "Bots need basic obstacle steering")
