@@ -85,18 +85,19 @@ func _physics_process(delta: float) -> void:
 	var input_vector := Vector2.ZERO
 	var jump_requested := false
 	var wants_crouch := false
-	if local_control and not bool(get_parent().get("is_local_paused")):
-		input_vector = Input.get_vector("move_left", "move_right", "move_forward", "move_backward")
-		jump_requested = Input.is_action_just_pressed("jump")
-		if jump_requested:
-			jump_input_buffered = true
-		wants_crouch = Input.is_action_pressed("crouch")
-		if not server_control:
-			network_timer += delta
-			if network_timer >= 0.05 and multiplayer.multiplayer_peer != null:
-				network_timer = 0.0
-				get_parent()._submit_input.rpc_id(1, input_vector, jump_input_buffered, wants_crouch, rotation.y, head.rotation.x)
-				jump_input_buffered = false
+	if local_control:
+		if not bool(get_parent().get("is_local_paused")):
+			input_vector = Input.get_vector("move_left", "move_right", "move_forward", "move_backward")
+			jump_requested = Input.is_action_just_pressed("jump")
+			if jump_requested:
+				jump_input_buffered = true
+			wants_crouch = Input.is_action_pressed("crouch")
+			if not server_control:
+				network_timer += delta
+				if network_timer >= 0.05 and multiplayer.multiplayer_peer != null:
+					network_timer = 0.0
+					get_parent()._submit_input.rpc_id(1, input_vector, jump_input_buffered, wants_crouch, rotation.y, head.rotation.x)
+					jump_input_buffered = false
 	else:
 		var input_is_fresh := Time.get_ticks_msec() - remote_input_received_msec <= 250
 		if input_is_fresh:
