@@ -29,6 +29,7 @@ var last_position_times: Dictionary = {}
 var bot_sync_timer := 0.0
 
 func _ready() -> void:
+	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 	_configure_inputs()
 	_build_menu()
 	_build_hud()
@@ -117,7 +118,7 @@ func _build_menu() -> void:
 	column.add_child(intro)
 	var training_button := Button.new()
 	training_button.text = "TRAINING STARTEN  //  SOFORT SPIELEN"
-	training_button.pressed.connect(host_game)
+	training_button.pressed.connect(_on_training_pressed)
 	column.add_child(training_button)
 	address_input = LineEdit.new()
 	address_input.placeholder_text = "Server-IP"
@@ -125,11 +126,11 @@ func _build_menu() -> void:
 	column.add_child(address_input)
 	var host_button := Button.new()
 	host_button.text = "MULTIPLAYER // SERVER HOSTEN"
-	host_button.pressed.connect(host_game)
+	host_button.pressed.connect(_on_host_pressed)
 	column.add_child(host_button)
 	var join_button := Button.new()
 	join_button.text = "MULTIPLAYER // SERVER BEITRETEN"
-	join_button.pressed.connect(join_game)
+	join_button.pressed.connect(_on_join_pressed)
 	column.add_child(join_button)
 	var status_title := Label.new()
 	status_title.text = "WASD bewegen  |  Maus zielen  |  Linksklick feuern"
@@ -193,8 +194,21 @@ func _build_hud() -> void:
 	minimap.draw.connect(_draw_minimap)
 	hud_layer.add_child(minimap)
 
+func _on_training_pressed() -> void:
+	status_label.text = "TRAINING WIRD GESTARTET ..."
+	host_game()
+
+func _on_host_pressed() -> void:
+	status_label.text = "SERVER WIRD GESTARTET ..."
+	host_game()
+
+func _on_join_pressed() -> void:
+	status_label.text = "VERBINDUNG WIRD AUFGEBAUT ..."
+	join_game()
+
 func host_game() -> void:
 	if multiplayer.multiplayer_peer != null:
+		status_label.text = "Es besteht bereits eine Netzwerkverbindung."
 		return
 	var peer := ENetMultiplayerPeer.new()
 	var error := peer.create_server(PORT, MAX_PLAYERS)
@@ -204,30 +218,45 @@ func host_game() -> void:
 	multiplayer.multiplayer_peer = peer
 	multiplayer.peer_connected.connect(_on_peer_connected)
 	multiplayer.peer_disconnected.connect(_on_peer_disconnected)
-	status_label.text = "Server aktiv // UDP %d" % PORT
+	status_label.text = "Server aktiv // UDP %d — Match startet" % PORT
 	_start_match()
 	_spawn_player(1)
 	for i in range(BOT_COUNT):
 		_spawn_bot(i + 1000)
 
 func join_game() -> void:
+	if multiplayer.multiplayer_peer != null:
+		status_label.text = "Es besteht bereits eine Netzwerkverbindung."
+		return
 	var peer := ENetMultiplayerPeer.new()
 	var error := peer.create_client(address_input.text.strip_edges(), PORT)
 	if error != OK:
 		status_label.text = "Verbindung fehlgeschlagen: %s" % error
 		return
-	multiplayer.multiplayer_peer = peer
+	if multiplayer.connected_to_server.is_connected(_on_connected_to_server):
+		multiplayer.connected_to_server.disconnect(_on_connected_to_server)
 	multiplayer.connected_to_server.connect(_on_connected_to_server)
-	multiplayer.connection_failed.connect(func(): status_label.text = "Verbindung fehlgeschlagen")
-	multiplayer.server_disconnected.connect(func(): status_label.text = "Server getrennt")
+	multiplayer.connection_failed.connect(_on_connection_failed)
+	multiplayer.server_disconnected.connect(_on_server_disconnected)
+	multiplayer.multiplayer_peer = peer
+	status_label.text = "Verbinde mit %s:%d ..." % [address_input.text.strip_edges(), PORT]
 
 func _on_connected_to_server() -> void:
-	status_label.text = "Verbunden // Spieler wird gespawnt"
+	status_label.text = "VERBUNDEN // Warte auf Match-Start"
+
+func _on_connection_failed() -> void:
+	status_label.text = "VERBINDUNG FEHLGESCHLAGEN // IP und Server prüfen"
+	multiplayer.multiplayer_peer = null
+
+func _on_server_disconnected() -> void:
+	status_label.text = "SERVERVERBINDUNG GETRENNT"
+	multiplayer.multiplayer_peer = null
 
 func _start_match() -> void:
 	round_active = true
 	round_time = ROUND_SECONDS
-	_match_started.rpc(round_time)
+	# Host local starten; RPC nur für weitere Clients verwenden.
+	_match_started(round_time)
 
 @rpc("authority", "call_local", "reliable")
 func _match_started(seconds: int) -> void:

@@ -1,8 +1,10 @@
-[gd_scene load_steps=40 format=3]
+[gd_scene load_steps=19 format=3]
 
 [sub_resource type="ProceduralSkyMaterial" id="SkyMaterial"]
-sky_top_color = Color(0.12, 0.19, 0.29, 1)
-sky_horizon_color = Color(0.48, 0.52, 0.56, 1)
+sky_top_color = Color(0.055, 0.11, 0.19, 1)
+sky_horizon_color = Color(0.31, 0.39, 0.47, 1)
+ground_bottom_color = Color(0.035, 0.05, 0.065, 1)
+ground_horizon_color = Color(0.18, 0.23, 0.28, 1)
 
 [sub_resource type="Sky" id="Sky"]
 sky_material = SubResource("SkyMaterial")
@@ -11,128 +13,56 @@ sky_material = SubResource("SkyMaterial")
 background_mode = 2
 sky = SubResource("Sky")
 ambient_light_source = 2
-ambient_light_color = Color(0.34, 0.39, 0.48, 1)
-ambient_light_energy = 0.7
+ambient_light_color = Color(0.39, 0.47, 0.56, 1)
+ambient_light_energy = 0.8
+tonemap_mode = 2
+glow_enabled = true
+glow_intensity = 0.35
 
-[sub_resource type="BoxMesh" id="FloorBox"]
-size = Vector3(48, 1, 48)
-
+[sub_resource type="BoxMesh" id="FloorMesh"]
+size = Vector3(64, 1, 64)
 [sub_resource type="BoxShape3D" id="FloorShape"]
-size = Vector3(48, 1, 48)
+size = Vector3(64, 1, 64)
+[sub_resource type="StandardMaterial3D" id="FloorMat"]
+albedo_color = Color(0.105, 0.14, 0.18, 1)
+metallic = 0.28
+roughness = 0.78
 
-[sub_resource type="StandardMaterial3D" id="FloorMaterial"]
-albedo_color = Color(0.13, 0.17, 0.21, 1)
+[sub_resource type="BoxMesh" id="WallMesh"]
+size = Vector3(64, 8, 1)
+[sub_resource type="BoxShape3D" id="WallShape"]
+size = Vector3(64, 8, 1)
+[sub_resource type="StandardMaterial3D" id="WallMat"]
+albedo_color = Color(0.18, 0.23, 0.29, 1)
+metallic = 0.35
+roughness = 0.72
+
+[sub_resource type="BoxMesh" id="PlatformMesh"]
+size = Vector3(14, 1.4, 14)
+[sub_resource type="BoxShape3D" id="PlatformShape"]
+size = Vector3(14, 1.4, 14)
+[sub_resource type="StandardMaterial3D" id="PlatformMat"]
+albedo_color = Color(0.24, 0.31, 0.37, 1)
+metallic = 0.42
+roughness = 0.58
+
+[sub_resource type="BoxMesh" id="CoverMesh"]
+size = Vector3(5, 2.4, 2)
+[sub_resource type="BoxShape3D" id="CoverShape"]
+size = Vector3(5, 2.4, 2)
+[sub_resource type="StandardMaterial3D" id="CoverMat"]
+albedo_color = Color(0.29, 0.36, 0.42, 1)
+metallic = 0.25
 roughness = 0.82
 
-[sub_resource type="BoxMesh" id="NorthWallBox"]
-size = Vector3(48, 6, 1)
-
-[sub_resource type="BoxShape3D" id="NorthWallShape"]
-size = Vector3(48, 6, 1)
-
-[sub_resource type="StandardMaterial3D" id="NorthWallMaterial"]
-albedo_color = Color(0.20, 0.25, 0.31, 1)
-roughness = 0.82
-
-[sub_resource type="BoxMesh" id="SouthWallBox"]
-size = Vector3(48, 6, 1)
-
-[sub_resource type="BoxShape3D" id="SouthWallShape"]
-size = Vector3(48, 6, 1)
-
-[sub_resource type="StandardMaterial3D" id="SouthWallMaterial"]
-albedo_color = Color(0.20, 0.25, 0.31, 1)
-roughness = 0.82
-
-[sub_resource type="BoxMesh" id="EastWallBox"]
-size = Vector3(1, 6, 48)
-
-[sub_resource type="BoxShape3D" id="EastWallShape"]
-size = Vector3(1, 6, 48)
-
-[sub_resource type="StandardMaterial3D" id="EastWallMaterial"]
-albedo_color = Color(0.20, 0.25, 0.31, 1)
-roughness = 0.82
-
-[sub_resource type="BoxMesh" id="WestWallBox"]
-size = Vector3(1, 6, 48)
-
-[sub_resource type="BoxShape3D" id="WestWallShape"]
-size = Vector3(1, 6, 48)
-
-[sub_resource type="StandardMaterial3D" id="WestWallMaterial"]
-albedo_color = Color(0.20, 0.25, 0.31, 1)
-roughness = 0.82
-
-[sub_resource type="BoxMesh" id="CoverABox"]
-size = Vector3(6, 2, 2)
-
-[sub_resource type="BoxShape3D" id="CoverAShape"]
-size = Vector3(6, 2, 2)
-
-[sub_resource type="StandardMaterial3D" id="CoverAMaterial"]
-albedo_color = Color(0.27, 0.33, 0.39, 1)
-roughness = 0.82
-
-[sub_resource type="BoxMesh" id="CoverBBox"]
-size = Vector3(6, 2, 2)
-
-[sub_resource type="BoxShape3D" id="CoverBShape"]
-size = Vector3(6, 2, 2)
-
-[sub_resource type="StandardMaterial3D" id="CoverBMaterial"]
-albedo_color = Color(0.27, 0.33, 0.39, 1)
-roughness = 0.82
-
-[sub_resource type="BoxMesh" id="CenterBlockBox"]
-size = Vector3(3, 3, 3)
-
-[sub_resource type="BoxShape3D" id="CenterBlockShape"]
-size = Vector3(3, 3, 3)
-
-[sub_resource type="StandardMaterial3D" id="CenterBlockMaterial"]
-albedo_color = Color(0.34, 0.39, 0.43, 1)
-roughness = 0.82
-
-[sub_resource type="BoxMesh" id="CoverCBox"]
-size = Vector3(2, 2, 7)
-
-[sub_resource type="BoxShape3D" id="CoverCShape"]
-size = Vector3(2, 2, 7)
-
-[sub_resource type="StandardMaterial3D" id="CoverCMaterial"]
-albedo_color = Color(0.27, 0.33, 0.39, 1)
-roughness = 0.82
-
-[sub_resource type="BoxMesh" id="CoverDBox"]
-size = Vector3(2, 2, 7)
-
-[sub_resource type="BoxShape3D" id="CoverDShape"]
-size = Vector3(2, 2, 7)
-
-[sub_resource type="StandardMaterial3D" id="CoverDMaterial"]
-albedo_color = Color(0.27, 0.33, 0.39, 1)
-roughness = 0.82
-
-[sub_resource type="BoxMesh" id="NorthCoverBox"]
-size = Vector3(9, 1.5, 2)
-
-[sub_resource type="BoxShape3D" id="NorthCoverShape"]
-size = Vector3(9, 1.5, 2)
-
-[sub_resource type="StandardMaterial3D" id="NorthCoverMaterial"]
-albedo_color = Color(0.27, 0.33, 0.39, 1)
-roughness = 0.82
-
-[sub_resource type="BoxMesh" id="SouthCoverBox"]
-size = Vector3(9, 1.5, 2)
-
-[sub_resource type="BoxShape3D" id="SouthCoverShape"]
-size = Vector3(9, 1.5, 2)
-
-[sub_resource type="StandardMaterial3D" id="SouthCoverMaterial"]
-albedo_color = Color(0.27, 0.33, 0.39, 1)
-roughness = 0.82
+[sub_resource type="BoxMesh" id="RampMesh"]
+size = Vector3(8, 0.8, 6)
+[sub_resource type="BoxShape3D" id="RampShape"]
+size = Vector3(8, 0.8, 6)
+[sub_resource type="StandardMaterial3D" id="RampMat"]
+albedo_color = Color(0.20, 0.29, 0.35, 1)
+metallic = 0.5
+roughness = 0.62
 
 [node name="Arena" type="Node3D"]
 
@@ -140,133 +70,148 @@ roughness = 0.82
 environment = SubResource("Environment")
 
 [node name="Sun" type="DirectionalLight3D" parent="."]
-rotation = Vector3(-0.907571, -0.488692, 0)
-light_energy = 1.25
+rotation_degrees = Vector3(-48, -32, 0)
+light_energy = 1.35
 shadow_enabled = true
 
 [node name="PreviewCamera" type="Camera3D" parent="."]
-position = Vector3(34, 27, 38)
-rotation_degrees = Vector3(-25, 42, 0)
+position = Vector3(47, 37, 52)
+rotation_degrees = Vector3(-29, 42, 0)
 current = true
-fov = 70.0
+fov = 64.0
 
 [node name="Floor" type="StaticBody3D" parent="."]
 position = Vector3(0, -0.5, 0)
-
-[node name="FloorMesh" type="MeshInstance3D" parent="Floor"]
-mesh = SubResource("FloorBox")
-material_override = SubResource("FloorMaterial")
-
-[node name="FloorCollision" type="CollisionShape3D" parent="Floor"]
+[node name="Mesh" type="MeshInstance3D" parent="Floor"]
+mesh = SubResource("FloorMesh")
+material_override = SubResource("FloorMat")
+[node name="Collision" type="CollisionShape3D" parent="Floor"]
 shape = SubResource("FloorShape")
 
 [node name="NorthWall" type="StaticBody3D" parent="."]
-position = Vector3(0, 3, -24)
-
-[node name="NorthWallMesh" type="MeshInstance3D" parent="NorthWall"]
-mesh = SubResource("NorthWallBox")
-material_override = SubResource("NorthWallMaterial")
-
-[node name="NorthWallCollision" type="CollisionShape3D" parent="NorthWall"]
-shape = SubResource("NorthWallShape")
+position = Vector3(0, 4, -32)
+[node name="Mesh" type="MeshInstance3D" parent="NorthWall"]
+mesh = SubResource("WallMesh")
+material_override = SubResource("WallMat")
+[node name="Collision" type="CollisionShape3D" parent="NorthWall"]
+shape = SubResource("WallShape")
 
 [node name="SouthWall" type="StaticBody3D" parent="."]
-position = Vector3(0, 3, 24)
-
-[node name="SouthWallMesh" type="MeshInstance3D" parent="SouthWall"]
-mesh = SubResource("SouthWallBox")
-material_override = SubResource("SouthWallMaterial")
-
-[node name="SouthWallCollision" type="CollisionShape3D" parent="SouthWall"]
-shape = SubResource("SouthWallShape")
+position = Vector3(0, 4, 32)
+[node name="Mesh" type="MeshInstance3D" parent="SouthWall"]
+mesh = SubResource("WallMesh")
+material_override = SubResource("WallMat")
+[node name="Collision" type="CollisionShape3D" parent="SouthWall"]
+shape = SubResource("WallShape")
 
 [node name="EastWall" type="StaticBody3D" parent="."]
-position = Vector3(24, 3, 0)
-
-[node name="EastWallMesh" type="MeshInstance3D" parent="EastWall"]
-mesh = SubResource("EastWallBox")
-material_override = SubResource("EastWallMaterial")
-
-[node name="EastWallCollision" type="CollisionShape3D" parent="EastWall"]
-shape = SubResource("EastWallShape")
+position = Vector3(32, 4, 0)
+rotation_degrees = Vector3(0, 90, 0)
+[node name="Mesh" type="MeshInstance3D" parent="EastWall"]
+mesh = SubResource("WallMesh")
+material_override = SubResource("WallMat")
+[node name="Collision" type="CollisionShape3D" parent="EastWall"]
+shape = SubResource("WallShape")
 
 [node name="WestWall" type="StaticBody3D" parent="."]
-position = Vector3(-24, 3, 0)
+position = Vector3(-32, 4, 0)
+rotation_degrees = Vector3(0, 90, 0)
+[node name="Mesh" type="MeshInstance3D" parent="WestWall"]
+mesh = SubResource("WallMesh")
+material_override = SubResource("WallMat")
+[node name="Collision" type="CollisionShape3D" parent="WestWall"]
+shape = SubResource("WallShape")
 
-[node name="WestWallMesh" type="MeshInstance3D" parent="WestWall"]
-mesh = SubResource("WestWallBox")
-material_override = SubResource("WestWallMaterial")
+[node name="CenterHighGround" type="StaticBody3D" parent="."]
+position = Vector3(0, 3.0, 0)
+[node name="Mesh" type="MeshInstance3D" parent="CenterHighGround"]
+mesh = SubResource("PlatformMesh")
+material_override = SubResource("PlatformMat")
+[node name="Collision" type="CollisionShape3D" parent="CenterHighGround"]
+shape = SubResource("PlatformShape")
 
-[node name="WestWallCollision" type="CollisionShape3D" parent="WestWall"]
-shape = SubResource("WestWallShape")
+[node name="WestHighGround" type="StaticBody3D" parent="."]
+position = Vector3(-20, 2.2, 0)
+[node name="Mesh" type="MeshInstance3D" parent="WestHighGround"]
+mesh = SubResource("PlatformMesh")
+material_override = SubResource("PlatformMat")
+[node name="Collision" type="CollisionShape3D" parent="WestHighGround"]
+shape = SubResource("PlatformShape")
 
-[node name="CoverA" type="StaticBody3D" parent="."]
-position = Vector3(-10, 1, -8)
+[node name="EastHighGround" type="StaticBody3D" parent="."]
+position = Vector3(20, 2.2, 0)
+[node name="Mesh" type="MeshInstance3D" parent="EastHighGround"]
+mesh = SubResource("PlatformMesh")
+material_override = SubResource("PlatformMat")
+[node name="Collision" type="CollisionShape3D" parent="EastHighGround"]
+shape = SubResource("PlatformShape")
 
-[node name="CoverAMesh" type="MeshInstance3D" parent="CoverA"]
-mesh = SubResource("CoverABox")
-material_override = SubResource("CoverAMaterial")
+[node name="RampWestToCenter" type="StaticBody3D" parent="."]
+position = Vector3(-10, 1.35, 0)
+rotation_degrees = Vector3(0, 0, -16)
+[node name="Mesh" type="MeshInstance3D" parent="RampWestToCenter"]
+mesh = SubResource("RampMesh")
+material_override = SubResource("RampMat")
+[node name="Collision" type="CollisionShape3D" parent="RampWestToCenter"]
+shape = SubResource("RampShape")
 
-[node name="CoverACollision" type="CollisionShape3D" parent="CoverA"]
-shape = SubResource("CoverAShape")
+[node name="RampEastToCenter" type="StaticBody3D" parent="."]
+position = Vector3(10, 1.35, 0)
+rotation_degrees = Vector3(0, 0, 16)
+[node name="Mesh" type="MeshInstance3D" parent="RampEastToCenter"]
+mesh = SubResource("RampMesh")
+material_override = SubResource("RampMat")
+[node name="Collision" type="CollisionShape3D" parent="RampEastToCenter"]
+shape = SubResource("RampShape")
 
-[node name="CoverB" type="StaticBody3D" parent="."]
-position = Vector3(10, 1, 8)
+[node name="RampNorthToCenter" type="StaticBody3D" parent="."]
+position = Vector3(0, 1.35, -10)
+rotation_degrees = Vector3(16, 0, 0)
+[node name="Mesh" type="MeshInstance3D" parent="RampNorthToCenter"]
+mesh = SubResource("RampMesh")
+material_override = SubResource("RampMat")
+[node name="Collision" type="CollisionShape3D" parent="RampNorthToCenter"]
+shape = SubResource("RampShape")
 
-[node name="CoverBMesh" type="MeshInstance3D" parent="CoverB"]
-mesh = SubResource("CoverBBox")
-material_override = SubResource("CoverBMaterial")
-
-[node name="CoverBCollision" type="CollisionShape3D" parent="CoverB"]
-shape = SubResource("CoverBShape")
-
-[node name="CenterBlock" type="StaticBody3D" parent="."]
-position = Vector3(0, 1.5, 0)
-
-[node name="CenterBlockMesh" type="MeshInstance3D" parent="CenterBlock"]
-mesh = SubResource("CenterBlockBox")
-material_override = SubResource("CenterBlockMaterial")
-
-[node name="CenterBlockCollision" type="CollisionShape3D" parent="CenterBlock"]
-shape = SubResource("CenterBlockShape")
-
-[node name="CoverC" type="StaticBody3D" parent="."]
-position = Vector3(-15, 1, 8)
-
-[node name="CoverCMesh" type="MeshInstance3D" parent="CoverC"]
-mesh = SubResource("CoverCBox")
-material_override = SubResource("CoverCMaterial")
-
-[node name="CoverCCollision" type="CollisionShape3D" parent="CoverC"]
-shape = SubResource("CoverCShape")
-
-[node name="CoverD" type="StaticBody3D" parent="."]
-position = Vector3(15, 1, -8)
-
-[node name="CoverDMesh" type="MeshInstance3D" parent="CoverD"]
-mesh = SubResource("CoverDBox")
-material_override = SubResource("CoverDMaterial")
-
-[node name="CoverDCollision" type="CollisionShape3D" parent="CoverD"]
-shape = SubResource("CoverDShape")
+[node name="RampSouthToCenter" type="StaticBody3D" parent="."]
+position = Vector3(0, 1.35, 10)
+rotation_degrees = Vector3(-16, 0, 0)
+[node name="Mesh" type="MeshInstance3D" parent="RampSouthToCenter"]
+mesh = SubResource("RampMesh")
+material_override = SubResource("RampMat")
+[node name="Collision" type="CollisionShape3D" parent="RampSouthToCenter"]
+shape = SubResource("RampShape")
 
 [node name="NorthCover" type="StaticBody3D" parent="."]
-position = Vector3(0, 0.75, -14)
-
-[node name="NorthCoverMesh" type="MeshInstance3D" parent="NorthCover"]
-mesh = SubResource("NorthCoverBox")
-material_override = SubResource("NorthCoverMaterial")
-
-[node name="NorthCoverCollision" type="CollisionShape3D" parent="NorthCover"]
-shape = SubResource("NorthCoverShape")
+position = Vector3(0, 1.2, -23)
+[node name="Mesh" type="MeshInstance3D" parent="NorthCover"]
+mesh = SubResource("CoverMesh")
+material_override = SubResource("CoverMat")
+[node name="Collision" type="CollisionShape3D" parent="NorthCover"]
+shape = SubResource("CoverShape")
 
 [node name="SouthCover" type="StaticBody3D" parent="."]
-position = Vector3(0, 0.75, 14)
+position = Vector3(0, 1.2, 23)
+[node name="Mesh" type="MeshInstance3D" parent="SouthCover"]
+mesh = SubResource("CoverMesh")
+material_override = SubResource("CoverMat")
+[node name="Collision" type="CollisionShape3D" parent="SouthCover"]
+shape = SubResource("CoverShape")
 
-[node name="SouthCoverMesh" type="MeshInstance3D" parent="SouthCover"]
-mesh = SubResource("SouthCoverBox")
-material_override = SubResource("SouthCoverMaterial")
+[node name="WestCover" type="StaticBody3D" parent="."]
+position = Vector3(-23, 1.2, 0)
+rotation_degrees = Vector3(0, 90, 0)
+[node name="Mesh" type="MeshInstance3D" parent="WestCover"]
+mesh = SubResource("CoverMesh")
+material_override = SubResource("CoverMat")
+[node name="Collision" type="CollisionShape3D" parent="WestCover"]
+shape = SubResource("CoverShape")
 
-[node name="SouthCoverCollision" type="CollisionShape3D" parent="SouthCover"]
-shape = SubResource("SouthCoverShape")
-
+[node name="EastCover" type="StaticBody3D" parent="."]
+position = Vector3(23, 1.2, 0)
+rotation_degrees = Vector3(0, 90, 0)
+[node name="Mesh" type="MeshInstance3D" parent="EastCover"]
+mesh = SubResource("CoverMesh")
+material_override = SubResource("CoverMat")
+[node name="Collision" type="CollisionShape3D" parent="EastCover"]
+shape = SubResource("CoverShape")
