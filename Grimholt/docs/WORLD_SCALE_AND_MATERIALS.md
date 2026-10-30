@@ -29,6 +29,10 @@ Für Türen dient 2,10 m lichte Höhe und 0,90 m lichte Breite als frühe Planun
 - Kräuter: klar unterscheidbare Blüten- und Stängelfarben.
 - Bauteile: eigene Materialdefinitionen, vorläufig ohne finale handgemalte PBR-Textursets.
 
+## Sichtbare Boden- und Himmelsmaterialien
+
+Das Terrain verwendet jetzt einen eigenen triplanaren Shader: Wiese und Moos werden anhand der Biom-Vertexfarben gemischt, steile Flächen wechseln zu Schieferfels und große Höhen erhalten Schnee/Eis. Die Projektion erfolgt in Weltkoordinaten, damit Texturen an Chunk-Grenzen nicht durch lokale UV-Neustarts springen. Die Umgebung nutzt eine eigens erstellte 2:1-Panorama-SVG mit Dämmerungshimmel, Wolken und Sonnenlicht über `PanoramaSkyMaterial`. Die vorhandenen SVG-Oberflächen sind damit nicht nur lose Asset-Dateien, sondern direkt an Terrain und Himmel angeschlossen.
+
 ## Wichtige technische Abgrenzung
 
 Die aktuellen Texturen werden prozedural in Godot erzeugt. Es werden keine externen Bilddateien oder lizenzpflichtigen Texturpakete benötigt. Das ist eine robuste Platzhalter-/Prototypbasis, aber noch kein finales AAA-PBR-Art-Set mit handgemalten Albedo-, Normal-, Roughness- und AO-Maps.
