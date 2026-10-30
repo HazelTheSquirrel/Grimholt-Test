@@ -6,6 +6,7 @@ func request_fire(shooter_id: int) -> void:
 	else:
 		_request_fire.rpc_id(1)
 
+@rpc("any_peer", "call_remote", "reliable")
 func _request_fire() -> void:
 	if multiplayer.is_server():
 		_server_fire(multiplayer.get_remote_sender_id())
@@ -49,6 +50,7 @@ func request_reload(player_id: int) -> void:
 	else:
 		_request_reload.rpc_id(1)
 
+@rpc("any_peer", "call_remote", "reliable")
 func _request_reload() -> void:
 	if multiplayer.is_server():
 		_server_reload(multiplayer.get_remote_sender_id())
@@ -79,6 +81,7 @@ func _process_reload_timers() -> void:
 		reload_deadlines.erase(id)
 		_sync_weapon_state.rpc(player_id, ammo + amount, reserve - amount, false)
 
+@rpc("authority", "call_local", "reliable")
 func _sync_weapon_state(player_id: int, ammo: int, reserve: int, reloading: bool) -> void:
 	if players.has(player_id):
 		players[player_id].ammo = ammo
@@ -129,12 +132,14 @@ func _actor_name(actor_id: int) -> String:
 		return "BOT-%02d" % (actor_id - 1000)
 	return "PLAYER-%d" % actor_id
 
+@rpc("authority", "call_local", "reliable")
 func _actor_health(actor_id: int, value: int) -> void:
 	if players.has(actor_id):
 		players[actor_id].health = value
 	if bots.has(actor_id):
 		bots[actor_id].health = value
 
+@rpc("authority", "call_local", "reliable")
 func _kill_feed(message: String) -> void:
 	if feed_label:
 		feed_label.text = message + "\n" + feed_label.text
@@ -156,6 +161,7 @@ func _respawn_bot_later(bot_id: int) -> void:
 	if round_active and not bots.has(bot_id):
 		_spawn_bot(bot_id)
 
+@rpc("authority", "call_local", "reliable")
 func _remove_bot(bot_id: int) -> void:
 	if not bots.has(bot_id):
 		return
@@ -164,6 +170,7 @@ func _remove_bot(bot_id: int) -> void:
 	if is_instance_valid(bot):
 		bot.queue_free()
 
+@rpc("authority", "call_local", "reliable")
 func _respawn_actor(actor_id: int, pos: Vector3, hp: int) -> void:
 	var actor: Node3D = players.get(actor_id, bots.get(actor_id)) as Node3D
 	if actor:
@@ -172,11 +179,13 @@ func _respawn_actor(actor_id: int, pos: Vector3, hp: int) -> void:
 		if actor is CharacterBody3D:
 			(actor as CharacterBody3D).velocity = Vector3.ZERO
 
+@rpc("authority", "call_local", "reliable")
 func _sync_scores(new_scores: Dictionary, new_deaths: Dictionary) -> void:
 	scores = new_scores.duplicate(true)
 	deaths = new_deaths.duplicate(true)
 	_update_scoreboard()
 
+@rpc("authority", "call_local", "reliable")
 func _hit_confirm(shooter_id: int) -> void:
 	if shooter_id == multiplayer.get_unique_id() and hitmarker_label != null:
 		hitmarker_timer = 0.16
