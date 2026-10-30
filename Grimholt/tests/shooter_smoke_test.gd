@@ -10,6 +10,10 @@ func _run_smoke_test() -> void:
 	root.add_child(game)
 	await process_frame
 	assert(game.has_method("start_solo_game"), "Main scene is missing solo start")
+	assert(game.get_script().resource_path == "res://scripts/shooter/main.gd", "Main scene must use the composition-root script")
+	assert(load("res://assets/branding/grimholt_crest.svg") != null, "Original Grimholt crest asset is missing")
+	assert(load("res://assets/branding/rifle_insignia.svg") != null, "Original rifle insignia asset is missing")
+	assert(load("res://assets/materials/arena_floor.svg") != null, "Original arena floor material is missing")
 	assert(InputMap.has_action("crouch"), "Crouch action was not registered")
 	assert(InputMap.has_action("jump"), "Jump action was not registered")
 	game.start_solo_game()
@@ -34,6 +38,7 @@ func _run_smoke_test() -> void:
 	assert(int(game.scores.get(1, 0)) == score_before_kill + 1, "Every kill must award exactly one point")
 	game._apply_damage(1000, 1, 100)
 	assert(int(game.scores.get(1, 0)) == score_before_kill + 1, "A dead target must not award duplicate kill points")
+	assert(not game.scores.has(1000), "Bots must not appear as independent FFA score leaders")
 	assert(not game.bots.has(1000), "Dead bot should be removed immediately")
 	await create_timer(3.2).timeout
 	assert(game.bots.has(1000), "Bot should respawn after its delay")
@@ -44,5 +49,7 @@ func _run_smoke_test() -> void:
 	await create_timer(1.25).timeout
 	assert(not game.round_active, "Round must finish when the real-time deadline reaches zero")
 	assert(game.timer_label.text.ends_with("00:00"), "Expired round must show 00:00")
+	game._round_finished.rpc(-1, 0, "score")
+	assert(game.timer_label.text.ends_with("SCORE LIMIT"), "A score-limit finish must not falsely display 00:00")
 	print("SHOOTER_SMOKE_TEST_OK: scene, input, player, bots, HUD, real-time countdown, one-point kill scoring, bot death/respawn")
 	quit(0)
