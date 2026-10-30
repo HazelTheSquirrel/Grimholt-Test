@@ -39,9 +39,7 @@ var scoreboard_panel: PanelContainer
 var scoreboard_label: RichTextLabel
 var hitmarker_label: Label
 var hitmarker_timer := 0.0
-var last_positions: Dictionary = {}
-var last_position_times: Dictionary = {}
-var last_transform_packet_msec: Dictionary = {}
+var last_input_packet_msec: Dictionary = {}
 var last_shot_times: Dictionary = {}
 var weapon_ammo: Dictionary = {}
 var weapon_reserve: Dictionary = {}
