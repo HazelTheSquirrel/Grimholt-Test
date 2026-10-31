@@ -1,0 +1,28 @@
+[gd_scene load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://scripts/combat/weapon_controller.gd" id="1"]
+[sub_resource type="BoxMesh" id="WeaponMesh"]
+size = Vector3(0.22, 0.2, 0.48)
+[sub_resource type="StandardMaterial3D" id="WeaponMaterial"]
+albedo_color = Color(0.28, 0.16, 0.12, 1)
+metallic = 0.62
+roughness = 0.38
+
+[node name="ArcScatter" type="Node3D"]
+script = ExtResource("1")
+display_name = "ARC SCATTER"
+damage = 8
+pellet_count = 7
+spread = 0.095
+magazine_size = 8
+reserve_capacity = 40
+fire_interval = 0.78
+reload_duration = 2.05
+max_range = 34.0
+
+[node name="Receiver" type="MeshInstance3D" parent="."]
+mesh = SubResource("WeaponMesh")
+material_override = SubResource("WeaponMaterial")
+
+[node name="Muzzle" type="Marker3D" parent="."]
+position = Vector3(0, 0, -0.34)
