@@ -1,0 +1,88 @@
+[gd_scene load_steps=8 format=3]
+
+[sub_resource type="Environment" id="Environment"]
+background_mode = 1
+background_color = Color(0.055, 0.085, 0.12, 1)
+ambient_light_source = 3
+ambient_light_color = Color(0.55, 0.63, 0.72, 1)
+ambient_light_energy = 0.7
+tonemap_mode = 2
+glow_enabled = true
+glow_intensity = 0.25
+
+[sub_resource type="BoxMesh" id="FloorMesh"]
+size = Vector3(64, 1, 64)
+[sub_resource type="BoxShape3D" id="FloorShape"]
+size = Vector3(64, 1, 64)
+[sub_resource type="StandardMaterial3D" id="FloorMat"]
+albedo_color = Color(0.12, 0.17, 0.21, 1)
+metallic = 0.25
+roughness = 0.82
+[sub_resource type="BoxMesh" id="CoverMesh"]
+size = Vector3(5, 2.2, 2)
+[sub_resource type="BoxShape3D" id="CoverShape"]
+size = Vector3(5, 2.2, 2)
+[sub_resource type="StandardMaterial3D" id="CoverMat"]
+albedo_color = Color(0.23, 0.31, 0.36, 1)
+metallic = 0.38
+roughness = 0.7
+
+[node name="Arena01" type="Node3D"]
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = SubResource("Environment")
+
+[node name="Sun" type="DirectionalLight3D" parent="."]
+rotation_degrees = Vector3(-52, -28, 0)
+light_energy = 1.4
+shadow_enabled = true
+
+[node name="Floor" type="StaticBody3D" parent="."]
+position = Vector3(0, -0.5, 0)
+[node name="Mesh" type="MeshInstance3D" parent="Floor"]
+mesh = SubResource("FloorMesh")
+material_override = SubResource("FloorMat")
+[node name="Collision" type="CollisionShape3D" parent="Floor"]
+shape = SubResource("FloorShape")
+
+[node name="CoverNorth" type="StaticBody3D" parent="."]
+position = Vector3(0, 1.1, -15)
+[node name="Mesh" type="MeshInstance3D" parent="CoverNorth"]
+mesh = SubResource("CoverMesh")
+material_override = SubResource("CoverMat")
+[node name="Collision" type="CollisionShape3D" parent="CoverNorth"]
+shape = SubResource("CoverShape")
+
+[node name="CoverSouth" type="StaticBody3D" parent="."]
+position = Vector3(0, 1.1, 15)
+[node name="Mesh" type="MeshInstance3D" parent="CoverSouth"]
+mesh = SubResource("CoverMesh")
+material_override = SubResource("CoverMat")
+[node name="Collision" type="CollisionShape3D" parent="CoverSouth"]
+shape = SubResource("CoverShape")
+
+[node name="CoverWest" type="StaticBody3D" parent="."]
+position = Vector3(-15, 1.1, 0)
+rotation_degrees = Vector3(0, 90, 0)
+[node name="Mesh" type="MeshInstance3D" parent="CoverWest"]
+mesh = SubResource("CoverMesh")
+material_override = SubResource("CoverMat")
+[node name="Collision" type="CollisionShape3D" parent="CoverWest"]
+shape = SubResource("CoverShape")
+
+[node name="CoverEast" type="StaticBody3D" parent="."]
+position = Vector3(15, 1.1, 0)
+rotation_degrees = Vector3(0, 90, 0)
+[node name="Mesh" type="MeshInstance3D" parent="CoverEast"]
+mesh = SubResource("CoverMesh")
+material_override = SubResource("CoverMat")
+[node name="Collision" type="CollisionShape3D" parent="CoverEast"]
+shape = SubResource("CoverShape")
+
+[node name="CenterPillar" type="StaticBody3D" parent="."]
+position = Vector3(0, 1.5, 0)
+[node name="Mesh" type="MeshInstance3D" parent="CenterPillar"]
+mesh = SubResource("CoverMesh")
+material_override = SubResource("CoverMat")
+[node name="Collision" type="CollisionShape3D" parent="CenterPillar"]
+shape = SubResource("CoverShape")
