@@ -24,6 +24,9 @@ func _run_smoke_test() -> void:
 	await process_frame
 	assert(game.players.has(1), "Solo player did not spawn")
 	assert(game.pause_layer != null, "In-match pause layer was not created")
+	var center_platform := game.get_node_or_null("Arena/CenterHighGround/Mesh") as MeshInstance3D
+	assert(center_platform != null, "Center arena platform is missing")
+	assert((center_platform.mesh as BoxMesh).size.x <= 9.0, "Center platform must not block the central sightline")
 	assert(not game.pause_layer.visible, "Pause menu must start hidden")
 	game._toggle_pause_menu()
 	assert(game.is_local_paused and game.pause_layer.visible, "Pause menu did not pause local input")
@@ -92,7 +95,10 @@ func _run_smoke_test() -> void:
 	assert(game.round_end_time_msec > Time.get_ticks_msec(), "Round must use a future monotonic deadline")
 	assert(game.scoreboard_panel != null, "Scoreboard UI was not created")
 	assert(game.hitmarker_label != null, "Hit confirmation UI was not created")
-	assert(game.minimap.position == Vector2(24, 72), "Minimap must stay below the match clock, clear of bottom-left vitals")
+	assert(game.health_bar != null and game.health_value_label != null, "Responsive vitals HUD is missing")
+	assert(game.weapon_label != null and game.ammo_reserve_label != null, "Weapon and reserve ammo HUD is missing")
+	assert(game.reload_state_label != null, "Reload status HUD is missing")
+	assert(game.minimap.position == Vector2(24, 70), "Minimap must stay below the match clock, clear of bottom-left vitals")
 	assert(game.pause_panel.theme != null, "Pause menu must use the original Grimholt UI theme")
 	assert(game.pause_options.get_child(1) is CheckButton, "Pause menu must expose a working fullscreen control")
 	assert(game.pause_options.get_child(3) is HSlider, "Pause menu must expose a working master-volume control")
@@ -109,6 +115,15 @@ func _run_smoke_test() -> void:
 	assert(player.get_node("Head/Camera3D").current, "Local player camera is not current")
 	assert(player.has_method("_update_first_person_feedback"), "First-person feedback update is missing")
 	assert(player.weapon_viewmodel != null, "Local weapon viewmodel was not created")
+	player.fire_cooldown = 0.0
+	player.ammo = 0
+	player._fire()
+	assert(not player.fire_audio.playing, "Empty magazine must not play a shot sound")
+	assert(player.fire_cooldown == 0.0, "Empty magazine must not consume a fire interval")
+	player.ammo = 30
+	player._reload()
+	assert(not player.reload_request_pending, "A full magazine must not start a reload request")
+	assert(not player.reload_audio.playing, "A rejected reload must not play reload audio")
 	player._update_first_person_feedback(1.0 / 60.0)
 	assert(player.camera.position.is_finite(), "Camera movement feedback produced an invalid position")
 	assert(player.weapon_viewmodel.position.is_finite(), "Weapon movement feedback produced an invalid position")
