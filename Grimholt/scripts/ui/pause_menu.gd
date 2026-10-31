@@ -21,6 +21,9 @@ func _ready() -> void:
 func set_menu_visible(value: bool) -> void:
 	overlay.visible = value
 
+func is_menu_visible() -> bool:
+	return overlay.visible
+
 func show_match_result(final_score: int) -> void:
 	heading.text = "RUNDE BEENDET  |  SCORE %d" % final_score
 	resume_button.visible = false
