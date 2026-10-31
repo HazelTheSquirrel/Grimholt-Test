@@ -32,6 +32,13 @@ func _run() -> void:
 		_check(player.get_node_or_null("Head/Camera3D/PulseCarbine") != null, "Pulse Carbine scene must exist")
 		_check(player.has_method("take_damage"), "Player damage receiver must exist")
 		_check(player.has_method("add_score"), "Player score receiver must exist")
+		_check(player.weapons.size() == 2, "Two distinct weapon roles must be available")
+		_check(player.weapon.display_name == "PULSE CARBINE", "Pulse Carbine must be the starting weapon")
+		player._switch_weapon()
+		_check(player.weapon.display_name == "ARC SCATTER", "Q weapon switch must select Arc Scatter")
+		_check(player.weapon.magazine_size == 8 and player.weapon.pellet_count == 7, "Arc Scatter must have its close-range multi-pellet role")
+		player._switch_weapon()
+		_check(player.weapon.display_name == "PULSE CARBINE", "Weapon cycling must return to Pulse Carbine")
 
 	var hud := game.get_node_or_null("HUD")
 	if hud != null:
@@ -40,11 +47,20 @@ func _run() -> void:
 		_check(hud.has_method("set_time"), "HUD match timer binding must exist")
 		_check(hud.has_method("show_hit_marker"), "HUD hit feedback must exist")
 		_check(hud.has_method("show_kill_marker"), "HUD elimination feedback must exist")
+		_check(hud.has_method("set_weapon"), "HUD active weapon binding must exist")
 
 	_check(InputMap.has_action("move_forward"), "Forward movement action must be configured")
 	_check(InputMap.has_action("fire"), "Fire action must be configured")
 	_check(InputMap.has_action("reload"), "Reload action must be configured")
+	_check(InputMap.has_action("switch_weapon"), "Weapon switching action must be configured")
 
+	if game != null and game.has_method("_toggle_pause"):
+		game._toggle_pause()
+		_check(get_tree().paused, "Pause action must pause the solo match")
+		_check(game.pause_menu.overlay.visible, "Pause overlay must be visible")
+		game._resume_match()
+		_check(not get_tree().paused, "Resume action must unpause the solo match")
+		_check(not game.pause_menu.overlay.visible, "Resume action must hide the pause overlay")
 	print("GRIMHOLT_FPS_SMOKE_TEST: %d failure(s)" % failures.size())
 	_finish()
 
