@@ -24,6 +24,9 @@ func _run_smoke_test() -> void:
 	await process_frame
 	assert(game.players.has(1), "Solo player did not spawn")
 	assert(game.pause_layer != null, "In-match pause layer was not created")
+	var center_platform := game.get_node_or_null("Arena/CenterHighGround/Mesh") as MeshInstance3D
+	assert(center_platform != null, "Center arena platform is missing")
+	assert((center_platform.mesh as BoxMesh).size.x <= 9.0, "Center platform must not block the central sightline")
 	assert(not game.pause_layer.visible, "Pause menu must start hidden")
 	game._toggle_pause_menu()
 	assert(game.is_local_paused and game.pause_layer.visible, "Pause menu did not pause local input")
