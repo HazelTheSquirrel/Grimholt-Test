@@ -98,7 +98,7 @@ func _run_smoke_test() -> void:
 	assert(game.health_bar != null and game.health_value_label != null, "Responsive vitals HUD is missing")
 	assert(game.weapon_label != null and game.ammo_reserve_label != null, "Weapon and reserve ammo HUD is missing")
 	assert(game.reload_state_label != null, "Reload status HUD is missing")
-	assert(game.minimap.position == Vector2(24, 72), "Minimap must stay below the match clock, clear of bottom-left vitals")
+	assert(game.minimap.position == Vector2(24, 70), "Minimap must stay below the match clock, clear of bottom-left vitals")
 	assert(game.pause_panel.theme != null, "Pause menu must use the original Grimholt UI theme")
 	assert(game.pause_options.get_child(1) is CheckButton, "Pause menu must expose a working fullscreen control")
 	assert(game.pause_options.get_child(3) is HSlider, "Pause menu must expose a working master-volume control")
