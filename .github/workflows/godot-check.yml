@@ -2,7 +2,7 @@ name: Godot 4.7.2 validation
 
 on:
   push:
-    branches: [main, hardening/godot-4.7.2-stability]
+    branches: [main, rebuild/halo-inspired-fps-foundation]
   pull_request:
     branches: [main]
   workflow_dispatch:
@@ -14,6 +14,7 @@ concurrency:
 jobs:
   validate:
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -34,5 +35,5 @@ jobs:
       - name: Headless startup smoke test
         run: godot --headless --path Grimholt --quit-after 10
 
-      - name: Shooter gameplay smoke test
-        run: godot --headless --path Grimholt --script res://tests/shooter_smoke_test.gd
+      - name: Modular FPS gameplay smoke test
+        run: godot --headless --path Grimholt --script res://tests/fps_foundation_smoke_test.gd
