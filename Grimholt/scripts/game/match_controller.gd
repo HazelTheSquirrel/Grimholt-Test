@@ -41,6 +41,7 @@ func _spawn_player() -> void:
 	player.global_position = Vector3(0, 1.1, 25)
 	player.pause_requested.connect(_toggle_pause)
 	player.hit_confirmed.connect(hud.show_hit_marker)
+	player.weapon_changed.connect(hud.set_weapon)
 	player.health_changed.connect(hud.set_health)
 	player.ammo_changed.connect(hud.set_ammo)
 	player.score_changed.connect(hud.set_score)
