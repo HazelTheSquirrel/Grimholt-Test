@@ -9,9 +9,9 @@ func setup(p_player: Node, p_manager: Node) -> void:
 	player = p_player
 	game_manager = p_manager
 	_build_ui()
-	player.vitals_changed.connect(_on_vitals_changed)
-	game_manager.score_changed.connect(_on_score_changed)
-	player.get_node("Head/Camera3D/WeaponController").weapon_state_changed.connect(_on_weapon_changed)
+	player.connect("vitals_changed", Callable(self, "_on_vitals_changed"))
+	game_manager.connect("score_changed", Callable(self, "_on_score_changed"))
+	player.get_node("Head/Camera3D/WeaponController").connect("weapon_state_changed", Callable(self, "_on_weapon_changed"))
 func _build_ui() -> void:
 	var root := Control.new()
 	root.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
