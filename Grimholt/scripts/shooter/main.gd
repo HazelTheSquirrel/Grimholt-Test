@@ -462,165 +462,187 @@ func _on_master_volume_changed(value: float) -> void:
 
 func _make_hud_panel_style() -> StyleBoxFlat:
 	var style := StyleBoxFlat.new()
-	style.bg_color = Color(0.018, 0.035, 0.052, 0.88)
-	style.border_color = Color(0.20, 0.48, 0.52, 0.82)
+	style.bg_color = Color(0.025, 0.035, 0.047, 0.94)
+	style.border_color = Color(0.30, 0.48, 0.49, 0.92)
 	style.set_border_width_all(1)
-	style.set_corner_radius_all(6)
+	style.set_corner_radius_all(4)
 	style.content_margin_left = 14.0
 	style.content_margin_right = 14.0
-	style.content_margin_top = 9.0
-	style.content_margin_bottom = 9.0
+	style.content_margin_top = 10.0
+	style.content_margin_bottom = 10.0
 	return style
 
+
+func _make_hud_accent_style(accent: Color) -> StyleBoxFlat:
+	var style := _make_hud_panel_style()
+	style.border_color = accent
+	style.set_border_width(SIDE_LEFT, 3)
+	return style
+
+
+func _make_hud_label(text_value: String, font_size: int, color: Color, alignment: HorizontalAlignment = HORIZONTAL_ALIGNMENT_LEFT) -> Label:
+	var label := Label.new()
+	label.text = text_value
+	label.horizontal_alignment = alignment
+	label.add_theme_font_size_override("font_size", font_size)
+	label.add_theme_color_override("font_color", color)
+	label.add_theme_color_override("font_shadow_color", Color(0.0, 0.0, 0.0, 0.65))
+	label.add_theme_constant_override("shadow_offset_x", 1)
+	label.add_theme_constant_override("shadow_offset_y", 1)
+	return label
+
+
 func _build_hud() -> void:
+	# Entire HUD is screen-space UI. No 3D meshes or camera-attached geometry are created here.
 	hud_layer = CanvasLayer.new()
 	hud_layer.layer = 5
 	add_child(hud_layer)
 
-	# Top information is kept compact and away from the central sight picture.
-	var top := HBoxContainer.new()
-	top.set_anchors_and_offsets_preset(Control.PRESET_TOP_WIDE)
-	top.offset_left = 24
-	top.offset_top = 18
-	top.offset_right = -24
-	top.offset_bottom = 56
-	hud_layer.add_child(top)
+	var root := Control.new()
+	root.name = "CombatHUD"
+	root.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	root.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	hud_layer.add_child(root)
 
-	timer_label = Label.new()
-	timer_label.add_theme_font_size_override("font_size", 21)
-	timer_label.add_theme_color_override("font_color", Color(0.46, 0.94, 0.88))
-	timer_label.add_theme_color_override("font_shadow_color", Color(0.0, 0.0, 0.0, 0.9))
-	timer_label.add_theme_constant_override("shadow_offset_x", 1)
-	timer_label.add_theme_constant_override("shadow_offset_y", 1)
-	top.add_child(timer_label)
-	var spacer := Control.new()
-	spacer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	top.add_child(spacer)
-	score_label = Label.new()
-	score_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
-	score_label.add_theme_font_size_override("font_size", 16)
-	score_label.add_theme_color_override("font_color", Color(0.84, 0.91, 0.94))
-	score_label.add_theme_color_override("font_shadow_color", Color(0.0, 0.0, 0.0, 0.9))
-	top.add_child(score_label)
+	var muted := Color(0.60, 0.70, 0.72)
+	var bright := Color(0.91, 0.95, 0.92)
+	var teal := Color(0.31, 0.88, 0.78)
+	var amber := Color(0.94, 0.69, 0.34)
 
-	var crosshair := Label.new()
-	crosshair.text = "+"
-	crosshair.set_anchors_and_offsets_preset(Control.PRESET_CENTER)
-	crosshair.add_theme_font_size_override("font_size", 24)
-	crosshair.add_theme_color_override("font_color", Color(0.94, 0.98, 1.0, 0.92))
-	crosshair.add_theme_color_override("font_shadow_color", Color(0.0, 0.0, 0.0, 0.95))
-	crosshair.add_theme_constant_override("shadow_offset_x", 1)
-	crosshair.add_theme_constant_override("shadow_offset_y", 1)
-	hud_layer.add_child(crosshair)
+	# Match status: compact plate at the upper-left safe edge.
+	var match_panel := PanelContainer.new()
+	match_panel.set_anchors_and_offsets_preset(Control.PRESET_TOP_LEFT)
+	match_panel.offset_left = 24
+	match_panel.offset_top = 20
+	match_panel.offset_right = 286
+	match_panel.offset_bottom = 78
+	match_panel.add_theme_stylebox_override("panel", _make_hud_accent_style(teal))
+	root.add_child(match_panel)
+	var match_row := HBoxContainer.new()
+	match_row.add_theme_constant_override("separation", 12)
+	match_panel.add_child(match_row)
+	var match_name := _make_hud_label("GRIMHOLT  /  DEATHMATCH", 13, muted)
+	match_name.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	match_row.add_child(match_name)
+	timer_label = _make_hud_label("15:00", 20, bright, HORIZONTAL_ALIGNMENT_RIGHT)
+	match_row.add_child(timer_label)
 
-	# Minimap stays in the upper-left safe area, with a fixed square drawing area.
+	# Score panel, aligned to the opposite top edge.
+	var score_panel := PanelContainer.new()
+	score_panel.set_anchors_and_offsets_preset(Control.PRESET_TOP_RIGHT)
+	score_panel.offset_left = -244
+	score_panel.offset_top = 20
+	score_panel.offset_right = -24
+	score_panel.offset_bottom = 94
+	score_panel.add_theme_stylebox_override("panel", _make_hud_panel_style())
+	root.add_child(score_panel)
+	var score_column := VBoxContainer.new()
+	score_column.add_theme_constant_override("separation", 2)
+	score_panel.add_child(score_column)
+	score_label = _make_hud_label("TOP FRAGGERS", 12, teal, HORIZONTAL_ALIGNMENT_RIGHT)
+	score_column.add_child(score_label)
+
+	# Minimap sits below the match plate and stays square at every aspect ratio.
 	minimap = Control.new()
+	minimap.name = "TacticalMinimap"
 	minimap.set_anchors_and_offsets_preset(Control.PRESET_TOP_LEFT)
-	minimap.position = Vector2(24, 70)
-	minimap.custom_minimum_size = Vector2(160, 160)
+	minimap.position = Vector2(24, 92)
+	minimap.custom_minimum_size = Vector2(164, 164)
 	minimap.draw.connect(_draw_minimap)
-	hud_layer.add_child(minimap)
+	root.add_child(minimap)
 
-	# Health panel: a readable numeric value plus a proportional bar.
+	# Fine, unobtrusive reticle. It is a screen-space label, never a world-space plane.
+	var crosshair := _make_hud_label("+", 22, Color(0.94, 0.98, 0.96, 0.95), HORIZONTAL_ALIGNMENT_CENTER)
+	crosshair.set_anchors_and_offsets_preset(Control.PRESET_CENTER)
+	crosshair.offset_left = -12
+	crosshair.offset_top = -16
+	crosshair.offset_right = 12
+	crosshair.offset_bottom = 16
+	crosshair.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	root.add_child(crosshair)
+
+	# Player vitals: fixed bottom-left safe-area card with readable value and health bar.
 	var vitals_panel := PanelContainer.new()
 	vitals_panel.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_LEFT)
 	vitals_panel.offset_left = 24
 	vitals_panel.offset_top = -112
 	vitals_panel.offset_right = 310
 	vitals_panel.offset_bottom = -22
-	vitals_panel.add_theme_stylebox_override("panel", _make_hud_panel_style())
-	hud_layer.add_child(vitals_panel)
+	vitals_panel.add_theme_stylebox_override("panel", _make_hud_accent_style(teal))
+	root.add_child(vitals_panel)
 	var vitals_column := VBoxContainer.new()
-	vitals_column.add_theme_constant_override("separation", 5)
+	vitals_column.add_theme_constant_override("separation", 7)
 	vitals_panel.add_child(vitals_column)
 	var vitals_header := HBoxContainer.new()
 	vitals_column.add_child(vitals_header)
-	health_label = Label.new()
-	health_label.text = "VITALS"
-	health_label.add_theme_font_size_override("font_size", 13)
-	health_label.add_theme_color_override("font_color", Color(0.52, 0.92, 0.84))
+	health_label = _make_hud_label("VITALS", 12, teal)
 	vitals_header.add_child(health_label)
-	var health_spacer := Control.new()
-	health_spacer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	vitals_header.add_child(health_spacer)
-	health_value_label = Label.new()
-	health_value_label.text = "100 / 100"
-	health_value_label.add_theme_font_size_override("font_size", 17)
-	health_value_label.add_theme_color_override("font_color", Color(0.92, 0.97, 0.96))
+	var vitals_spacer := Control.new()
+	vitals_spacer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	vitals_header.add_child(vitals_spacer)
+	health_value_label = _make_hud_label("100 / 100", 18, bright, HORIZONTAL_ALIGNMENT_RIGHT)
 	vitals_header.add_child(health_value_label)
 	health_bar = ProgressBar.new()
 	health_bar.min_value = 0
 	health_bar.max_value = 100
 	health_bar.value = 100
 	health_bar.show_percentage = false
+	health_bar.custom_minimum_size = Vector2(0, 13)
 	var health_track := StyleBoxFlat.new()
-	health_track.bg_color = Color(0.08, 0.12, 0.15, 1.0)
-	health_track.set_corner_radius_all(3)
+	health_track.bg_color = Color(0.07, 0.10, 0.12, 1.0)
+	health_track.set_corner_radius_all(2)
 	health_bar.add_theme_stylebox_override("background", health_track)
 	var health_fill := StyleBoxFlat.new()
-	health_fill.bg_color = Color(0.20, 0.82, 0.68, 1.0)
-	health_fill.set_corner_radius_all(3)
+	health_fill.bg_color = teal
+	health_fill.set_corner_radius_all(2)
 	health_bar.add_theme_stylebox_override("fill", health_fill)
-	health_bar.custom_minimum_size.y = 12
 	vitals_column.add_child(health_bar)
 
-	# Weapon panel is anchored independently to the lower-right safe area.
+	# Weapon/ammo card mirrors the vitals card in the bottom-right corner.
 	var weapon_panel := PanelContainer.new()
 	weapon_panel.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_RIGHT)
-	weapon_panel.offset_left = -286
-	weapon_panel.offset_top = -124
+	weapon_panel.offset_left = -310
+	weapon_panel.offset_top = -122
 	weapon_panel.offset_right = -24
 	weapon_panel.offset_bottom = -22
-	weapon_panel.add_theme_stylebox_override("panel", _make_hud_panel_style())
-	hud_layer.add_child(weapon_panel)
+	weapon_panel.add_theme_stylebox_override("panel", _make_hud_accent_style(amber))
+	root.add_child(weapon_panel)
 	var weapon_column := VBoxContainer.new()
-	weapon_column.add_theme_constant_override("separation", 2)
+	weapon_column.add_theme_constant_override("separation", 3)
 	weapon_panel.add_child(weapon_column)
-	weapon_label = Label.new()
-	weapon_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
-	weapon_label.add_theme_font_size_override("font_size", 12)
-	weapon_label.add_theme_color_override("font_color", Color(0.54, 0.91, 0.88))
+	weapon_label = _make_hud_label("PULSE CARBINE", 12, amber, HORIZONTAL_ALIGNMENT_RIGHT)
 	weapon_column.add_child(weapon_label)
 	var ammo_row := HBoxContainer.new()
 	ammo_row.alignment = BoxContainer.ALIGNMENT_END
-	ammo_row.add_theme_constant_override("separation", 8)
+	ammo_row.add_theme_constant_override("separation", 7)
 	weapon_column.add_child(ammo_row)
-	ammo_label = Label.new()
-	ammo_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
-	ammo_label.add_theme_font_size_override("font_size", 32)
-	ammo_label.add_theme_color_override("font_color", Color(0.96, 0.97, 0.94))
+	ammo_label = _make_hud_label("30", 34, bright, HORIZONTAL_ALIGNMENT_RIGHT)
 	ammo_row.add_child(ammo_label)
-	ammo_reserve_label = Label.new()
-	ammo_reserve_label.vertical_alignment = VERTICAL_ALIGNMENT_BOTTOM
-	ammo_reserve_label.add_theme_font_size_override("font_size", 17)
-	ammo_reserve_label.add_theme_color_override("font_color", Color(0.72, 0.80, 0.82))
+	ammo_reserve_label = _make_hud_label("/ 120", 17, muted, HORIZONTAL_ALIGNMENT_RIGHT)
 	ammo_row.add_child(ammo_reserve_label)
-	reload_state_label = Label.new()
-	reload_state_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
-	reload_state_label.add_theme_font_size_override("font_size", 11)
-	reload_state_label.add_theme_color_override("font_color", Color(0.95, 0.76, 0.40))
+	reload_state_label = _make_hud_label("RELOADING", 11, amber, HORIZONTAL_ALIGNMENT_RIGHT)
 	reload_state_label.visible = false
 	weapon_column.add_child(reload_state_label)
 
-	feed_label = Label.new()
+	# Kill feed is independent from the score plate and remains within the top-right safe area.
+	feed_label = _make_hud_label("", 13, bright, HORIZONTAL_ALIGNMENT_RIGHT)
 	feed_label.set_anchors_and_offsets_preset(Control.PRESET_TOP_RIGHT)
+	feed_label.offset_left = -360
+	feed_label.offset_top = 108
 	feed_label.offset_right = -24
-	feed_label.offset_top = 74
-	feed_label.offset_left = -330
-	feed_label.add_theme_font_size_override("font_size", 14)
-	feed_label.add_theme_color_override("font_color", Color(0.84, 0.91, 0.94))
-	feed_label.add_theme_color_override("font_shadow_color", Color(0.0, 0.0, 0.0, 0.9))
-	feed_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
-	hud_layer.add_child(feed_label)
+	feed_label.offset_bottom = 170
+	root.add_child(feed_label)
 
-	hitmarker_label = Label.new()
-	hitmarker_label.text = "✕"
+	hitmarker_label = _make_hud_label("×", 27, amber, HORIZONTAL_ALIGNMENT_CENTER)
 	hitmarker_label.visible = false
 	hitmarker_label.set_anchors_and_offsets_preset(Control.PRESET_CENTER)
-	hitmarker_label.add_theme_font_size_override("font_size", 32)
-	hitmarker_label.add_theme_color_override("font_color", Color(1.0, 0.88, 0.35))
-	hud_layer.add_child(hitmarker_label)
+	hitmarker_label.offset_left = -16
+	hitmarker_label.offset_top = -18
+	hitmarker_label.offset_right = 16
+	hitmarker_label.offset_bottom = 18
+	root.add_child(hitmarker_label)
 
+	# Scoreboard is a temporary center overlay shown only while TAB is held.
 	scoreboard_panel = PanelContainer.new()
 	scoreboard_panel.set_anchors_and_offsets_preset(Control.PRESET_CENTER)
 	scoreboard_panel.offset_left = -310
@@ -629,12 +651,13 @@ func _build_hud() -> void:
 	scoreboard_panel.offset_bottom = 250
 	scoreboard_panel.visible = false
 	scoreboard_panel.add_theme_stylebox_override("panel", _make_hud_panel_style())
-	hud_layer.add_child(scoreboard_panel)
+	root.add_child(scoreboard_panel)
 	scoreboard_label = RichTextLabel.new()
 	scoreboard_label.bbcode_enabled = true
 	scoreboard_label.fit_content = true
 	scoreboard_label.scroll_active = false
 	scoreboard_panel.add_child(scoreboard_label)
+
 
 func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventKey and event.pressed and not event.echo and event.keycode == KEY_ESCAPE and round_active:
