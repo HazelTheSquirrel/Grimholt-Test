@@ -40,6 +40,10 @@ var is_crouched := false
 var fire_held := false
 var fire_audio: AudioStreamPlayer
 var reload_audio: AudioStreamPlayer
+var base_camera_position := Vector3.ZERO
+var base_viewmodel_position := Vector3(0.24, -0.20, -0.42)
+var bob_phase := 0.0
+var viewmodel_recoil := 0.0
 
 func _ready() -> void:
 	collision_shape.shape = collision_shape.shape.duplicate()
@@ -56,8 +60,28 @@ func _ready() -> void:
 	camera.current = is_multiplayer_authority()
 	if is_multiplayer_authority():
 		Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
+		base_camera_position = camera.position
 		_build_weapon_viewmodel()
 		_build_audio_feedback()
+
+func _process(delta: float) -> void:
+	if not is_multiplayer_authority() or camera == null or weapon_viewmodel == null:
+		return
+	_update_first_person_feedback(delta)
+
+func _update_first_person_feedback(delta: float) -> void:
+	var is_playing := bool(get_parent().get("round_active")) and not bool(get_parent().get("is_local_paused"))
+	var planar_speed := Vector2(velocity.x, velocity.z).length()
+	var moving := is_playing and is_on_floor() and planar_speed > 0.2
+	if moving:
+		bob_phase += delta * clampf(planar_speed * 1.35, 0.0, 12.0)
+	var bob_strength := clampf(planar_speed / WALK_SPEED, 0.0, 1.0) if moving else 0.0
+	var camera_bob := Vector3(0.0, sin(bob_phase * 2.0) * 0.025 * bob_strength, 0.0)
+	var weapon_bob := Vector3(sin(bob_phase) * 0.009 * bob_strength, absf(cos(bob_phase)) * 0.012 * bob_strength, 0.0)
+	viewmodel_recoil = move_toward(viewmodel_recoil, 0.0, delta * 0.42)
+	var smoothing := 1.0 - exp(-delta * 14.0)
+	camera.position = camera.position.lerp(base_camera_position + camera_bob, smoothing)
+	weapon_viewmodel.position = weapon_viewmodel.position.lerp(base_viewmodel_position + weapon_bob + Vector3(0.0, viewmodel_recoil * 0.45, viewmodel_recoil), smoothing)
 
 func _unhandled_input(event: InputEvent) -> void:
 	if not is_multiplayer_authority():
@@ -165,7 +189,7 @@ func _make_tone(frequency: float, duration: float, amplitude: float, noisy: bool
 func _build_weapon_viewmodel() -> void:
 	weapon_viewmodel = Node3D.new()
 	weapon_viewmodel.name = "WeaponViewmodel"
-	weapon_viewmodel.position = Vector3(0.24, -0.20, -0.42)
+	weapon_viewmodel.position = base_viewmodel_position
 	camera.add_child(weapon_viewmodel)
 
 	carbine_model = Node3D.new()
@@ -254,6 +278,7 @@ func _fire() -> void:
 	fire_cooldown = float(spec["fire_interval"])
 	if fire_audio != null:
 		fire_audio.play()
+	viewmodel_recoil = minf(viewmodel_recoil + (0.095 if current_weapon == "scatter" else 0.055), 0.16)
 	get_parent().request_fire(get_multiplayer_authority())
 
 func _reload() -> void:
