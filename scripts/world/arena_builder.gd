@@ -1,11 +1,9 @@
 extends Node
-
 const FLOOR: Color = Color(0.075, 0.11, 0.15)
 const WALL: Color = Color(0.12, 0.19, 0.25)
 const ARMOR: Color = Color(0.19, 0.29, 0.36)
 const CYAN: Color = Color(0.04, 0.65, 0.92)
 const AMBER: Color = Color(0.95, 0.48, 0.12)
-
 func build(world: Node3D) -> void:
 	_add_box(world, Vector3(0, -0.5, 0), Vector3(52, 1, 52), FLOOR, 0.35)
 	_add_box(world, Vector3(0, 4, -26), Vector3(52, 8, 1), WALL)
@@ -19,8 +17,6 @@ func build(world: Node3D) -> void:
 	for x in [-15.0, -5.0, 5.0, 15.0]:
 		for z in [-15.0, 15.0]:
 			_add_cover_block(world, Vector3(x, 1.1, z))
-	for z in [-9.0, 9.0]:
-		_add_box(world, Vector3(-9, 1.4, z * 0.0), Vector3(2.4, 2.8, 7.0), ARMOR)
 	_add_box(world, Vector3(-9, 1.4, 0), Vector3(2.4, 2.8, 7.0), ARMOR)
 	_add_box(world, Vector3(9, 1.4, 0), Vector3(2.4, 2.8, 7.0), ARMOR)
 	_add_box(world, Vector3(0, 0.8, -8), Vector3(7, 1.6, 2.2), ARMOR)
@@ -37,15 +33,12 @@ func build(world: Node3D) -> void:
 	_add_pillar(world, Vector3(23.8, 0.0, 23.8))
 	_add_lighting(world)
 	_add_environment(world)
-
 func _add_cover_block(world: Node3D, pos: Vector3) -> void:
 	_add_box(world, pos, Vector3(3.2, 2.2, 2.2), ARMOR)
 	_add_box(world, pos + Vector3(0, 1.12, 0), Vector3(3.35, 0.08, 2.3), CYAN, 0.2, true, false)
-
 func _add_pillar(world: Node3D, pos: Vector3) -> void:
 	_add_box(world, pos + Vector3(0, 3.0, 0), Vector3(1.2, 6.0, 1.2), WALL)
 	_add_box(world, pos + Vector3(0, 6.1, 0), Vector3(1.5, 0.22, 1.5), CYAN, 0.2, true, false)
-
 func _add_lighting(world: Node3D) -> void:
 	var sun: DirectionalLight3D = DirectionalLight3D.new()
 	sun.rotation_degrees = Vector3(-52, -28, 0)
@@ -59,7 +52,6 @@ func _add_lighting(world: Node3D) -> void:
 		fill.light_energy = 1.5
 		fill.omni_range = 18.0
 		world.add_child(fill)
-
 func _add_environment(world: Node3D) -> void:
 	var environment_node: WorldEnvironment = WorldEnvironment.new()
 	var env: Environment = Environment.new()
@@ -73,7 +65,6 @@ func _add_environment(world: Node3D) -> void:
 	env.glow_intensity = 0.35
 	environment_node.environment = env
 	world.add_child(environment_node)
-
 func _add_box(world: Node3D, pos: Vector3, dimensions: Vector3, color: Color, metallic: float = 0.55, emissive: bool = false, collision_enabled: bool = true) -> void:
 	var parent: Node3D
 	if collision_enabled:
