@@ -1,91 +1,56 @@
-# Grimholt Foundation Audit
+# Grimholt – Architektur-Audit
 
-Status: 2026-10-30
-Engine target: Godot 4.7.2
-Branch policy: all development directly on `main`
+Stand: 31.10.2026  
+Engine: Godot 4.7.2  
+Aktiver Entwicklungszweig: `rebuild/halo-inspired-fps-foundation`
 
-## Direction
+## Ziel
 
-Grimholt is an original multiplayer arena shooter. Its sole design reference is the gameplay and presentation quality of Halo 3. This is a principles-level reference only: Grimholt must use original code, names, worldbuilding, maps, weapons, characters, models, textures, animation, sound, music, interface artwork and visual identity. No Bungie or Microsoft game assets, trademarks, distinctive copied layouts, audio, story elements or other protected content may be included.
+Grimholt ist ein eigenständiger Arena-FPS. Halo 3 ist ausschließlich eine abstrakte Referenz für lesbare Gefechte, bewusst gestaltete Waffenrollen und klares Match-Feedback. Keine geschützten Assets, Namen, Waffen-/Figurendesigns, Kartenlayouts, UI-Kompositionen oder Audioinhalte werden übernommen.
 
-The goal is to translate broad design lessons into a distinct Grimholt identity:
+## Aktiver Build
 
-- **Readable arena combat:** clear sightlines, fair engagements, consistent movement and weapon rules, and strong spatial readability.
-- **Focused player dashboard:** a restrained HUD hierarchy that communicates health/shields (if a shield system is implemented), ammunition, equipment, match time, score and immediate combat events without obscuring the sight picture.
-- **Distinct weapon sandbox:** weapons with deliberate roles, recognizable handling, meaningful trade-offs and reliable feedback.
-- **Strong combat feedback:** original hit confirmation, damage direction when known, clear kill/respawn communication and readable state changes.
-- **Polished multiplayer flow:** concise lobby, match start, scoreboard, round result and rematch transitions.
-- **Original science-fiction identity:** Grimholt-specific silhouettes, materials, symbols, typography, palette, soundscape and environmental storytelling.
+Der aktive Einstieg ist `scenes/main.tscn` und verwendet einen modularen Offline-Match-Controller.
 
-## Current implementation found on main
+- Spieler: First-Person-Bewegung, Mausblick, Sprung, Gesundheit, Respawn und Pausezustand.
+- Waffen: Pulse Carbine (Hitscan) und Arc Scatter (sieben Pellet-Strahlen), getrennte Magazine/Reserven, Feuerrate und Nachladen.
+- Gegner: fünf Bots mit Verfolgung, einfacher Hindernissteuerung, Angriffsdistanz und Sichtlinienprüfung.
+- Match: zehnminütiger lokaler Deathmatch-Ablauf, Punkte, Bot-Respawn und Rundenende.
+- UI: Score, Timer, Gesundheit, aktive Waffe, Munition, Fadenkreuz, Treffer-/Abschussfeedback und Pausemenü.
+- Szenen: Spieler, Waffen, Bots, Arena, HUD und Pausemenü sind im Godot-Editor einzeln sichtbar und editierbar.
 
-### Present
-- Godot 4.7.2 project and procedural greybox arena.
-- First-person player controller, basic rifle, ammo/reload, health, hit marker.
-- Free-for-all score and round timer.
-- Two original weapon roles: server-authoritative Pulse Carbine and short-range Arc Scatter, with independent ammo reserves, switching, reload timing and pellet spread.
-- ENet host/join skeleton and server-side combat validation.
-- Server-driven bots with target acquisition, engagement-distance control, strafing, short-range obstacle steering and line-of-sight-gated fire.
-- Minimap, kill feed, top-fragger label, scoreboard.
-- Headless script validation and a gameplay smoke test.
+## Architektur
 
-### Foundation gaps
+Die aktive Gameplay-Grundlage ist auf folgende Verantwortlichkeiten aufgeteilt:
 
-1. **Application and match state are not separated.** The game controller owns menu construction, match lifecycle, networking, combat, bots, scoreboard and HUD in one large script. The previous cyclic inheritance issue was removed by flattening the systems into one script; that fixed parsing, but it is not the intended long-term architecture.
-2. **Pause is present but needs runtime verification.** ESC opens a local pause overlay. It must not freeze the network authority or other players.
-3. **Options are incomplete.** The main menu currently exposes only fullscreen and master volume. Graphics, sound, controls and extras need real settings, persistence and validation rather than decorative menu labels.
-4. **HUD needs a proper layout pass.** Existing elements are mostly labels positioned with anchors and offsets. There is no responsive HUD specification, scale setting, safe-area treatment or visual acceptance test.
-5. **The reported oversized bar is not identifiable from source alone.** A screenshot is required before changing an unknown visual element.
-6. **Multiplayer is prototype-grade.** The server owns damage, score and ammo, but there is no lag compensation, robust reconnect/session flow, packet-loss test, prediction/reconciliation or complete client disconnect handling.
-7. **Bot navigation is still prototype-grade.** Bots now manage engagement distance, strafe, probe nearby obstacles and require a clear line of sight before firing. They still do not use navigation meshes, multi-step pathfinding, tactical cover selection or difficulty profiles.
-8. **Gameplay content is very thin.** One greybox arena, one rifle, one FFA ruleset and placeholder actors are not yet a complete shooter foundation.
-9. **Weapon sandbox is still early.** The Pulse Carbine and Arc Scatter now have separate server-owned ammo pools, fire cadence, reload times and damage patterns. There are still no pickups, recoil model, weapon animations or third weapon.
-10. **Current CI is not visual QA.** Headless import, parse and smoke tests do not prove that a windowed menu is laid out correctly or that mouse interaction works.
+| Bereich | Verantwortung |
+|---|---|
+| `scripts/game/match_controller.gd` | Match-Lifecycle, Spawn, Score, Timer und Pausekoordination |
+| `scripts/player/player_controller.gd` | lokale Bewegung, Kamera, Eingabe, Treffer und Gesundheit |
+| `scripts/combat/weapon_controller.gd` | Munitionszustand, Feuerrate, Nachladen und Waffenparameter |
+| `scripts/ai/arena_bot.gd` | Zielverfolgung, Hindernissteuerung, Sichtlinie und Schaden |
+| `scripts/ui/hud_controller.gd` | HUD-Daten und temporäres Trefferfeedback |
+| `scripts/ui/pause_menu.gd` | Pause- und Rundenende-Menü |
 
-## Required foundation order
+Der alte Prototyp unter `scripts/shooter/` und `scenes/shooter/` bleibt als Referenz erhalten, ist aber nicht der aktive Einstieg. Seine frühere zentrale `main.gd`-Datei ist noch nicht in die neue modulare Struktur migriert.
 
-### A. Application and match flow
-- Explicit states: boot, main menu, lobby, loading, playing, local pause, match result, disconnect/error.
-- One owner for transitions; no ad-hoc visibility toggles scattered through gameplay code.
-- ESC opens the in-match pause menu: **Match verlassen**, **Optionen**, **Spiel verlassen**, and **Weiterspielen**.
-- Leaving a match tears down the peer and actors cleanly; it must not silently leave a host session running.
-- Local pause must not pause the network authority or other clients.
+## Validierung
 
-### B. Settings
-- Graphics: window mode, resolution, VSync, quality presets.
-- Sound: master, effects, music and voice buses (only as those buses are implemented).
-- Controls: remapping, mouse sensitivity, invert look, crouch behavior.
-- Extras: HUD scale/visibility, subtitles/accessibility and gameplay preferences.
-- Settings must be saved, loaded, range-checked and applied consistently.
+GitHub Actions soll unter Godot 4.7.2 Folgendes ausführen:
+1. Projektimport im Headless-Modus.
+2. Laden/Validieren aller GDScript-Dateien.
+3. Headless-Start der Hauptszene.
+4. Gameplay-Smoke-Test für Szenen, Eingaben, Waffenwechsel, HUD und Pause/Resume.
 
-### C. HUD and presentation
-- Treat the HUD as a player dashboard, not decoration.
-- Keep the central sight picture clean; use deliberate corner/edge anchoring and resolution-aware scaling.
-- Separate persistent status (ammo, health/shields where applicable, timer, score) from short-lived events (hit confirmation, damage direction, kill feed).
-- Add damage direction only when the damage source and direction are known.
-- Build a screenshot-based visual regression checklist at common 16:9 and ultrawide resolutions.
-- All icons, typography, shapes, colors and panel compositions must be designed specifically for Grimholt.
+Ein erfolgreicher CI-Lauf bestätigt nur die getesteten technischen Pfade. Fensterlayout, Mausgefühl, Performance und längere Spielsessions benötigen zusätzlich eine manuelle Prüfung im Godot-Editor.
 
-### D. Runtime and multiplayer correctness
-- Separate state, presentation and input responsibilities using composition and signals, not cyclic script inheritance.
-- Server-authoritative hit, damage, score, ammo, reload and respawn.
-- Add host/client tests, disconnect tests, invalid RPC tests, latency and packet-loss scenarios.
-- Add a deterministic match lifecycle test suite.
+## Noch nicht umgesetzt
 
-### E. Combat and maps
-- Establish one polished rifle loop before adding more weapons.
-- Expand the current short-range steering into navigation-aware pathfinding, tactical cover selection and difficulty profiles; test movement and line-of-sight behavior.
-- Design maps around sightlines, controlled engagement distances, cover, verticality and readable original landmarks.
-- Build weapon and equipment roles around a coherent sandbox; avoid copying any specific game's weapon roster or balance values.
+- Multiplayer-Host/Join, serverautoritatives Combat, Replikation, Lag Compensation und Reconnect.
+- NavigationMesh-Pfadfindung und taktische Deckungswahl für Bots.
+- Settings-Menüs mit persistenter Steuerungs-/Grafik-/Audio-Konfiguration.
+- Waffen-Pickups, Health-/Ammo-Pickups und weitere Waffen.
+- Finale Modelle, Animationen, Audio, Partikeleffekte und mehrere handgebaute Karten.
+- Netzwerk-, Last-, Paketverlust- und Disconnect-Tests.
 
-## Reference-derived design principles
-
-Halo 3 is useful as a high-level study of readable combat, a compact player information hierarchy, deliberate weapon roles, clear multiplayer communication and polished match presentation. These are general design lessons, not permission to reproduce Bungie's expression. Grimholt must create its own interface geometry, iconography, typography, color system, assets, terminology, sound and gameplay content.
-
-Do not use Halo names, logos, character or faction designs, map layouts, weapon designs, UI artwork, sounds, music, extracted assets or recognizable copied compositions. Use only original Grimholt implementations.
-
-## Current implementation status
-
-The local in-match pause menu has been added. It offers Match verlassen, Optionen, Spiel verlassen and Weiterspielen. The Options page currently exposes the planned categories (Grafik, Sound, Steuerung, Extras), but those categories are navigation placeholders, not completed settings screens. A local pause flag gates local input without globally pausing the match simulation.
-
-Do not call the foundation complete until the state flow, settings persistence, HUD visual QA and multiplayer test coverage above are implemented and verified.
+Diese Punkte sind ausdrücklich nicht als fertig zu betrachten. Die frühere ENet-Implementierung bleibt nur als Referenz erhalten und ist nicht in den aktiven Offline-Build integriert.
