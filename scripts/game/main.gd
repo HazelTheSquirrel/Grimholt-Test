@@ -18,9 +18,11 @@ func _ready() -> void:
 	player = PLAYER_SCENE.instantiate() as CharacterBody3D
 	player.position = Vector3(0, 0.2, 12)
 	add_child(player)
+	player.player_damaged.connect(_on_player_damaged)
 	game_manager = GAME_MANAGER.new()
 	game_manager.name = "GameManager"
 	add_child(game_manager)
+	game_manager.wave_started.connect(_on_wave_started)
 	game_manager.call("setup", self, player)
 	hud = HUD_SCRIPT.new()
 	hud.name = "HUD"
@@ -31,3 +33,7 @@ func _build_world() -> void:
 	builder.name = "Arena"
 	add_child(builder)
 	builder.call("build", self)
+func _on_player_damaged(_amount: float, _health: float, _shields: float) -> void:
+	audio_manager.call("play_sfx", "damage")
+func _on_wave_started(_wave: int, _enemy_count: int) -> void:
+	audio_manager.call("play_sfx", "wave")
