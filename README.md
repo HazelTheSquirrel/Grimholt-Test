@@ -1,59 +1,55 @@
 # Grimholt: Arena
 
-Grimholt ist ein eigenständiger, reiner Multiplayer-3D-Arena-Shooter. Es gibt keine Einzelspieler-Kampagne. Die gestalterische und spielerische Qualitätsreferenz ist Halo 3: lesbare Arena-Gefechte, ein fokussiertes Spieler-Dashboard, eine klare Waffen-Sandbox und eine hochwertige Multiplayer-Präsentation. Grimholt bleibt dabei vollständig eigenständig: Karten, Waffen, Figuren, UI, Namen, Audio und Weltgestaltung werden eigens entwickelt; geschützte Bungie-/Microsoft-Inhalte werden nicht übernommen.
+Grimholt ist ein eigenständiger First-Person-Arena-Shooter. Die spielerische Qualitätsreferenz ist klassisches Arena-FPS-Design: klare Bewegungsregeln, lesbare Gefechte, präzise Treffer-Rückmeldung, unterschiedliche Waffenrollen und ein fokussiertes HUD. Halo 3 ist ausschließlich eine abstrakte Referenz. Sämtliche Namen, Karten, Waffen, Figuren, UI-Elemente, Audioinhalte und Assets werden eigenständig entwickelt.
 
-## Aktueller Prototyp
+## Aktueller Entwicklungszweig
 
-- Free-for-All-Deathmatch mit 50 Abschüssen als Rundenziel und exakt 15 Minuten Echtzeit-Limit. Die Uhr zählt rückwärts; das Match endet sofort, sobald ein Spieler 50 Punkte erreicht, oder exakt bei 00:00. Läuft die Zeit ab, gewinnt der Spieler mit dem höchsten Punktestand; bei Gleichstand endet die Runde unentschieden. Ein Teammodus ist derzeit noch nicht implementiert.
-- ENet-Host/Join über UDP-Port 27015.
-- Fest gespeicherte Greybox-Arena-Szene mit sichtbarer Geometrie, Kollisionen, Licht, Vorschaukamera, Deckung und acht Spawnpositionen.
-- First-Person-Steuerung, Mausblick, Springen, Halten von Strg zum Ducken und Hitscan-Gewehr mit prozeduralem Viewmodel.
-- 30-Schuss-Magazin, Reserve-Munition und Nachladen.
-- 100 Lebenspunkte, Respawn und exakt **1 Punkt pro bestätigtem Kill**; ein bereits besiegtes Ziel kann keine weiteren Punkte geben.
-- Der Countdown basiert auf einer monotonen Echtzeituhr und wird regelmäßig an Clients synchronisiert; Teilsekunden werden aufgerundet, damit 00:00 erst beim tatsächlichen Ablauf erscheint.
-- Fünf servergesteuerte Arena-Bots als Gegner; Bot-Kills erhöhen nicht den FFA-Spielerpunktestand.
-- Eigenständiges Arena-Shooter-HUD: Matchzeit, Top-Fragger, Lebenspunkte, Munition, Killfeed und Minimap; die Informationshierarchie wird auf Lesbarkeit und ein freies Sichtfeld ausgelegt.
-- Vollständige K/D-Scoreboard-Ansicht per Tab, Trefferbestätigung und automatisches Gewehrfeuer bei gehaltenem Linksklick.
-- Eigenständige dunkle Graphit-/Türkis-Oberfläche mit klaren Akzentfarben; Minimap sitzt getrennt von der Vitalanzeige, damit die linke untere HUD-Zone frei bleibt.
-- Vollbild und Master-Lautstärke sind im Haupt- und Pausemenü einstellbar und werden lokal in `user://grimholt_settings.cfg` gespeichert.
-- Lokale Waffen- und Nachlade-Rückmeldung; finale Audioaufnahmen und räumlicher Mix stehen noch aus.
-- Serverseitige Bewegungsphysik: Clients senden nur validierte Eingaben (20 Hz); der Server simuliert Bewegung und verteilt Positions-Snapshots. Direkte clientseitige Positionsmeldungen werden nicht mehr akzeptiert.
+Der Branch `rebuild/halo-inspired-fps-foundation` enthält den Neuaufbau der Gameplay-Grundlage. Der alte Prototyp bleibt vorerst in den historischen Pfaden erhalten, damit bestehende Implementierungen und Assets nicht versehentlich verloren gehen.
 
-## Starten
+### Neuer spielbarer Kern
 
-1. Godot 4.7.2 installieren.
-2. `Grimholt/project.godot` importieren.
-3. Projekt starten.
-4. Im Hauptmenü **Start Solo Game** wählen, um offline auf der Karte gegen fünf Bots zu spielen.
-5. Für Multiplayer **Custom Games → Spiel hosten** wählen. Andere Spieler geben die öffentliche Server-IP ein und wählen **Spiel beitreten**. UDP-Port 27015 muss am Host erreichbar sein.
+- First-Person-Controller mit WASD, Mausblick und Springen.
+- Eigenständige Pulse-Carbine-Szene mit Hitscan-Trefferprüfung, Feuerrate, Magazin und Nachladen.
+- Spieler-Gesundheit und Trefferreaktion.
+- Fünf Arena-Bots mit einfacher Verfolgung und Angriff.
+- Kill-Punkte und Bot-Respawn.
+- Eine Greybox-Arena mit sichtbarer Geometrie, Licht, Kollision und Deckung.
+- HUD als eigene Godot-Szene mit Score, Timer, Gesundheit und Munition.
+- Gameplay-Systeme sind auf einzelne GDScript-Dateien verteilt; sichtbare Objekte und UI liegen in editierbaren `.tscn`-Szenen.
 
-Training startet einen lokalen Host mit fünf Bots. Auch beim Multiplayer-Hosting startet der Host das Match und spawnt fünf Bots. Der Standardport ist UDP 27015.
+## Projekt öffnen
+
+1. Godot **4.7.2** installieren.
+2. Die Datei `Grimholt/project.godot` öffnen/importieren.
+3. Das Projekt starten.
 
 ## Steuerung
 
-| Taste | Funktion |
+| Eingabe | Aktion |
 |---|---|
 | WASD | Bewegen |
-| Maus | Zielen |
-| Linksklick | Schießen |
+| Maus | Umschauen und zielen |
+| Linksklick halten | Feuern |
 | Leertaste | Springen |
-| Strg (halten) | Ducken (Kamera und Kollisionskapsel werden abgesenkt) |
 | R | Nachladen |
-| ESC | Ingame-Menü öffnen/schließen |
+| ESC | Maus freigeben |
 
+Nach dem Start wird direkt eine lokale Arena-Runde mit fünf Bots geladen. Linksklick in das Spielfenster fängt die Maus wieder ein.
 
-## Architektur und eigene Assets
+## Architektur
 
-Die Gameplay-Logik wird derzeit durch einen zentralen Composition Root zusammengeführt. Die frühere zyklische Script-Vererbung wurde entfernt, damit alle GDScript-Dateien fehlerfrei laden. Die langfristige Architektur soll unabhängige Komponenten mit klaren Datenverträgen und Signalen verwenden; die aktuelle Zentralisierung ist noch ein Refactoring-Thema.
+- `scenes/player/`: Spieleraufbau und Kamera.
+- `scenes/weapons/`: Waffen- und Viewmodel-Szenen.
+- `scenes/enemies/`: Gegner-Szenen.
+- `scenes/levels/`: Levelgeometrie und Kollision.
+- `scenes/ui/`: HUD und weitere UI-Szenen.
+- `scripts/player/`: Bewegung und Spielergesundheit.
+- `scripts/combat/`: Waffenlogik und Trefferprüfung.
+- `scripts/ai/`: Bot-Verhalten.
+- `scripts/game/`: Match-Aufbau, Spawn und Score.
+- `scripts/ui/`: HUD-Datenbindung.
+- `assets/`: eigenständige Grafiken und Materialien.
 
-Unter `Grimholt/assets/` liegen eigens für Grimholt gezeichnete SVG-Dateien: Gildenwappen, Waffeninsignie und gekacheltes Arenaboden-Material. Wappen und Bodenmaterial sind bereits im Menü bzw. in der Arena eingebunden. `actor_visual.gd` ergänzt Spieler und Bots außerdem um eigens zusammengesetzte Rüstungsdetails statt ausschließlich unveränderter Kapsel-Silhouetten. Es werden keine fremden Marken- oder Spielassets eingebunden.
+## Bekannte Grenzen
 
-## Entwicklungsstand und bekannte Grenzen
-
-Dies ist weiterhin ein früher Gameplay-Prototyp, kein fertiges oder öffentlich serverfestes Spiel. Die Arena-Geometrie, HUD-Elemente und Bot-KI sind weiterhin frühe Prototyp-Inhalte; die neuen SVG-Dateien ersetzen nicht die noch fehlenden finalen 3D-Modelle, Animationen und Audioaufnahmen. Die Bot-KI nutzt einfache direkte Verfolgung und Hitscan-Angriffe; sie navigiert noch nicht intelligent um Deckung. Die Minimap zeigt Positionsmarker, keine Sichtlinien- oder Aufklärungsdaten.
-
-Noch offen sind unter anderem Client-Prediction/Reconciliation, zuverlässige Replikation unter Paketverlust, Lag Compensation, Anti-Cheat-Härtung, Lobby/Matchmaking, Serverbrowser, dedizierte Serverkonfiguration, Tests mit mehreren echten Clients sowie finale Grafik, Levelgestaltung und finale Audioassets. Die alten RPG-Skripte und RPG-Tests liegen weiterhin in den historischen Pfaden, werden aber nicht vom aktiven Shooter-Startpfad verwendet; siehe Grimholt/docs/LEGACY_RPG.md. Die physische Verschiebung bleibt aus, bis interne res://-Abhängigkeiten inventarisiert sind. Die CI lädt zusätzlich jede GDScript-Datei. Das Headless-Smoke-Testskript prüft Szenenstart, Eingabeaktionen, Solo-Spawn, Bots, HUD und Bewegungs-Input-Validierung; es ersetzt keine echten Mehrspieler- und Eingabetests. Die aktuelle Schussprüfung validiert Feuerrate und Blickrichtung serverseitig, ersetzt aber noch keine vollständige serverautoritativ simulierte Combat-Pipeline.
-
-## Projektstruktur
-
-Das Godot-Projekt liegt unter `Grimholt/`. Shooter-Szenen und -Skripte liegen unter `Grimholt/scenes/shooter/` und `Grimholt/scripts/shooter/`. GitHub Actions importiert das Projekt, lädt alle GDScript-Dateien und führt Headless-Start sowie Shooter-Smoke-Test aus. Ein erfolgreicher CI-Lauf und ein visueller Test mit mehreren Clients müssen vor einer Freigabe geprüft werden.
+Dieser Branch ist ein lokaler Gameplay-Neuaufbau und noch kein vollständiges Multiplayer-Spiel. Bot-Navigation, Deckungswahl, serverautoritatives Netzwerk-Combat, Lag Compensation, Multiplayer-Reconnect, Audio, Animationen, mehrere Waffen, Pickups, Menüs und umfangreiche automatisierte Tests sind noch ausstehend. Der Code wurde über die Repository-Schnittstelle geschrieben; ein echter Godot-4.7.2-Editor-/Headless-Lauf muss vor einer Freigabe ausgeführt werden.
