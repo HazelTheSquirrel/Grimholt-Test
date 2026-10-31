@@ -1,4 +1,4 @@
-[gd_scene load_steps=20 format=3]
+[gd_scene load_steps=18 format=3]
 
 [ext_resource type="Texture2D" path="res://assets/materials/arena_floor.svg" id="1_floor"]
 
@@ -45,10 +45,6 @@ roughness = 0.72
 size = Vector3(14, 1.4, 14)
 [sub_resource type="BoxShape3D" id="PlatformShape"]
 size = Vector3(14, 1.4, 14)
-[sub_resource type="BoxMesh" id="CenterPlatformMesh"]
-size = Vector3(9, 0.8, 9)
-[sub_resource type="BoxShape3D" id="CenterPlatformShape"]
-size = Vector3(9, 0.8, 9)
 [sub_resource type="StandardMaterial3D" id="PlatformMat"]
 albedo_color = Color(0.12, 0.17, 0.21, 1)
 metallic = 0.58
@@ -130,13 +126,6 @@ material_override = SubResource("WallMat")
 [node name="Collision" type="CollisionShape3D" parent="WestWall"]
 shape = SubResource("WallShape")
 
-[node name="CenterHighGround" type="StaticBody3D" parent="."]
-position = Vector3(0, 2.7, 0)
-[node name="Mesh" type="MeshInstance3D" parent="CenterHighGround"]
-mesh = SubResource("CenterPlatformMesh")
-material_override = SubResource("PlatformMat")
-[node name="Collision" type="CollisionShape3D" parent="CenterHighGround"]
-shape = SubResource("CenterPlatformShape")
 
 [node name="WestHighGround" type="StaticBody3D" parent="."]
 position = Vector3(-20, 2.2, 0)
