@@ -40,6 +40,8 @@ var is_crouched := false
 var fire_held := false
 var fire_audio: AudioStreamPlayer
 var reload_audio: AudioStreamPlayer
+var reload_request_pending := false
+var reload_request_timeout := 0.0
 var base_camera_position := Vector3.ZERO
 var base_viewmodel_position := Vector3(0.24, -0.20, -0.42)
 var bob_phase := 0.0
@@ -65,6 +67,10 @@ func _ready() -> void:
 		_build_audio_feedback()
 
 func _process(delta: float) -> void:
+	if reload_request_pending:
+		reload_request_timeout = maxf(0.0, reload_request_timeout - delta)
+		if reload_request_timeout <= 0.0:
+			reload_request_pending = false
 	if not is_multiplayer_authority() or camera == null or weapon_viewmodel == null:
 		return
 	_update_first_person_feedback(delta)
@@ -272,7 +278,8 @@ func _update_crouch(wants_crouch: bool) -> void:
 	body_visual.position.y = capsule.height * 0.5
 
 func _fire() -> void:
-	if fire_cooldown > 0.0 or reload_time > 0.0:
+	# Empty magazines are silent: no shot sound, recoil or repeated server request.
+	if fire_cooldown > 0.0 or reload_time > 0.0 or reload_request_pending or ammo <= 0:
 		return
 	var spec: Dictionary = get_parent()._weapon_spec(current_weapon)
 	fire_cooldown = float(spec["fire_interval"])
@@ -283,7 +290,21 @@ func _fire() -> void:
 
 func _reload() -> void:
 	var spec: Dictionary = get_parent()._weapon_spec(current_weapon)
-	if reload_time <= 0.0 and ammo < int(spec["magazine"]) and reserve_ammo > 0:
-		if reload_audio != null:
-			reload_audio.play()
-		get_parent().request_reload(get_multiplayer_authority())
+	if reload_time > 0.0 or reload_request_pending:
+		return
+	if ammo >= int(spec["magazine"]) or reserve_ammo <= 0:
+		return
+	# The server confirms the reload before its sound is played. This prevents
+	# R-spamming from replaying audio while a reload is already in progress.
+	reload_request_pending = true
+	reload_request_timeout = 0.75
+	get_parent().request_reload(get_multiplayer_authority())
+
+func apply_weapon_state(new_ammo: int, new_reserve: int, reloading: bool) -> void:
+	ammo = maxi(0, new_ammo)
+	reserve_ammo = maxi(0, new_reserve)
+	reload_request_pending = false
+	reload_request_timeout = 0.0
+	reload_time = float(get_parent()._weapon_spec(current_weapon)["reload_time"]) if reloading else 0.0
+	if reloading and is_multiplayer_authority() and reload_audio != null:
+		reload_audio.play()
