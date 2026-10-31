@@ -3,6 +3,7 @@ extends Node
 signal score_changed(score: int, wave: int, remaining: int)
 signal wave_started(wave: int, enemy_count: int)
 signal wave_cleared(wave: int)
+signal enemy_killed
 
 const ENEMY_SCENE: PackedScene = preload("res://scenes/enemy.tscn")
 
@@ -59,6 +60,7 @@ func _spawn_enemy(index: int) -> void:
 
 func _on_enemy_defeated() -> void:
 	score += 100
+	enemy_killed.emit()
 	alive_enemies = maxi(0, alive_enemies - 1)
 	remaining = maxi(0, remaining - 1)
 	score_changed.emit(score, wave, remaining)
