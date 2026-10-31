@@ -1,7 +1,8 @@
-[gd_scene load_steps=5 format=3]
+[gd_scene load_steps=6 format=3]
 
 [ext_resource type="Script" path="res://scripts/player/player_controller.gd" id="1"]
 [ext_resource type="PackedScene" path="res://scenes/weapons/pulse_carbine.tscn" id="2"]
+[ext_resource type="PackedScene" path="res://scenes/weapons/arc_scatter.tscn" id="3"]
 
 [sub_resource type="CapsuleShape3D" id="Capsule"]
 radius = 0.38
@@ -30,3 +31,6 @@ position = Vector3(0.28, -0.25, -0.55)
 [node name="BodyVisual" type="MeshInstance3D" parent="."]
 position = Vector3(0, 0.9, 0)
 mesh = SubResource("BodyMesh")
+
+[node name="ArcScatter" parent="Head/Camera3D" instance=ExtResource("3")]
+position = Vector3(0.28, -0.25, -0.55)
