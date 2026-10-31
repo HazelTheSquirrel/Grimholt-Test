@@ -6,6 +6,7 @@ class_name HUDController
 @onready var health_label: Label = $Margin/Layout/BottomRow/Health
 @onready var ammo_label: Label = $Margin/Layout/BottomRow/Ammo
 @onready var hit_label: Label = $HitFeedback
+@onready var weapon_label: Label = $Margin/Layout/TopRow/Weapon
 
 var _feedback_time: float = 0.0
 
@@ -29,6 +30,9 @@ func set_ammo(current: int, reserve: int) -> void:
 
 func set_time(seconds: int) -> void:
 	timer_label.text = "%02d:%02d" % [seconds / 60, seconds % 60]
+
+func set_weapon(display_name: String) -> void:
+	weapon_label.text = display_name
 
 func show_hit_marker() -> void:
 	hit_label.text = "×"
