@@ -3,7 +3,10 @@ class_name WeaponController
 
 signal ammo_changed(current: int, reserve: int)
 
+@export var display_name: String = "PULSE CARBINE"
 @export var damage: int = 34
+@export var pellet_count: int = 1
+@export var spread: float = 0.003
 @export var magazine_size: int = 30
 @export var reserve_capacity: int = 120
 @export var fire_interval: float = 0.12
