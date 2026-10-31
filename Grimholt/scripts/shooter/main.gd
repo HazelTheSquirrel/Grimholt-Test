@@ -46,6 +46,11 @@ var score_label: Label
 var timer_label: Label
 var ammo_label: Label
 var health_label: Label
+var health_bar: ProgressBar
+var health_value_label: Label
+var weapon_label: Label
+var ammo_reserve_label: Label
+var reload_state_label: Label
 var feed_label: Label
 var minimap: Control
 var scoreboard_panel: PanelContainer
@@ -455,21 +460,36 @@ func _on_master_volume_changed(value: float) -> void:
 	AudioServer.set_bus_volume_linear(0, value)
 	_save_settings()
 
+func _make_hud_panel_style() -> StyleBoxFlat:
+	var style := StyleBoxFlat.new()
+	style.bg_color = Color(0.018, 0.035, 0.052, 0.88)
+	style.border_color = Color(0.20, 0.48, 0.52, 0.82)
+	style.set_border_width_all(1)
+	style.set_corner_radius_all(6)
+	style.content_margin_left = 14.0
+	style.content_margin_right = 14.0
+	style.content_margin_top = 9.0
+	style.content_margin_bottom = 9.0
+	return style
+
 func _build_hud() -> void:
 	hud_layer = CanvasLayer.new()
 	hud_layer.layer = 5
 	add_child(hud_layer)
+
+	# Top information is kept compact and away from the central sight picture.
 	var top := HBoxContainer.new()
 	top.set_anchors_and_offsets_preset(Control.PRESET_TOP_WIDE)
 	top.offset_left = 24
 	top.offset_top = 18
 	top.offset_right = -24
-	top.custom_minimum_size.y = 42
+	top.offset_bottom = 56
 	hud_layer.add_child(top)
+
 	timer_label = Label.new()
-	timer_label.add_theme_font_size_override("font_size", 22)
-	timer_label.add_theme_color_override("font_color", Color(0.48, 0.94, 0.91))
-	timer_label.add_theme_color_override("font_shadow_color", Color(0.01, 0.025, 0.035, 0.95))
+	timer_label.add_theme_font_size_override("font_size", 21)
+	timer_label.add_theme_color_override("font_color", Color(0.46, 0.94, 0.88))
+	timer_label.add_theme_color_override("font_shadow_color", Color(0.0, 0.0, 0.0, 0.9))
 	timer_label.add_theme_constant_override("shadow_offset_x", 1)
 	timer_label.add_theme_constant_override("shadow_offset_y", 1)
 	top.add_child(timer_label)
@@ -478,58 +498,126 @@ func _build_hud() -> void:
 	top.add_child(spacer)
 	score_label = Label.new()
 	score_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
-	score_label.add_theme_font_size_override("font_size", 18)
-	score_label.add_theme_color_override("font_color", Color(0.78, 0.88, 0.93))
-	score_label.add_theme_color_override("font_shadow_color", Color(0.01, 0.025, 0.035, 0.95))
+	score_label.add_theme_font_size_override("font_size", 16)
+	score_label.add_theme_color_override("font_color", Color(0.84, 0.91, 0.94))
+	score_label.add_theme_color_override("font_shadow_color", Color(0.0, 0.0, 0.0, 0.9))
 	top.add_child(score_label)
+
 	var crosshair := Label.new()
-	crosshair.text = "＋"
+	crosshair.text = "+"
 	crosshair.set_anchors_and_offsets_preset(Control.PRESET_CENTER)
-	crosshair.add_theme_font_size_override("font_size", 28)
+	crosshair.add_theme_font_size_override("font_size", 24)
+	crosshair.add_theme_color_override("font_color", Color(0.94, 0.98, 1.0, 0.92))
+	crosshair.add_theme_color_override("font_shadow_color", Color(0.0, 0.0, 0.0, 0.95))
+	crosshair.add_theme_constant_override("shadow_offset_x", 1)
+	crosshair.add_theme_constant_override("shadow_offset_y", 1)
 	hud_layer.add_child(crosshair)
-	health_label = Label.new()
-	health_label.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_LEFT)
-	health_label.offset_left = 26
-	health_label.offset_bottom = -24
-	health_label.offset_top = -70
-	health_label.add_theme_font_size_override("font_size", 20)
-	health_label.add_theme_color_override("font_color", Color(0.48, 0.94, 0.82))
-	health_label.add_theme_color_override("font_shadow_color", Color(0.01, 0.025, 0.035, 0.95))
-	hud_layer.add_child(health_label)
-	ammo_label = Label.new()
-	ammo_label.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_RIGHT)
-	ammo_label.offset_right = -28
-	ammo_label.offset_bottom = -24
-	ammo_label.offset_top = -82
-	ammo_label.add_theme_font_size_override("font_size", 22)
-	ammo_label.add_theme_color_override("font_color", Color(0.92, 0.82, 0.52))
-	ammo_label.add_theme_color_override("font_shadow_color", Color(0.01, 0.025, 0.035, 0.95))
-	ammo_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
-	hud_layer.add_child(ammo_label)
-	feed_label = Label.new()
-	feed_label.set_anchors_and_offsets_preset(Control.PRESET_TOP_RIGHT)
-	feed_label.offset_right = -26
-	feed_label.offset_top = 74
-	feed_label.offset_left = -330
-	feed_label.add_theme_font_size_override("font_size", 15)
-	feed_label.add_theme_color_override("font_color", Color(0.84, 0.91, 0.94))
-	feed_label.add_theme_color_override("font_shadow_color", Color(0.01, 0.025, 0.035, 0.95))
-	feed_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
-	hud_layer.add_child(feed_label)
+
+	# Minimap stays in the upper-left safe area, with a fixed square drawing area.
 	minimap = Control.new()
-	# Keep the tactical grid below the match clock. The previous bottom-left
-	# placement overlapped the vitals readout and crowded the player's sightline.
 	minimap.set_anchors_and_offsets_preset(Control.PRESET_TOP_LEFT)
-	minimap.position = Vector2(24, 72)
+	minimap.position = Vector2(24, 70)
 	minimap.custom_minimum_size = Vector2(160, 160)
 	minimap.draw.connect(_draw_minimap)
 	hud_layer.add_child(minimap)
+
+	# Health panel: a readable numeric value plus a proportional bar.
+	var vitals_panel := PanelContainer.new()
+	vitals_panel.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_LEFT)
+	vitals_panel.offset_left = 24
+	vitals_panel.offset_top = -112
+	vitals_panel.offset_right = 310
+	vitals_panel.offset_bottom = -22
+	vitals_panel.add_theme_stylebox_override("panel", _make_hud_panel_style())
+	hud_layer.add_child(vitals_panel)
+	var vitals_column := VBoxContainer.new()
+	vitals_column.add_theme_constant_override("separation", 5)
+	vitals_panel.add_child(vitals_column)
+	var vitals_header := HBoxContainer.new()
+	vitals_column.add_child(vitals_header)
+	health_label = Label.new()
+	health_label.text = "VITALS"
+	health_label.add_theme_font_size_override("font_size", 13)
+	health_label.add_theme_color_override("font_color", Color(0.52, 0.92, 0.84))
+	vitals_header.add_child(health_label)
+	var health_spacer := Control.new()
+	health_spacer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	vitals_header.add_child(health_spacer)
+	health_value_label = Label.new()
+	health_value_label.text = "100 / 100"
+	health_value_label.add_theme_font_size_override("font_size", 17)
+	health_value_label.add_theme_color_override("font_color", Color(0.92, 0.97, 0.96))
+	vitals_header.add_child(health_value_label)
+	health_bar = ProgressBar.new()
+	health_bar.min_value = 0
+	health_bar.max_value = 100
+	health_bar.value = 100
+	health_bar.show_percentage = false
+	var health_track := StyleBoxFlat.new()
+	health_track.bg_color = Color(0.08, 0.12, 0.15, 1.0)
+	health_track.set_corner_radius_all(3)
+	health_bar.add_theme_stylebox_override("background", health_track)
+	var health_fill := StyleBoxFlat.new()
+	health_fill.bg_color = Color(0.20, 0.82, 0.68, 1.0)
+	health_fill.set_corner_radius_all(3)
+	health_bar.add_theme_stylebox_override("fill", health_fill)
+	health_bar.custom_minimum_size.y = 12
+	vitals_column.add_child(health_bar)
+
+	# Weapon panel is anchored independently to the lower-right safe area.
+	var weapon_panel := PanelContainer.new()
+	weapon_panel.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_RIGHT)
+	weapon_panel.offset_left = -286
+	weapon_panel.offset_top = -124
+	weapon_panel.offset_right = -24
+	weapon_panel.offset_bottom = -22
+	weapon_panel.add_theme_stylebox_override("panel", _make_hud_panel_style())
+	hud_layer.add_child(weapon_panel)
+	var weapon_column := VBoxContainer.new()
+	weapon_column.add_theme_constant_override("separation", 2)
+	weapon_panel.add_child(weapon_column)
+	weapon_label = Label.new()
+	weapon_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	weapon_label.add_theme_font_size_override("font_size", 12)
+	weapon_label.add_theme_color_override("font_color", Color(0.54, 0.91, 0.88))
+	weapon_column.add_child(weapon_label)
+	var ammo_row := HBoxContainer.new()
+	ammo_row.alignment = BoxContainer.ALIGNMENT_END
+	ammo_row.add_theme_constant_override("separation", 8)
+	weapon_column.add_child(ammo_row)
+	ammo_label = Label.new()
+	ammo_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	ammo_label.add_theme_font_size_override("font_size", 32)
+	ammo_label.add_theme_color_override("font_color", Color(0.96, 0.97, 0.94))
+	ammo_row.add_child(ammo_label)
+	ammo_reserve_label = Label.new()
+	ammo_reserve_label.vertical_alignment = VERTICAL_ALIGNMENT_BOTTOM
+	ammo_reserve_label.add_theme_font_size_override("font_size", 17)
+	ammo_reserve_label.add_theme_color_override("font_color", Color(0.72, 0.80, 0.82))
+	ammo_row.add_child(ammo_reserve_label)
+	reload_state_label = Label.new()
+	reload_state_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	reload_state_label.add_theme_font_size_override("font_size", 11)
+	reload_state_label.add_theme_color_override("font_color", Color(0.95, 0.76, 0.40))
+	reload_state_label.visible = false
+	weapon_column.add_child(reload_state_label)
+
+	feed_label = Label.new()
+	feed_label.set_anchors_and_offsets_preset(Control.PRESET_TOP_RIGHT)
+	feed_label.offset_right = -24
+	feed_label.offset_top = 74
+	feed_label.offset_left = -330
+	feed_label.add_theme_font_size_override("font_size", 14)
+	feed_label.add_theme_color_override("font_color", Color(0.84, 0.91, 0.94))
+	feed_label.add_theme_color_override("font_shadow_color", Color(0.0, 0.0, 0.0, 0.9))
+	feed_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	hud_layer.add_child(feed_label)
 
 	hitmarker_label = Label.new()
 	hitmarker_label.text = "✕"
 	hitmarker_label.visible = false
 	hitmarker_label.set_anchors_and_offsets_preset(Control.PRESET_CENTER)
-	hitmarker_label.add_theme_font_size_override("font_size", 34)
+	hitmarker_label.add_theme_font_size_override("font_size", 32)
 	hitmarker_label.add_theme_color_override("font_color", Color(1.0, 0.88, 0.35))
 	hud_layer.add_child(hitmarker_label)
 
@@ -540,6 +628,7 @@ func _build_hud() -> void:
 	scoreboard_panel.offset_right = 310
 	scoreboard_panel.offset_bottom = 250
 	scoreboard_panel.visible = false
+	scoreboard_panel.add_theme_stylebox_override("panel", _make_hud_panel_style())
 	hud_layer.add_child(scoreboard_panel)
 	scoreboard_label = RichTextLabel.new()
 	scoreboard_label.bbcode_enabled = true
@@ -1019,9 +1108,13 @@ func _process_reload_timers() -> void:
 @rpc("authority", "call_local", "reliable")
 func _sync_weapon_state(player_id: int, weapon_id: String, ammo: int, reserve: int, reloading: bool) -> void:
 	if players.has(player_id) and str(players[player_id].get("current_weapon")) == weapon_id:
-		players[player_id].ammo = ammo
-		players[player_id].reserve_ammo = reserve
-		players[player_id].reload_time = float(_weapon_spec(weapon_id)["reload_time"]) if reloading else 0.0
+		var player: Node = players[player_id]
+		if player.has_method("apply_weapon_state"):
+			player.apply_weapon_state(ammo, reserve, reloading)
+		else:
+			player.ammo = ammo
+			player.reserve_ammo = reserve
+			player.reload_time = float(_weapon_spec(weapon_id)["reload_time"]) if reloading else 0.0
 
 func bot_fire(bot_id: int, origin: Vector3, direction: Vector3) -> void:
 	if multiplayer.is_server() and round_active:
@@ -1206,13 +1299,29 @@ func _update_hud() -> void:
 		_update_scoreboard()
 	var local_player: Node3D = players.get(multiplayer.get_unique_id()) as Node3D
 	if local_player:
-		health_label.text = "VITALS   %03d / 100" % int(local_player.get("health"))
+		var health := clampi(int(local_player.get("health")), 0, 100)
+		health_label.text = "VITALS"
+		health_value_label.text = "%03d / 100" % health
+		health_bar.value = health
 		var weapon_id := str(local_player.get("current_weapon"))
-		var weapon_name := str(_weapon_spec(weapon_id)["display_name"])
-		ammo_label.text = "%s  |  %02d / %03d\n[1] CARBINE  [2] SCATTER  [R] RELOAD" % [weapon_name, int(local_player.get("ammo")), int(local_player.get("reserve_ammo"))]
+		var spec := _weapon_spec(weapon_id)
+		weapon_label.text = str(spec["display_name"])
+		ammo_label.text = "%02d" % int(local_player.get("ammo"))
+		ammo_reserve_label.text = "/ %03d" % int(local_player.get("reserve_ammo"))
+		var is_reloading := float(local_player.get("reload_time")) > 0.0 or bool(local_player.get("reload_request_pending"))
+		reload_state_label.visible = is_reloading
+		reload_state_label.text = "RELOADING..." if is_reloading else ""
+		if health < 30:
+			health_value_label.add_theme_color_override("font_color", Color(1.0, 0.48, 0.40))
+		else:
+			health_value_label.add_theme_color_override("font_color", Color(0.92, 0.97, 0.96))
 	else:
-		health_label.text = "VITALS   --"
-		ammo_label.text = "WEAPON  |  -- / --"
+		health_value_label.text = "--- / 100"
+		health_bar.value = 0
+		weapon_label.text = "NO WEAPON"
+		ammo_label.text = "--"
+		ammo_reserve_label.text = "/ ---"
+		reload_state_label.visible = false
 
 func _draw_minimap() -> void:
 	var rect := Rect2(Vector2.ZERO, Vector2(160, 160))
