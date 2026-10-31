@@ -1,0 +1,69 @@
+extends CharacterBody3D
+signal vitals_changed(health: float, shields: float)
+signal player_died
+@export var walk_speed: float = 8.0
+@export var sprint_speed: float = 11.5
+@export var jump_velocity: float = 8.5
+@export var mouse_sensitivity: float = 0.0018
+@export var max_health: float = 100.0
+@export var max_shields: float = 100.0
+@onready var head: Node3D = $Head
+var health: float = 100.0
+var shields: float = 100.0
+var shield_delay: float = 0.0
+var gravity: float = 24.0
+var dead: bool = false
+func _ready() -> void:
+	health = max_health
+	shields = max_shields
+	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
+	vitals_changed.emit(health, shields)
+func _unhandled_input(event: InputEvent) -> void:
+	if event is InputEventMouseMotion and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED and not dead:
+		rotate_y(-event.relative.x * mouse_sensitivity)
+		head.rotate_x(-event.relative.y * mouse_sensitivity)
+		head.rotation.x = clampf(head.rotation.x, deg_to_rad(-88), deg_to_rad(88))
+	if event.is_action_pressed("ui_cancel"):
+		Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+	if event is InputEventMouseButton and event.pressed and Input.mouse_mode == Input.MOUSE_MODE_VISIBLE:
+		Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
+func _physics_process(delta: float) -> void:
+	if dead:
+		return
+	if not is_on_floor():
+		velocity.y -= gravity * delta
+	elif Input.is_key_pressed(KEY_SPACE):
+		velocity.y = jump_velocity
+	var input_dir := Vector2(float(Input.is_key_pressed(KEY_D)) - float(Input.is_key_pressed(KEY_A)), float(Input.is_key_pressed(KEY_S)) - float(Input.is_key_pressed(KEY_W))).normalized()
+	var direction := (transform.basis * Vector3(input_dir.x, 0, input_dir.y)).normalized()
+	var speed := sprint_speed if Input.is_key_pressed(KEY_SHIFT) else walk_speed
+	if direction.length() > 0.0:
+		velocity.x = direction.x * speed
+		velocity.z = direction.z * speed
+	else:
+		velocity.x = move_toward(velocity.x, 0.0, walk_speed * 8.0 * delta)
+		velocity.z = move_toward(velocity.z, 0.0, walk_speed * 8.0 * delta)
+	move_and_slide()
+	if shield_delay > 0.0:
+		shield_delay -= delta
+	else:
+		shields = minf(max_shields, shields + 22.0 * delta)
+		vitals_changed.emit(health, shields)
+func receive_damage(amount: float) -> void:
+	if dead:
+		return
+	shield_delay = 3.0
+	var absorbed := minf(shields, amount)
+	shields -= absorbed
+	health = maxf(0.0, health - (amount - absorbed))
+	vitals_changed.emit(health, shields)
+	if health <= 0.0:
+		dead = true
+		player_died.emit()
+		await get_tree().create_timer(2.5).timeout
+		health = max_health
+		shields = max_shields
+		global_position = Vector3(0, 0.2, 12)
+		velocity = Vector3.ZERO
+		dead = false
+		vitals_changed.emit(health, shields)
