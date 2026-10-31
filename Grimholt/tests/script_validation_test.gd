@@ -13,7 +13,7 @@ func _run() -> void:
 			push_error(failure)
 		quit(1)
 		return
-	print("SCRIPT_VALIDATION_OK: %d GDScript files loaded." % checked_files)
+	print("SCRIPT_VALIDATION_OK: %d GDScript files parsed." % checked_files)
 	quit(0)
 
 func _scan_directory(path: String) -> void:
@@ -36,5 +36,9 @@ func _scan_directory(path: String) -> void:
 			var script := load(child_path)
 			if script == null:
 				failures.append("Failed to load GDScript: " + child_path)
+			elif script is GDScript:
+				var reload_error: Error = (script as GDScript).reload()
+				if reload_error != OK:
+					failures.append("GDScript parser rejected: " + child_path)
 		entry = directory.get_next()
 	directory.list_dir_end()
