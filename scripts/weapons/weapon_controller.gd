@@ -72,7 +72,8 @@ func _fire() -> void:
 	var origin := camera.global_position
 	var direction := -camera.global_transform.basis.z
 	var query := PhysicsRayQueryParameters3D.create(origin, origin + direction * 180.0)
-	query.exclude = [camera.get_parent().get_parent().get_rid()]
+	var player_body := camera.get_parent().get_parent() as CollisionObject3D
+	query.exclude = [player_body.get_rid()]
 	var hit := camera.get_world_3d().direct_space_state.intersect_ray(query)
 	if not hit.is_empty():
 		var collider = hit.get("collider")
