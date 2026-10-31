@@ -1,4 +1,4 @@
-[gd_scene load_steps=18 format=3]
+[gd_scene load_steps=15 format=3]
 
 [ext_resource type="Texture2D" path="res://assets/materials/arena_floor.svg" id="1_floor"]
 
@@ -59,14 +59,6 @@ albedo_color = Color(0.29, 0.36, 0.42, 1)
 metallic = 0.25
 roughness = 0.82
 
-[sub_resource type="BoxMesh" id="RampMesh"]
-size = Vector3(8, 0.8, 6)
-[sub_resource type="BoxShape3D" id="RampShape"]
-size = Vector3(8, 0.8, 6)
-[sub_resource type="StandardMaterial3D" id="RampMat"]
-albedo_color = Color(0.20, 0.29, 0.35, 1)
-metallic = 0.5
-roughness = 0.62
 
 [node name="Arena" type="Node3D"]
 
@@ -143,36 +135,24 @@ material_override = SubResource("PlatformMat")
 [node name="Collision" type="CollisionShape3D" parent="EastHighGround"]
 shape = SubResource("PlatformShape")
 
-[node name="RampWestToCenter" type="StaticBody3D" parent="."]
-position = Vector3(-10, 1.35, 0)
-rotation_degrees = Vector3(0, 0, -16)
 [node name="Mesh" type="MeshInstance3D" parent="RampWestToCenter"]
 mesh = SubResource("RampMesh")
 material_override = SubResource("RampMat")
 [node name="Collision" type="CollisionShape3D" parent="RampWestToCenter"]
 shape = SubResource("RampShape")
 
-[node name="RampEastToCenter" type="StaticBody3D" parent="."]
-position = Vector3(10, 1.35, 0)
-rotation_degrees = Vector3(0, 0, 16)
 [node name="Mesh" type="MeshInstance3D" parent="RampEastToCenter"]
 mesh = SubResource("RampMesh")
 material_override = SubResource("RampMat")
 [node name="Collision" type="CollisionShape3D" parent="RampEastToCenter"]
 shape = SubResource("RampShape")
 
-[node name="RampNorthToCenter" type="StaticBody3D" parent="."]
-position = Vector3(0, 1.35, -10)
-rotation_degrees = Vector3(16, 0, 0)
 [node name="Mesh" type="MeshInstance3D" parent="RampNorthToCenter"]
 mesh = SubResource("RampMesh")
 material_override = SubResource("RampMat")
 [node name="Collision" type="CollisionShape3D" parent="RampNorthToCenter"]
 shape = SubResource("RampShape")
 
-[node name="RampSouthToCenter" type="StaticBody3D" parent="."]
-position = Vector3(0, 1.35, 10)
-rotation_degrees = Vector3(-16, 0, 0)
 [node name="Mesh" type="MeshInstance3D" parent="RampSouthToCenter"]
 mesh = SubResource("RampMesh")
 material_override = SubResource("RampMat")
