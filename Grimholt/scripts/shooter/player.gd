@@ -15,7 +15,8 @@ const RESERVE_START := 120
 const DAMAGE_RANGE := 120.0
 
 @onready var head: Node3D = $Head
-@onready var camera: Camera3D = $Head/Camera3D
+@onready var camera_rig: Node3D = $Head/CameraRig
+@onready var camera: Camera3D = $Head/CameraRig/FirstPersonCamera
 @onready var body_visual: MeshInstance3D = $BodyVisual
 @onready var collision_shape: CollisionShape3D = $CollisionShape3D
 var gravity: float = ProjectSettings.get_setting("physics/3d/default_gravity")
@@ -42,7 +43,7 @@ var fire_audio: AudioStreamPlayer
 var reload_audio: AudioStreamPlayer
 var reload_request_pending := false
 var reload_request_timeout := 0.0
-var base_camera_position := Vector3.ZERO
+var base_camera_rig_position := Vector3.ZERO
 var base_viewmodel_position := Vector3(0.24, -0.20, -0.42)
 var bob_phase := 0.0
 var viewmodel_recoil := 0.0
@@ -59,10 +60,16 @@ func _ready() -> void:
 	material.albedo_color = Color.from_hsv(float(get_multiplayer_authority() % 8) / 8.0, 0.72, 0.95)
 	body_visual.material_override = material
 	ACTOR_VISUAL.build(body_visual, material.albedo_color, Color(0.88, 0.72, 0.38))
-	camera.current = is_multiplayer_authority()
+	camera.current = false
 	if is_multiplayer_authority():
+		camera.fov = 82.0
+		camera.near = 0.08
+		camera.far = 250.0
+		camera.cull_mask = 1
+		camera.make_current()
+		camera_rig.position = Vector3.ZERO
 		Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
-		base_camera_position = camera.position
+		base_camera_rig_position = camera_rig.position
 		_build_weapon_viewmodel()
 		_build_audio_feedback()
 
@@ -86,7 +93,7 @@ func _update_first_person_feedback(delta: float) -> void:
 	var weapon_bob := Vector3(sin(bob_phase) * 0.009 * bob_strength, absf(cos(bob_phase)) * 0.012 * bob_strength, 0.0)
 	viewmodel_recoil = move_toward(viewmodel_recoil, 0.0, delta * 0.42)
 	var smoothing := 1.0 - exp(-delta * 14.0)
-	camera.position = camera.position.lerp(base_camera_position + camera_bob, smoothing)
+	camera_rig.position = camera_rig.position.lerp(base_camera_rig_position + camera_bob, smoothing)
 	weapon_viewmodel.position = weapon_viewmodel.position.lerp(base_viewmodel_position + weapon_bob + Vector3(0.0, viewmodel_recoil * 0.45, viewmodel_recoil), smoothing)
 
 func _unhandled_input(event: InputEvent) -> void:
