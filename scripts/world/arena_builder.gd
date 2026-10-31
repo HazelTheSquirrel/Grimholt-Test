@@ -24,7 +24,8 @@ func build(world: Node3D) -> void:
 	world.add_child(fill)
 	var environment_node := WorldEnvironment.new()
 	var env := Environment.new()
-	env.background_mode = Environment.BG_SKY
+	env.background_mode = Environment.BG_COLOR
+	env.background_color = Color(0.025, 0.04, 0.065, 1)
 	env.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
 	env.ambient_light_color = Color(0.23,0.31,0.4)
 	env.ambient_light_energy = 0.65
