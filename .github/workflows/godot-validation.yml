@@ -1,4 +1,4 @@
-name: Godot validation
+name: Godot validation and Windows build
 on:
   push:
     branches: ["godot-fps-demo"]
@@ -24,3 +24,36 @@ jobs:
         run: godot/Godot_v4.7.2-stable_linux.x86_64 --headless --path . --quit-after 5
       - name: Run gameplay smoke tests
         run: godot/Godot_v4.7.2-stable_linux.x86_64 --headless --path . --script res://tests/smoke_test.gd
+
+  windows-export:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Download Godot and export templates
+        run: |
+          wget -q https://github.com/godotengine/godot-builds/releases/download/4.7.2-stable/Godot_v4.7.2-stable_linux.x86_64.zip -O godot.zip
+          unzip -q godot.zip -d godot
+          chmod +x godot/Godot_v4.7.2-stable_linux.x86_64
+          wget -q https://github.com/godotengine/godot-builds/releases/download/4.7.2-stable/Godot_v4.7.2-stable_export_templates.tpz -O templates.tpz
+          mkdir -p "$HOME/.local/share/godot/export_templates/4.7.2.stable"
+          mkdir -p template_unpack
+          unzip -q templates.tpz -d template_unpack
+          cp template_unpack/templates/* "$HOME/.local/share/godot/export_templates/4.7.2.stable/"
+      - name: Import project
+        run: godot/Godot_v4.7.2-stable_linux.x86_64 --headless --editor --path . --quit
+      - name: Export Windows x86_64 build
+        run: |
+          mkdir -p build
+          godot/Godot_v4.7.2-stable_linux.x86_64 --headless --path . --export-release "Windows Desktop" build/FRONTLINE-Rift-Arena.exe
+          test -s build/FRONTLINE-Rift-Arena.exe
+      - name: Upload Windows build
+        uses: actions/upload-artifact@v4
+        with:
+          name: FRONTLINE-Rift-Arena-Windows-x86_64
+          path: |
+            build/FRONTLINE-Rift-Arena.exe
+            build/FRONTLINE-Rift-Arena.pck
+          if-no-files-found: error
+          retention-days: 14
