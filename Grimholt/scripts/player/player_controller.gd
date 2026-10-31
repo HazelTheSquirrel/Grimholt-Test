@@ -6,6 +6,7 @@ signal ammo_changed(current: int, reserve: int)
 signal score_changed(value: int)
 signal pause_requested
 signal hit_confirmed
+signal weapon_changed(display_name: String)
 
 @export var move_speed: float = 8.0
 @export var acceleration: float = 24.0
@@ -15,8 +16,12 @@ signal hit_confirmed
 
 @onready var head: Node3D = $Head
 @onready var camera: Camera3D = $Head/Camera3D
-@onready var weapon: WeaponController = $Head/Camera3D/PulseCarbine
+@onready var carbine: WeaponController = $Head/Camera3D/PulseCarbine
+@onready var arc_scatter: WeaponController = $Head/Camera3D/ArcScatter
 
+var weapons: Array[WeaponController] = []
+var weapon_index: int = 0
+var weapon: WeaponController
 var health: int = 100
 var score: int = 0
 var _is_paused: bool = false
@@ -25,8 +30,13 @@ var _gravity: float = ProjectSettings.get_setting("physics/3d/default_gravity")
 func _ready() -> void:
 	health = max_health
 	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
-	weapon.ammo_changed.connect(_on_ammo_changed)
+	weapons = [carbine, arc_scatter]
+	weapon = carbine
+	arc_scatter.visible = false
+	for weapon_node in weapons:
+		weapon_node.ammo_changed.connect(_on_ammo_changed)
 	ammo_changed.emit(weapon.magazine_ammo, weapon.reserve_ammo)
+	weapon_changed.emit(weapon.display_name)
 
 func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed("ui_cancel"):
@@ -44,6 +54,8 @@ func _unhandled_input(event: InputEvent) -> void:
 			Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 	if event.is_action_pressed("reload"):
 		weapon.reload()
+	if event.is_action_pressed("switch_weapon"):
+		_switch_weapon()
 
 func set_local_paused(value: bool) -> void:
 	_is_paused = value
@@ -68,19 +80,31 @@ func _physics_process(delta: float) -> void:
 	if Input.is_action_pressed("fire") and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
 		_fire()
 
+func _switch_weapon() -> void:
+	if weapons.size() < 2:
+		return
+	weapon_index = (weapon_index + 1) % weapons.size()
+	weapon = weapons[weapon_index]
+	for index in range(weapons.size()):
+		weapons[index].visible = index == weapon_index
+	ammo_changed.emit(weapon.magazine_ammo, weapon.reserve_ammo)
+	weapon_changed.emit(weapon.display_name)
+
 func _fire() -> void:
 	if not weapon.try_fire():
 		return
 	var origin := camera.global_position
-	var direction := -camera.global_transform.basis.z
-	var query := PhysicsRayQueryParameters3D.create(origin, origin + direction * weapon.max_range)
-	query.exclude = [get_rid()]
-	var hit := get_world_3d().direct_space_state.intersect_ray(query)
-	if not hit.is_empty():
-		var target: Object = hit.collider
-		if target.has_method("take_damage"):
-			target.take_damage(weapon.damage, self)
-			hit_confirmed.emit()
+	var basis := camera.global_transform.basis
+	for pellet_index in range(weapon.pellet_count):
+		var direction := (-basis.z + basis.x * randf_range(-weapon.spread, weapon.spread) + basis.y * randf_range(-weapon.spread, weapon.spread)).normalized()
+		var query := PhysicsRayQueryParameters3D.create(origin, origin + direction * weapon.max_range)
+		query.exclude = [get_rid()]
+		var hit := get_world_3d().direct_space_state.intersect_ray(query)
+		if not hit.is_empty():
+			var target: Object = hit.collider
+			if target.has_method("take_damage"):
+				target.take_damage(weapon.damage, self)
+				hit_confirmed.emit()
 
 func take_damage(amount: int, _attacker: Node = null) -> void:
 	if amount <= 0 or health <= 0:
