@@ -1,8 +1,11 @@
 extends Node
 
 signal weapon_state_changed(weapon_name: String, ammo: int, reserve: int)
+signal shot_fired
+signal hit_confirmed
 
 @export var reload_duration: float = 1.55
+@export var max_shot_distance: float = 180.0
 
 @onready var camera: Camera3D = get_parent() as Camera3D
 
@@ -17,6 +20,9 @@ var cooldown: float = 0.0
 var reloading: bool = false
 var reload_token: int = 0
 var viewmodel: Node3D
+var muzzle_light: OmniLight3D
+var muzzle_timer: float = 0.0
+var recoil_amount: float = 0.0
 
 func _ready() -> void:
 	_create_viewmodel()
@@ -26,6 +32,12 @@ func _process(delta: float) -> void:
 	if get_tree().paused:
 		return
 	cooldown = maxf(0.0, cooldown - delta)
+	muzzle_timer = maxf(0.0, muzzle_timer - delta)
+	recoil_amount = move_toward(recoil_amount, 0.0, delta * 3.5)
+	if muzzle_light != null:
+		muzzle_light.visible = muzzle_timer > 0.0
+	if viewmodel != null:
+		viewmodel.position.y = -0.29 + recoil_amount * 0.035
 	if Input.mouse_mode == Input.MOUSE_MODE_CAPTURED and Input.is_action_pressed("fire"):
 		_fire()
 	if Input.is_action_just_pressed("reload"):
@@ -38,18 +50,28 @@ func _create_viewmodel() -> void:
 	viewmodel.position = Vector3(0.34, -0.29, -0.58)
 	viewmodel.rotation_degrees = Vector3(-4.0, -7.0, 0.0)
 	camera.add_child(viewmodel)
-	_add_gun_part(Vector3.ZERO, Vector3(0.19, 0.16, 0.48), Color(0.12, 0.19, 0.25), 0.7)
+	var body_color: Color = Color(0.12, 0.19, 0.25)
+	_add_gun_part(Vector3.ZERO, Vector3(0.19, 0.16, 0.48), body_color, 0.7)
 	_add_gun_part(Vector3(0, 0.055, -0.29), Vector3(0.075, 0.075, 0.32), Color(0.055, 0.08, 0.1), 0.85)
 	_add_gun_part(Vector3(0, -0.16, 0.06), Vector3(0.12, 0.25, 0.16), Color(0.09, 0.14, 0.18), 0.55)
 	_add_gun_part(Vector3(0, 0.105, -0.08), Vector3(0.06, 0.025, 0.15), Color(0.1, 0.75, 1.0), 0.3, true)
+	_add_gun_part(Vector3(0.105, 0.02, 0.02), Vector3(0.035, 0.11, 0.22), Color(0.25, 0.34, 0.4), 0.9)
+	_add_gun_part(Vector3(-0.105, 0.02, 0.02), Vector3(0.035, 0.11, 0.22), Color(0.25, 0.34, 0.4), 0.9)
+	muzzle_light = OmniLight3D.new()
+	muzzle_light.position = Vector3(0.0, 0.06, -0.52)
+	muzzle_light.light_color = Color(0.35, 0.78, 1.0)
+	muzzle_light.light_energy = 3.0
+	muzzle_light.omni_range = 5.0
+	muzzle_light.visible = false
+	viewmodel.add_child(muzzle_light)
 
 func _add_gun_part(pos: Vector3, dimensions: Vector3, tint: Color, metal: float, glow: bool = false) -> void:
-	var part := MeshInstance3D.new()
-	var mesh := BoxMesh.new()
+	var part: MeshInstance3D = MeshInstance3D.new()
+	var mesh: BoxMesh = BoxMesh.new()
 	mesh.size = dimensions
 	part.mesh = mesh
 	part.position = pos
-	var material := StandardMaterial3D.new()
+	var material: StandardMaterial3D = StandardMaterial3D.new()
 	material.albedo_color = tint
 	material.metallic = metal
 	material.roughness = 0.28
@@ -66,25 +88,26 @@ func _fire() -> void:
 	if ammo_in_mag[weapon_index] <= 0:
 		_reload()
 		return
-
 	ammo_in_mag[weapon_index] -= 1
 	cooldown = intervals[weapon_index]
-	var origin := camera.global_position
-	var direction := -camera.global_transform.basis.z
-	var query := PhysicsRayQueryParameters3D.create(origin, origin + direction * 180.0)
-	var player_body := camera.get_parent().get_parent() as CollisionObject3D
+	muzzle_timer = 0.045
+	recoil_amount = minf(1.0, recoil_amount + 0.45)
+	shot_fired.emit()
+	var origin: Vector3 = camera.global_position
+	var direction: Vector3 = -camera.global_transform.basis.z
+	var query: PhysicsRayQueryParameters3D = PhysicsRayQueryParameters3D.create(origin, origin + direction * max_shot_distance)
+	var player_body: CollisionObject3D = camera.get_parent().get_parent() as CollisionObject3D
 	query.exclude = [player_body.get_rid()]
-	var hit := camera.get_world_3d().direct_space_state.intersect_ray(query)
-
+	var hit: Dictionary = camera.get_world_3d().direct_space_state.intersect_ray(query)
 	if not hit.is_empty():
-		var collider = hit.get("collider")
+		var collider: Object = hit.get("collider")
 		if collider != null and collider.has_method("take_damage"):
 			var damage: float = damage_values[weapon_index]
 			var hit_position: Vector3 = hit.get("position", Vector3.ZERO)
-			if hit_position.distance_to(collider.global_position + Vector3.UP * 1.4) < 0.32:
+			if hit_position.distance_to((collider as Node3D).global_position + Vector3.UP * 1.4) < 0.32:
 				damage *= 2.0
-			collider.take_damage(damage)
-
+			collider.call("take_damage", damage)
+			hit_confirmed.emit()
 	_emit_weapon_state()
 
 func _reload() -> void:
@@ -92,7 +115,7 @@ func _reload() -> void:
 		return
 	reloading = true
 	reload_token += 1
-	var this_reload := reload_token
+	var this_reload: int = reload_token
 	await get_tree().create_timer(reload_duration).timeout
 	if not is_inside_tree() or this_reload != reload_token:
 		return
