@@ -9,19 +9,19 @@ var hud: CanvasLayer
 func _ready() -> void:
 	Engine.max_fps = 60
 	_build_world()
-	player = PLAYER_SCENE.instantiate()
+	player = PLAYER_SCENE.instantiate() as CharacterBody3D
 	player.position = Vector3(0, 0.2, 12)
 	add_child(player)
 	game_manager = GAME_MANAGER.new()
 	game_manager.name = "GameManager"
 	add_child(game_manager)
-	game_manager.setup(self, player)
+	game_manager.call("setup", self, player)
 	hud = HUD_SCRIPT.new()
 	hud.name = "HUD"
 	add_child(hud)
-	hud.setup(player, game_manager)
+	hud.call("setup", player, game_manager)
 func _build_world() -> void:
 	var builder = ARENA_BUILDER.new()
 	builder.name = "Arena"
 	add_child(builder)
-	builder.build(self)
+	builder.call("build", self)
