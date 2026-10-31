@@ -13,6 +13,12 @@ var pause_panel: PanelContainer
 var death_overlay: ColorRect
 var damage_flash: ColorRect
 var hit_marker: Label
+var scoreboard_panel: PanelContainer
+var scoreboard_stats: Label
+var kills: int = 0
+var deaths: int = 0
+var assists: int = 0
+@export var player_display_name: String = "Hazel"
 var hit_marker_time: float = 0.0
 var damage_tween: Tween
 const PANEL_COLOR: Color = Color(0.025, 0.055, 0.085, 0.88)
@@ -30,6 +36,7 @@ func setup(p_player: Node, p_manager: Node) -> void:
 	player.player_died.connect(_on_player_died)
 	player.player_respawned.connect(_on_player_respawned)
 	game_manager.score_changed.connect(_on_score_changed)
+	game_manager.enemy_killed.connect(_on_enemy_killed)
 	game_manager.wave_started.connect(_on_wave_started)
 	weapon_controller.weapon_state_changed.connect(_on_weapon_changed)
 	weapon_controller.hit_confirmed.connect(_on_hit_confirmed)
@@ -40,6 +47,14 @@ func _process(delta: float) -> void:
 	if hit_marker != null:
 		hit_marker.modulate.a = clampf(hit_marker_time / 0.12, 0.0, 1.0)
 func _input(event: InputEvent) -> void:
+	if event is InputEventKey and event.keycode == KEY_TAB and not event.echo:
+		if event.pressed:
+			scoreboard_panel.visible = true
+			_update_scoreboard()
+		else:
+			scoreboard_panel.visible = false
+		get_viewport().set_input_as_handled()
+		return
 	if event.is_action_pressed("pause_game"):
 		if get_tree().paused:
 			_resume_game()
@@ -74,12 +89,7 @@ func _build_ui() -> void:
 	score_label = _label(score_panel, "SCORE 000000", 14, Color.WHITE)
 	score_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	score_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	var crosshair: Label = _label(root, "+", 28, Color(0.78, 0.95, 1.0))
-	crosshair.set_anchors_preset(Control.PRESET_CENTER)
-	crosshair.position = Vector2(-12, -18)
-	crosshair.size = Vector2(24, 36)
-	crosshair.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	crosshair.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	_build_crosshair(root)
 	hit_marker = _label(root, "×", 34, Color(1.0, 0.88, 0.42))
 	hit_marker.set_anchors_preset(Control.PRESET_CENTER)
 	hit_marker.position = Vector2(-16, -22)
@@ -110,6 +120,58 @@ func _build_ui() -> void:
 	death_text.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	death_text.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	_build_pause_panel(root)
+	_build_scoreboard(root)
+
+func _build_crosshair(root: Control) -> void:
+	var crosshair: Control = Control.new()
+	crosshair.set_anchors_preset(Control.PRESET_CENTER)
+	crosshair.offset_left = -12.0
+	crosshair.offset_top = -12.0
+	crosshair.offset_right = 12.0
+	crosshair.offset_bottom = 12.0
+	crosshair.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	root.add_child(crosshair)
+	_add_crosshair_piece(crosshair, Vector2(11, 1), Vector2(2, 7))
+	_add_crosshair_piece(crosshair, Vector2(11, 16), Vector2(2, 7))
+	_add_crosshair_piece(crosshair, Vector2(1, 11), Vector2(7, 2))
+	_add_crosshair_piece(crosshair, Vector2(16, 11), Vector2(7, 2))
+	_add_crosshair_piece(crosshair, Vector2(11, 11), Vector2(2, 2))
+
+func _add_crosshair_piece(parent: Control, piece_position: Vector2, piece_size: Vector2) -> void:
+	var piece: ColorRect = ColorRect.new()
+	piece.position = piece_position
+	piece.size = piece_size
+	piece.color = Color(0.78, 0.95, 1.0, 0.96)
+	piece.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	parent.add_child(piece)
+
+func _build_scoreboard(root: Control) -> void:
+	scoreboard_panel = _panel(root, Vector2(-310, -125), Vector2(620, 250), Control.PRESET_CENTER)
+	scoreboard_panel.visible = false
+	var column: VBoxContainer = VBoxContainer.new()
+	column.add_theme_constant_override("separation", 14)
+	scoreboard_panel.add_child(column)
+	var heading: Label = _label(column, "MATCH SCOREBOARD", 24, ACCENT)
+	heading.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	var subtitle: Label = _label(column, "RIFT ARENA  //  TRAINING SIMULATION", 11, MUTED)
+	subtitle.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	var header: Label = _label(column, "PLAYER                                      KILLS       DEATHS       ASSISTS", 13, MUTED)
+	header.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
+	scoreboard_stats = _label(column, "", 17, Color.WHITE)
+	scoreboard_stats.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_update_scoreboard()
+	var hint: Label = _label(column, "HOLD TAB TO VIEW  •  RELEASE TO CLOSE", 11, MUTED)
+	hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+
+func _update_scoreboard() -> void:
+	if scoreboard_stats == null:
+		return
+	scoreboard_stats.text = "%-38s %7d %11d %12d" % [player_display_name, kills, deaths, assists]
+
+func _on_enemy_killed() -> void:
+	kills += 1
+	_update_scoreboard()
+
 func _panel(parent: Control, pos: Vector2, dimensions: Vector2, preset: Control.LayoutPreset) -> PanelContainer:
 	var panel: PanelContainer = PanelContainer.new()
 	panel.set_anchors_preset(preset)
@@ -197,6 +259,8 @@ func _on_player_damaged(_amount: float, _health: float, _shields: float) -> void
 	if player.dead:
 		death_overlay.visible = true
 func _on_player_died() -> void:
+	deaths += 1
+	_update_scoreboard()
 	death_overlay.visible = true
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 func _on_player_respawned() -> void:
