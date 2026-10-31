@@ -6,6 +6,7 @@ const BOT_SCENE: PackedScene = preload("res://scenes/enemies/arena_bot.tscn")
 const PAUSE_MENU_SCENE: PackedScene = preload("res://scenes/ui/pause_menu.tscn")
 const BOT_COUNT: int = 5
 const MATCH_LENGTH: int = 600
+const SCORE_LIMIT: int = 50
 
 @onready var hud: HUDController = $HUD
 
@@ -31,9 +32,21 @@ func _process(delta: float) -> void:
 	remaining_time = maxf(0.0, remaining_time - delta)
 	hud.set_time(ceili(remaining_time))
 	if remaining_time <= 0.0:
-		_match_running = false
-		Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
-		pause_menu.show_match_result(player.score)
+		_finish_match()
+
+func _on_score_changed(value: int) -> void:
+	if value >= SCORE_LIMIT:
+		_finish_match()
+
+func _finish_match() -> void:
+	if not _match_running:
+		return
+	_match_running = false
+	_is_paused = true
+	get_tree().paused = true
+	player.set_local_paused(true)
+	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+	pause_menu.show_match_result(player.score)
 
 func _spawn_player() -> void:
 	player = PLAYER_SCENE.instantiate() as PlayerController
@@ -45,6 +58,7 @@ func _spawn_player() -> void:
 	player.health_changed.connect(hud.set_health)
 	player.ammo_changed.connect(hud.set_ammo)
 	player.score_changed.connect(hud.set_score)
+	player.score_changed.connect(_on_score_changed)
 
 func _spawn_bots() -> void:
 	var spawn_points: Array[Vector3] = [
