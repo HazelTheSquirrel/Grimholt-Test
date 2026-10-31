@@ -16,7 +16,7 @@ func _run() -> void:
 		_finish()
 		return
 
-	var game := packed.instantiate()
+	var game := packed.instantiate() as MatchController
 	root.add_child(game)
 	await process_frame
 	await process_frame
@@ -26,7 +26,7 @@ func _run() -> void:
 	_check(game.get_node_or_null("PauseMenu") != null, "Pause menu scene must be instanced")
 	_check(get_nodes_in_group("enemies").size() == 5, "Exactly five arena bots must spawn")
 
-	var player := game.get_node_or_null("Player")
+	var player := game.get_node_or_null("Player") as PlayerController
 	if player != null:
 		_check(player.get_node_or_null("Head/Camera3D") != null, "First-person camera must exist")
 		_check(player.get_node_or_null("Head/Camera3D/PulseCarbine") != null, "Pulse Carbine scene must exist")
@@ -40,7 +40,7 @@ func _run() -> void:
 		player._switch_weapon()
 		_check(player.weapon.display_name == "PULSE CARBINE", "Weapon cycling must return to Pulse Carbine")
 
-	var hud := game.get_node_or_null("HUD")
+	var hud := game.get_node_or_null("HUD") as HUDController
 	if hud != null:
 		_check(hud.has_method("set_health"), "HUD health binding must exist")
 		_check(hud.has_method("set_ammo"), "HUD ammunition binding must exist")
@@ -57,10 +57,10 @@ func _run() -> void:
 	if game != null and game.has_method("_toggle_pause"):
 		game._toggle_pause()
 		_check(get_tree().paused, "Pause action must pause the solo match")
-		_check(game.pause_menu.overlay.visible, "Pause overlay must be visible")
+		_check(game.pause_menu.is_menu_visible(), "Pause overlay must be visible")
 		game._resume_match()
 		_check(not get_tree().paused, "Resume action must unpause the solo match")
-		_check(not game.pause_menu.overlay.visible, "Resume action must hide the pause overlay")
+		_check(not game.pause_menu.is_menu_visible(), "Resume action must hide the pause overlay")
 	print("GRIMHOLT_FPS_SMOKE_TEST: %d failure(s)" % failures.size())
 	_finish()
 
