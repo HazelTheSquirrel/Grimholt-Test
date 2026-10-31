@@ -25,8 +25,7 @@ func _run_smoke_test() -> void:
 	assert(game.players.has(1), "Solo player did not spawn")
 	assert(game.pause_layer != null, "In-match pause layer was not created")
 	var center_platform := game.get_node_or_null("Arena/CenterHighGround/Mesh") as MeshInstance3D
-	assert(center_platform != null, "Center arena platform is missing")
-	assert((center_platform.mesh as BoxMesh).size.x <= 9.0, "Center platform must not block the central sightline")
+	assert(center_platform == null, "Removed center platform must not block the central sightline")
 	assert(not game.pause_layer.visible, "Pause menu must start hidden")
 	game._toggle_pause_menu()
 	assert(game.is_local_paused and game.pause_layer.visible, "Pause menu did not pause local input")
@@ -98,7 +97,7 @@ func _run_smoke_test() -> void:
 	assert(game.health_bar != null and game.health_value_label != null, "Responsive vitals HUD is missing")
 	assert(game.weapon_label != null and game.ammo_reserve_label != null, "Weapon and reserve ammo HUD is missing")
 	assert(game.reload_state_label != null, "Reload status HUD is missing")
-	assert(game.minimap.position == Vector2(24, 70), "Minimap must stay below the match clock, clear of bottom-left vitals")
+	assert(game.minimap.position == Vector2(24, 92), "Minimap must stay below the match clock, clear of bottom-left vitals")
 	assert(game.pause_panel.theme != null, "Pause menu must use the original Grimholt UI theme")
 	assert(game.pause_options.get_child(1) is CheckButton, "Pause menu must expose a working fullscreen control")
 	assert(game.pause_options.get_child(3) is HSlider, "Pause menu must expose a working master-volume control")
