@@ -8,6 +8,7 @@ var game_manager: Node
 var hud: CanvasLayer
 func _ready() -> void:
 	Engine.max_fps = 60
+	Engine.physics_ticks_per_second = 60
 	_build_world()
 	player = PLAYER_SCENE.instantiate() as CharacterBody3D
 	player.position = Vector3(0, 0.2, 12)
