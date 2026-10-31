@@ -17,30 +17,19 @@ var shields: float = 100.0
 var shield_delay: float = 0.0
 var gravity: float = 24.0
 var dead: bool = false
-var mouse_capture_requested: bool = false
 
 func _ready() -> void:
 	health = max_health
 	shields = max_shields
-	# Start visible: some desktop/window managers discard a capture requested
-	# before the game window receives focus. The first click captures reliably.
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 	vitals_changed.emit(health, shields)
 
 func _input(event: InputEvent) -> void:
-	if event is InputEventMouseButton and event.pressed and not dead:
+	if event is InputEventMouseButton and event.pressed and not dead and not get_tree().paused:
 		if Input.mouse_mode != Input.MOUSE_MODE_CAPTURED:
-			mouse_capture_requested = true
 			Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 			get_viewport().set_input_as_handled()
 			return
-
-	if event.is_action_pressed("pause_game"):
-		if Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
-			Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
-		elif mouse_capture_requested and not get_tree().paused and not dead:
-			Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
-		return
 
 	if event is InputEventMouseMotion and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED and not dead and not get_tree().paused:
 		rotate_y(-event.relative.x * mouse_sensitivity)
