@@ -1,4 +1,4 @@
-[gd_scene load_steps=15 format=3]
+[gd_scene load_steps=12 format=3]
 
 [ext_resource type="Texture2D" path="res://assets/materials/arena_floor.svg" id="1_floor"]
 
@@ -134,30 +134,6 @@ mesh = SubResource("PlatformMesh")
 material_override = SubResource("PlatformMat")
 [node name="Collision" type="CollisionShape3D" parent="EastHighGround"]
 shape = SubResource("PlatformShape")
-
-[node name="Mesh" type="MeshInstance3D" parent="RampWestToCenter"]
-mesh = SubResource("RampMesh")
-material_override = SubResource("RampMat")
-[node name="Collision" type="CollisionShape3D" parent="RampWestToCenter"]
-shape = SubResource("RampShape")
-
-[node name="Mesh" type="MeshInstance3D" parent="RampEastToCenter"]
-mesh = SubResource("RampMesh")
-material_override = SubResource("RampMat")
-[node name="Collision" type="CollisionShape3D" parent="RampEastToCenter"]
-shape = SubResource("RampShape")
-
-[node name="Mesh" type="MeshInstance3D" parent="RampNorthToCenter"]
-mesh = SubResource("RampMesh")
-material_override = SubResource("RampMat")
-[node name="Collision" type="CollisionShape3D" parent="RampNorthToCenter"]
-shape = SubResource("RampShape")
-
-[node name="Mesh" type="MeshInstance3D" parent="RampSouthToCenter"]
-mesh = SubResource("RampMesh")
-material_override = SubResource("RampMat")
-[node name="Collision" type="CollisionShape3D" parent="RampSouthToCenter"]
-shape = SubResource("RampShape")
 
 [node name="NorthCover" type="StaticBody3D" parent="."]
 position = Vector3(0, 1.2, -23)
