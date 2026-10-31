@@ -23,10 +23,10 @@ func start_next_wave() -> void:
 func _spawn_enemy() -> void:
 	if not is_instance_valid(player):
 		return
-	var enemy = ENEMY_SCENE.instantiate()
+	var enemy := ENEMY_SCENE.instantiate() as CharacterBody3D
 	enemy.position = spawn_points[randi() % spawn_points.size()]
-	enemy.target = player
-	enemy.defeated.connect(_on_enemy_defeated)
+	enemy.set("target", player)
+	enemy.connect("defeated", Callable(self, "_on_enemy_defeated"))
 	world.add_child(enemy)
 func _on_enemy_defeated() -> void:
 	score += 100
