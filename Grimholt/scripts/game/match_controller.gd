@@ -40,6 +40,7 @@ func _spawn_player() -> void:
 	add_child(player)
 	player.global_position = Vector3(0, 1.1, 25)
 	player.pause_requested.connect(_toggle_pause)
+	player.hit_confirmed.connect(hud.show_hit_marker)
 	player.health_changed.connect(hud.set_health)
 	player.ammo_changed.connect(hud.set_ammo)
 	player.score_changed.connect(hud.set_score)
@@ -63,6 +64,7 @@ func _spawn_bot(spawn_position: Vector3) -> void:
 func _on_bot_eliminated(_bot: ArenaBot, killer: Node) -> void:
 	if killer == player:
 		player.add_score(1)
+		hud.show_kill_marker()
 	get_tree().create_timer(2.0).timeout.connect(_respawn_bot)
 
 func _respawn_bot() -> void:
