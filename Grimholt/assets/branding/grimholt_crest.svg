@@ -1,9 +1,0 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="640" height="640" viewBox="0 0 640 640">
-<defs><linearGradient id="steel" x2="0" y2="1"><stop stop-color="#d5e4e8"/><stop offset=".48" stop-color="#6f8994"/><stop offset="1" stop-color="#263b48"/></linearGradient><linearGradient id="gold" x2="0" y2="1"><stop stop-color="#f4d88d"/><stop offset="1" stop-color="#a86d2e"/></linearGradient></defs>
-<path d="M320 34 532 112 514 370Q478 510 320 600 162 510 126 370L108 112Z" fill="#0b1821" stroke="url(#gold)" stroke-width="12"/>
-<path d="M320 65 500 132 484 360Q451 480 320 558 189 480 156 360L140 132Z" fill="#182c38" stroke="#8ca5ad" stroke-width="5"/>
-<path d="M320 115 365 245 505 255 397 342 432 478 320 400 208 478 243 342 135 255 275 245Z" fill="none" stroke="url(#gold)" stroke-width="13" stroke-linejoin="round"/>
-<path d="M320 165 352 267 458 275 377 340 402 438 320 380 238 438 263 340 182 275 288 267Z" fill="#294653" stroke="#d5e4e8" stroke-width="4"/>
-<path d="M320 215 342 288 418 292 359 339 378 412 320 369 262 412 281 339 222 292 298 288Z" fill="url(#steel)"/>
-<path d="M208 505H432" stroke="url(#gold)" stroke-width="7"/><text x="320" y="540" text-anchor="middle" font-family="serif" font-weight="bold" font-size="34" letter-spacing="8" fill="#f2d18a">GRIMHOLT</text>
-</svg>
