@@ -5,6 +5,7 @@ signal health_changed(value: int)
 signal ammo_changed(current: int, reserve: int)
 signal score_changed(value: int)
 signal pause_requested
+signal hit_confirmed
 
 @export var move_speed: float = 8.0
 @export var acceleration: float = 24.0
@@ -79,6 +80,7 @@ func _fire() -> void:
 		var target: Object = hit.collider
 		if target.has_method("take_damage"):
 			target.take_damage(weapon.damage, self)
+			hit_confirmed.emit()
 
 func take_damage(amount: int, _attacker: Node = null) -> void:
 	if amount <= 0 or health <= 0:
