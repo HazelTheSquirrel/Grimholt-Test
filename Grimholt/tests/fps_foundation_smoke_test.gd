@@ -56,7 +56,7 @@ func _run() -> void:
 
 	if game != null and game.has_method("_toggle_pause"):
 		game._toggle_pause()
-		_check(get_tree().paused, "Pause action must pause the solo match")
+		_check(paused, "Pause action must pause the solo match")
 		_check(game.pause_menu.is_menu_visible(), "Pause overlay must be visible")
 		game._resume_match()
 		_check(not get_tree().paused, "Resume action must unpause the solo match")
