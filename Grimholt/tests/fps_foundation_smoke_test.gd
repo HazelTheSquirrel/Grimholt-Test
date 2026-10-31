@@ -23,6 +23,7 @@ func _run() -> void:
 
 	_check(game.get_node_or_null("Player") != null, "Player must spawn")
 	_check(game.get_node_or_null("HUD") != null, "HUD scene must be instanced")
+	_check(game.get_node_or_null("PauseMenu") != null, "Pause menu scene must be instanced")
 	_check(get_nodes_in_group("enemies").size() == 5, "Exactly five arena bots must spawn")
 
 	var player := game.get_node_or_null("Player")
@@ -37,6 +38,8 @@ func _run() -> void:
 		_check(hud.has_method("set_health"), "HUD health binding must exist")
 		_check(hud.has_method("set_ammo"), "HUD ammunition binding must exist")
 		_check(hud.has_method("set_time"), "HUD match timer binding must exist")
+		_check(hud.has_method("show_hit_marker"), "HUD hit feedback must exist")
+		_check(hud.has_method("show_kill_marker"), "HUD elimination feedback must exist")
 
 	_check(InputMap.has_action("move_forward"), "Forward movement action must be configured")
 	_check(InputMap.has_action("fire"), "Fire action must be configured")
